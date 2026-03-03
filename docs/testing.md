@@ -13,7 +13,7 @@ component (GCC, binutils, GDB, newlib), how to invoke each suite for the
 | binutils  | `check-binutils`  | ✅ Yes | ~5–10 min | DejaGnu, `arm-none-eabi-objdump` etc. |
 | GCC       | `check-gcc` (ARM) | ⚠️ Partial | 2–6 h | QEMU for execution tests |
 | GDB       | `check-gdb`       | ⚠️ Partial | 2–4 h | QEMU / gdbserver for target tests |
-| newlib    | `check-newlib`    | ❌ Hardware | N/A | Physical board or QEMU |
+| newlib    | `check-target-newlib` | ❌ Hardware | N/A | Physical board or QEMU |
 
 ---
 
@@ -36,14 +36,14 @@ against. Additional general ELF tests live in `gas/testsuite/gas/elf/`.
 **How to invoke (cross-target):**
 
 ```bash
-cd <build-dir>/gas
-make check-gas RUNTESTFLAGS="--target arm-none-eabi arm.exp"
+cd <build-dir>
+make check-gas RUNTESTFLAGS="--target arm-none-eabi gas/arm/arm.exp"
 ```
 
 Run all ARM tests:
 
 ```bash
-make check RUNTESTFLAGS="arm.exp"
+make check-gas RUNTESTFLAGS="gas/arm/arm.exp"
 ```
 
 **CI feasibility:** ✅ Fully feasible. Tests only require the host-side
@@ -68,8 +68,8 @@ the host, then inspecting the resulting object files with `objdump` or `nm`.
 **How to invoke:**
 
 ```bash
-cd <build-dir>/ld
-make check-ld RUNTESTFLAGS="--target arm-none-eabi ld-arm.exp"
+cd <build-dir>
+make check-ld RUNTESTFLAGS="--target arm-none-eabi ld-arm/arm-elf.exp"
 ```
 
 **CI feasibility:** ✅ Fully feasible. No target execution required.
@@ -93,7 +93,7 @@ The demangler tests (`binutils-all/`) are host-only and architecture-agnostic.
 **How to invoke:**
 
 ```bash
-cd <build-dir>/binutils
+cd <build-dir>
 make check-binutils
 ```
 
@@ -141,7 +141,7 @@ tests only:
 
 ```bash
 cd <build-dir>/gcc
-make check-gcc RUNTESTFLAGS="--target_board=arm-none-eabi arm.exp"
+make check-gcc RUNTESTFLAGS="--target_board=arm-none-eabi gcc.target/arm/arm.exp"
 ```
 
 To also run execution tests via QEMU:
