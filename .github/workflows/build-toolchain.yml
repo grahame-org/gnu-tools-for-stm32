@@ -41,3 +41,35 @@ jobs:
             /opt/ghc \
             /opt/hostedtoolcache/CodeQL
           df -h
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            yacc \
+            flex \
+            gcc-arm-none-eabi \
+            gdb-multiarch \
+            cmake \
+            git \
+            openocd \
+            python3 \
+            python3-pip \
+            python3-venv \
+            texi2html \
+            texinfo \
+            automake
+          for version in 1.15 1.14; do
+            for tool in aclocal automake; do
+              target="/usr/bin/${tool}-1.16"
+              link="/usr/bin/${tool}-${version}"
+              if [ -e "$link" ] || [ -L "$link" ]; then
+                if [ "$(readlink -f "$link" 2>/dev/null || echo "")" != "$target" ]; then
+                  echo "ERROR: $link already exists and does not point to $target" >&2
+                  exit 1
+                fi
+              else
+                sudo ln -s "$target" "$link"
+              fi
+            done
+          done
