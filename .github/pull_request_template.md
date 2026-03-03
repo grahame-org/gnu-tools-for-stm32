@@ -20,7 +20,7 @@
 > The PR title must therefore conform to commitlint requirements:
 >
 > ```
-> type(optional-scope): description
+> <type>[(optional scope)][!]: <description>
 > ```
 >
 > Common types: `feat`, `fix`, `docs`, `chore`, `refactor`, `test`, `ci`, `build`, `perf`, `style`, `revert`
