@@ -1,4 +1,7 @@
 {
+  "name": "gnu-tools-for-stm32",
+  "version": "0.0.1",
+  "description": "Development tooling for gnu-tools-for-stm32",
   "private": true,
   "scripts": {
     "commitlint": "commitlint"
