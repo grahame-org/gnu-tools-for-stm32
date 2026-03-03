@@ -90,8 +90,6 @@ jobs:
         with:
           path: build-native/host-libs
           key: ${{ runner.os }}-prerequisites-${{ hashFiles('build-prerequisites.sh', 'build-common.sh', 'src/gmp/**', 'src/mpfr/**', 'src/mpc/**', 'src/isl/**', 'src/expat/**', 'src/zlib*/**') }}
-          restore-keys: |
-            ${{ runner.os }}-prerequisites-
 
       - name: Build prerequisites
         if: steps.cache-prerequisites.outputs.cache-hit != 'true'
