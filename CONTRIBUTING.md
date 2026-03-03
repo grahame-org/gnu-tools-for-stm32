@@ -11,12 +11,15 @@ This repository uses the [Conventional Commits](https://www.conventionalcommits.
 ### Format
 
 ```
-<type>[optional scope]: <description>
+<type>[(optional scope)][!]: <description>
 
 [optional body]
 
 [optional footer(s)]
 ```
+
+- The **scope** is optional and written in parentheses, e.g. `feat(parser): ...`
+- Append `!` after the type/scope to indicate a **breaking change**, e.g. `feat!: ...` or `feat(api)!: ...`
 
 ### Allowed Types
 
