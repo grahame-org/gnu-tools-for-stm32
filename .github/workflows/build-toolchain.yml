@@ -103,8 +103,6 @@ jobs:
         with:
           path: install-native
           key: ${{ runner.os }}-toolchain-${{ hashFiles('build-toolchain.sh', 'build-common.sh', 'src/binutils/**', 'src/gcc/**', 'src/gdb/**', 'src/newlib/**', 'src/libiconv/**', 'src/liblongpath-win32/**', 'src/specs/**') }}-${{ hashFiles('build-prerequisites.sh', 'build-common.sh', 'src/gmp/**', 'src/mpfr/**', 'src/mpc/**', 'src/isl/**', 'src/expat/**', 'src/zlib*/**') }}
-          restore-keys: |
-            ${{ runner.os }}-toolchain-
 
       - name: Build toolchain
         if: steps.cache-toolchain.outputs.cache-hit != 'true'
