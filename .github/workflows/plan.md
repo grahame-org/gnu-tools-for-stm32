@@ -61,7 +61,7 @@ Analyze the issue or discussion along with the comment content (which may contai
 
 ## Creating Sub-Issues
 
-Create actionable sub-issues (at most 5) with the following format:
+Create actionable sub-issues (at most 50) with the following format:
 - Each sub-issue should be a clear, actionable task for a SWE agent
 - Use the `create_issue` type with `title` and `body` fields
 - Do NOT use the `parent` field - grouping is automatic
@@ -129,11 +129,11 @@ Review instructions in `.github/instructions/*.instructions.md` if you need guid
 
 {{#if github.event.issue.number}}
 1. First, analyze the current issue (#${{ github.event.issue.number }}) and the user's comment for context and any additional guidance
-2. Create sub-issues (at most 5) - they will be automatically grouped
+2. Create sub-issues (at most 50) - they will be automatically grouped
 {{/if}}
 
 {{#if github.event.discussion.number}}
 1. First, analyze the discussion (#${{ github.event.discussion.number }}) and the user's comment for context and any additional guidance
-2. Create sub-issues (at most 5) - they will be automatically grouped
+2. Create sub-issues (at most 50) - they will be automatically grouped
 3. After creating all issues successfully, if this was triggered from a discussion in the "Ideas" category, close the discussion with a comment summarizing the plan and resolution reason "RESOLVED"
 {{/if}}
