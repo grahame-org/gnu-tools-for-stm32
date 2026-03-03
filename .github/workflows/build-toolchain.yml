@@ -73,3 +73,11 @@ jobs:
               fi
             done
           done
+
+      - name: Set up Python virtual environment
+        run: |
+          STM32_VENV_PATH=/opt/stm32-venv
+          python3 -m venv "${STM32_VENV_PATH}"
+          "${STM32_VENV_PATH}/bin/python3" -m pip install python-magic
+          echo "${STM32_VENV_PATH}/bin" >> "${GITHUB_PATH}"
+          echo "STM32_VENV_PATH=${STM32_VENV_PATH}" >> "${GITHUB_ENV}"
