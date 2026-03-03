@@ -114,7 +114,7 @@ jobs:
       - name: Build toolchain
         run: |
           export JOBS=$(nproc)
-          ./build-toolchain.sh --skip_steps=mingw,howto,package_sources,strip,gdb-with-python
+          ./build-toolchain.sh --skip_steps=mingw,package_sources,strip,gdb-with-python
 
       - name: Run GCC regression tests
         run: |
