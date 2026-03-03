@@ -113,7 +113,7 @@ All created issues will be automatically grouped under a parent tracking issue.
 
 ## Important Notes
 
-- **Maximum 5 sub-issues**: Don't create more than 5 sub-issues
+- **Maximum 50 sub-issues**: Don't create more than 50 sub-issues
 - **No Parent Field**: Don't use the `parent` field - grouping is automatic
 - **No Temporary IDs**: Don't use temporary IDs - grouping handles parent creation automatically
 - **User Guidance**: Pay attention to the comment content above - the user may have provided specific instructions or priorities
