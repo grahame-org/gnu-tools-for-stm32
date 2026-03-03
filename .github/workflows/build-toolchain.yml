@@ -83,3 +83,16 @@ jobs:
           "${STM32_VENV_PATH}/bin/python3" -m pip install python-magic==0.4.27
           echo "${STM32_VENV_PATH}/bin" >> "${GITHUB_PATH}"
           echo "STM32_VENV_PATH=${STM32_VENV_PATH}" >> "${GITHUB_ENV}"
+
+      - name: Cache build prerequisites
+        id: cache-prerequisites
+        uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        with:
+          path: build-native/host-libs
+          key: ${{ runner.os }}-prerequisites-${{ hashFiles('build-prerequisites.sh', 'build-common.sh', 'src/gmp/**', 'src/mpfr/**', 'src/mpc/**', 'src/isl/**', 'src/expat/**', 'src/zlib*/**') }}
+
+      - name: Build prerequisites
+        if: steps.cache-prerequisites.outputs.cache-hit != 'true'
+        run: |
+          export JOBS=$(nproc)
+          ./build-prerequisites.sh --skip_steps=mingw,howto,package_sources
