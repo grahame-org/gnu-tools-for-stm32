@@ -42,7 +42,9 @@ jobs:
             texinfo \
             automake \
             gcc-arm-none-eabi \
-            qemu-system-arm
+            qemu-system-arm \
+            libgmp-dev \
+            libmpfr-dev
 
       - name: Configure GDB
         run: |
