@@ -1,0 +1,133 @@
+# Copyright 2024 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Board configuration for GDB testing using qemu-system-arm to simulate
+# an ARM Cortex-M3 target for arm-none-eabi GDB regression testing.
+#
+# Uses the ARM MPS2+ AN385 (Cortex-M3) machine model.  The machine can be
+# overridden via the QEMU_BOARD_MACHINE environment variable.
+# The qemu-system-arm binary can be overridden via QEMU_SYSTEM_ARM.
+# The GDB stub port can be overridden via QEMU_GDB_PORT.
+
+# Allow the user to override the path to qemu-system-arm.
+if { [info exists ::env(QEMU_SYSTEM_ARM)] } {
+    set qemu_board_program $::env(QEMU_SYSTEM_ARM)
+} else {
+    set qemu_board_program "qemu-system-arm"
+}
+
+# Allow the user to override the simulated machine type.
+#
+# The value must be a machine accepted by qemu-system-arm -M.
+# The default is "mps2-an385" (ARM Cortex-M3, MPS2+ AN385 FPGA image).
+if { [info exists ::env(QEMU_BOARD_MACHINE)] } {
+    set qemu_board_machine $::env(QEMU_BOARD_MACHINE)
+} else {
+    set qemu_board_machine "mps2-an385"
+}
+
+# Allow the user to override the TCP port used for the GDB remote stub.
+if { [info exists ::env(QEMU_GDB_PORT)] } {
+    set qemu_board_port $::env(QEMU_GDB_PORT)
+} else {
+    set qemu_board_port 1234
+}
+
+set qemu_board_last_load_file ""
+set qemu_board_spawn_id ""
+
+set_board_info compiler      "arm-none-eabi-gcc"
+set_board_info cflags        "-mcpu=cortex-m3 -mthumb"
+set_board_info ldflags       "-mcpu=cortex-m3 -mthumb -specs=rdimon.specs"
+set_board_info debug_flags   "-g"
+
+# This is a remote (stub-based) target: the "run" command is not available.
+set_board_info use_gdb_stub             1
+set_board_info gdb_protocol             "remote"
+set_board_info gdb,do_reload_on_run     1
+set_board_info noargs                   1
+set_board_info gdb,noinferiorio         1
+set_board_info gdb,nofileio             1
+set_board_info gdb,noresults            1
+set_board_info gdb,nosignals            1
+set_board_info gdb,no_hardware_watchpoints 1
+
+proc gdb_load { file } {
+    global qemu_board_last_load_file
+    global qemu_board_spawn_id
+    global qemu_board_program
+    global qemu_board_machine
+    global qemu_board_port
+    global gdb_prompt
+
+    if { $file == "" } {
+        set file $qemu_board_last_load_file
+    } else {
+        set qemu_board_last_load_file $file
+    }
+
+    gdb_file_cmd $file
+
+    # Close any previous QEMU instance before starting a new one.
+    if { $qemu_board_spawn_id != "" } {
+        verbose -log "qemu: closing previous instance $qemu_board_spawn_id"
+        if [catch { close -i $qemu_board_spawn_id }] {
+            warning "qemu: failed to close previous QEMU instance"
+        }
+        wait -i $qemu_board_spawn_id
+        set qemu_board_spawn_id ""
+    }
+
+    # Launch qemu-system-arm with a GDB remote stub on the configured port.
+    # -S halts the CPU at startup, waiting for GDB to connect and issue
+    # a "continue" command.
+    set cmd "spawn -noecho ${qemu_board_program}\
+        -M ${qemu_board_machine}\
+        -nographic\
+        -semihosting-config enable=on,target=native\
+        -S\
+        -gdb tcp::${qemu_board_port}\
+        -kernel ${file}"
+    verbose -log "Spawning QEMU: $cmd"
+    eval $cmd
+    set qemu_board_spawn_id $spawn_id
+
+    verbose -log "qemu: spawned with spawn id $qemu_board_spawn_id,\
+        pid [exp_pid $qemu_board_spawn_id]"
+
+    # Give QEMU a moment to open its GDB listener before we connect.
+    after 500
+
+    # Connect GDB to the QEMU GDB remote stub.
+    send_gdb "target remote :${qemu_board_port}\n"
+    gdb_expect 30 {
+        -re ".*Remote debugging using :${qemu_board_port}.*\[\r\n\]+$gdb_prompt $" {
+            verbose -log "qemu: connected to GDB stub on port ${qemu_board_port}"
+        }
+        timeout {
+            verbose -log \
+                "qemu: timeout waiting for connection on port ${qemu_board_port}"
+            if { $qemu_board_spawn_id != "" } {
+                catch { close -i $qemu_board_spawn_id }
+                wait -i $qemu_board_spawn_id
+                set qemu_board_spawn_id ""
+            }
+            error \
+                "unable to connect to QEMU GDB stub on port ${qemu_board_port}"
+        }
+    }
+
+    return 0
+}

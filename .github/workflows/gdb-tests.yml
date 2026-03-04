@@ -1,0 +1,78 @@
+name: GDB Regression Tests
+
+on:
+  push:
+    branches:
+      - 13.3.rel1
+  pull_request:
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  gdb-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        test-group:
+          - name: gdb.base
+            tests: "gdb.base/*.exp"
+          - name: gdb.dwarf2
+            tests: "gdb.dwarf2/*.exp"
+          - name: gdb.arch
+            tests: "gdb.arch/*.exp"
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            yacc \
+            flex \
+            git \
+            dejagnu \
+            texinfo \
+            automake \
+            gcc-arm-none-eabi \
+            qemu-system-arm
+
+      - name: Configure GDB
+        run: |
+          mkdir -p build/gdb
+          cd build/gdb
+          ../../src/gdb/configure \
+            --target=arm-none-eabi \
+            --disable-nls \
+            --disable-werror \
+            --disable-sim \
+            --disable-binutils \
+            --disable-gas \
+            --disable-ld \
+            --disable-gold \
+            --disable-gprof
+
+      - name: Build GDB
+        run: make -C build/gdb -j$(nproc) all-gdb
+
+      - name: Run GDB regression tests
+        run: |
+          make -C build/gdb/gdb check \
+            RUNTESTFLAGS="--target_board=qemu" \
+            TESTS="${{ matrix.test-group.tests }}"
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: gdb-test-results-${{ matrix.test-group.name }}
+          path: |
+            build/gdb/**/*.sum
+            build/gdb/**/*.log
