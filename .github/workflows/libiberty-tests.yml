@@ -49,29 +49,27 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y build-essential
 
-      - name: Configure binutils
+      - name: Configure libiberty
         run: |
-          mkdir -p build/binutils
-          cd build/binutils
-          ../../src/binutils/configure \
-            --target=arm-none-eabi \
-            --disable-nls \
-            --disable-werror \
-            --disable-gdb \
-            --disable-sim
+          mkdir -p build/libiberty
+          cd build/libiberty
+          ../../src/binutils/libiberty/configure
 
       - name: Build libiberty
-        run: make -C build/binutils/libiberty -j$(nproc)
+        run: make -C build/libiberty -j$(nproc)
 
       - name: Run libiberty tests
-        run: make -C build/binutils/libiberty check
+        run: |
+          set -o pipefail
+          mkdir -p build/libiberty/testsuite
+          make -C build/libiberty check 2>&1 | tee build/libiberty/testsuite/libiberty-tests.log
 
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: libiberty-test-results
-          path: build/binutils/libiberty/testsuite/*.log
+          path: build/libiberty/testsuite/*.log
 
   libiberty-tests-status:
     runs-on: ubuntu-latest
