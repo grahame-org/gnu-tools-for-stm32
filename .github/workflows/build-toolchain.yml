@@ -140,6 +140,9 @@ jobs:
     steps:
       - name: Report build status
         run: |
+          if [[ "${{ needs.check-changes.result }}" == "failure" || "${{ needs.check-changes.result }}" == "cancelled" ]]; then
+            echo "check-changes job failed or was cancelled" && exit 1
+          fi
           if [[ "${{ needs.build.result }}" == "failure" || "${{ needs.build.result }}" == "cancelled" ]]; then
             echo "Build failed or was cancelled" && exit 1
           fi
