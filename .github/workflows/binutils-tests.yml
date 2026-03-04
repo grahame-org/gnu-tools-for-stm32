@@ -1,0 +1,68 @@
+name: Binutils Regression Tests
+
+on:
+  push:
+    branches:
+      - 13.3.rel1
+  pull_request:
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  binutils-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            yacc \
+            flex \
+            git \
+            dejagnu \
+            texinfo \
+            automake \
+            gcc-arm-none-eabi
+
+      - name: Configure binutils
+        run: |
+          mkdir -p build/binutils
+          cd build/binutils
+          ../../src/binutils/configure \
+            --target=arm-none-eabi \
+            --disable-nls \
+            --disable-werror \
+            --disable-sim \
+            --disable-gdb \
+            --enable-interwork \
+            --enable-plugins \
+            --with-zstd=no
+
+      - name: Build binutils
+        run: make -C build/binutils -j$(nproc)
+
+      - name: Run binutils regression tests
+        run: |
+          rc=0
+          make -C build/binutils check-gas || rc=$((rc | $?))
+          make -C build/binutils check-ld || rc=$((rc | $?))
+          make -C build/binutils check-binutils || rc=$((rc | $?))
+          exit $rc
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: binutils-test-results
+          path: |
+            build/binutils/**/*.sum
+            build/binutils/**/*.log
