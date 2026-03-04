@@ -1,0 +1,122 @@
+name: GCC Selftests
+
+on:
+  push:
+    branches:
+      - 13.3.rel1
+  pull_request:
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  check-changes:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      should-test: ${{ steps.filter.outputs.test || 'true' }}
+    steps:
+      - name: Check for test-relevant file changes
+        if: github.event_name == 'pull_request'
+        id: filter
+        uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
+        with:
+          filters: |
+            test:
+              - 'src/gcc/**'
+              - 'build-toolchain.sh'
+              - 'build-prerequisites.sh'
+              - 'build-common.sh'
+              - '.github/workflows/gcc-selftests.yml'
+
+  gcc-selftests:
+    needs: check-changes
+    if: needs.check-changes.outputs.should-test == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            libgmp-dev \
+            libmpfr-dev \
+            libmpc-dev \
+            flex \
+            bison \
+            texinfo
+
+      - name: Compute source tree hash
+        id: src-hashes
+        run: |
+          set -euo pipefail
+          gcc_src_hash=$(git rev-parse "HEAD:src/gcc" | sha256sum | cut -d' ' -f1)
+          echo "gcc-src=${gcc_src_hash}" >> "${GITHUB_OUTPUT}"
+
+      - name: Cache GCC build
+        id: cache-gcc
+        uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        with:
+          path: build/gcc
+          key: ${{ runner.os }}-gcc-selftest-${{ hashFiles('build-toolchain.sh', 'build-prerequisites.sh', 'build-common.sh') }}-${{ steps.src-hashes.outputs.gcc-src }}
+
+      - name: Configure GCC
+        if: steps.cache-gcc.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p build/gcc
+          cd build/gcc
+          ../../src/gcc/configure \
+            --enable-languages=c,c++ \
+            --disable-multilib \
+            --disable-nls \
+            --disable-werror \
+            --enable-checking=yes
+
+      - name: Build host GCC
+        if: steps.cache-gcc.outputs.cache-hit != 'true'
+        run: make -C build/gcc -j$(nproc) all-gcc
+
+      - name: Run GCC selftests
+        run: |
+          build/gcc/gcc/xgcc -B build/gcc/gcc \
+            -fself-test=src/gcc/gcc/testsuite/selftests \
+            2>&1 | tee gcc-selftest-results.txt
+
+      - name: Check for test failures
+        run: |
+          if grep -E '^(FAIL|ERROR)' gcc-selftest-results.txt; then
+            echo "GCC selftests reported failures or errors"
+            exit 1
+          fi
+
+      - name: Upload selftest results
+        if: always()
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: gcc-selftest-results
+          path: gcc-selftest-results.txt
+
+  gcc-selftests-status:
+    runs-on: ubuntu-latest
+    needs: [check-changes, gcc-selftests]
+    if: always()
+    steps:
+      - name: Report test status
+        run: |
+          if [[ "${{ needs.check-changes.result }}" == "failure" || "${{ needs.check-changes.result }}" == "cancelled" ]]; then
+            echo "check-changes job failed or was cancelled" && exit 1
+          fi
+          if [[ "${{ needs.gcc-selftests.result }}" == "failure" || "${{ needs.gcc-selftests.result }}" == "cancelled" ]]; then
+            echo "Tests failed or were cancelled" && exit 1
+          fi
+          echo "Tests skipped or succeeded"
