@@ -173,3 +173,9 @@ Output is saved to: /tmp/gh-aw/aw-mcp/logs
 Memory structure: `/tmp/gh-aw/repo-memory/default/{audits,patterns,metrics}/*.json`
 
 Always create discussion with findings and update repo memory.
+
+## Large-Repository Compatibility
+
+This repository contains a very large number of source files (~217,000 files across GCC, binutils, GDB, newlib, and other toolchain components). When the `memory/audit-workflows` branch does not yet exist, the `push_repo_memory` step disables sparse-checkout (expanding the entire working tree), creates an orphan branch, and then runs `git rm -rf .` to clear it. On this repository the output of that command exceeds the Node.js `spawnSync` buffer limit (1 MB), causing the job to fail with `spawnSync git ENOBUFS`.
+
+**Required**: Before running the memory push step, ensure the `memory/audit-workflows` branch exists in the remote repository. If it does not exist, create it as an empty orphan branch via the GitHub REST API (create an empty git tree, create a root commit with that tree and no parents, then create the `refs/heads/memory/audit-workflows` ref pointing to that commit). This pre-creation means `push_repo_memory` will always take the existing-branch code path (fetch → checkout → copy files → push) rather than the orphan-branch path, avoiding the buffer overflow entirely.
