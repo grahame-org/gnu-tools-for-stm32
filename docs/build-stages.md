@@ -13,7 +13,7 @@ of `install-native/` it creates or modifies.
 | `newlib` | III-2 | `src/newlib/` | `gcc-first` |
 | `newlib-nano` | III-3 | `src/newlib/` | `gcc-first` |
 | `gcc-final` | III-4 | `src/gcc/` | `binutils`, `newlib` |
-| `gcc-size-libstdcxx` | III-5 | `src/gcc/` | `gcc-final`, `newlib-nano` |
+| `gcc-size-libstdcxx` | III-5 | `src/gcc/` | `newlib`, `newlib-nano` |
 | `gdb` | III-6 | `src/gdb/` | `binutils` |
 | `pretidy` | III-8 | — | `gdb` |
 | `strip_host_objects` | III-9 | — | `pretidy` |
@@ -202,11 +202,13 @@ nano-specific `newlib.h` header is copied to
 `install-native/arm-none-eabi/include/newlib-nano/`.
 
 **Depends on:**
-- `gcc-final` — the host-side cross-compiler (`install-native/bin/arm-none-eabi-gcc`)
-  is needed on `PATH`; the build itself targets
-  `build-native/target-libs/bin/arm-none-eabi-gcc`.
-- `newlib-nano` — `build-native/target-libs/arm-none-eabi/` must contain the
-  nano newlib headers and libraries.
+- `newlib` — `install-native/arm-none-eabi/lib/` multilib directory structure must
+  already exist for `copy_multi_libs` to copy the `_nano` archives into the correct
+  per-multilib subdirectories.
+- `newlib-nano` — `build-native/target-libs/arm-none-eabi/` must contain the nano
+  newlib headers and libraries (the sysroot for the build). The cross-tools in
+  `build-native/target-libs/bin/` (copied from `binutils` install at stage III-0 via
+  `copy_dir`) are also used by GCC configure for `--with-gnu-as`/`--with-gnu-ld`.
 
 **Artifacts written to `install-native/`:**
 
@@ -267,7 +269,8 @@ anywhere under `install-native/`.
 **Source directory:** none (post-install cleanup)
 
 **Description:** Strips debug symbols from host-native ELF/PE/Mach-O
-executables to reduce package size (skipped when `--build_type=native,debug`).
+executables to reduce package size (skipped for debug builds, i.e., whenever
+`--build_type` includes `debug`).
 
 **Depends on:** `pretidy` (III-8).
 
@@ -389,18 +392,20 @@ on a Homebrew-installed library not present on a clean target system).
 binutils (III-0)
     └── gcc-first (III-1)
             ├── newlib (III-2)
-            │       └── gcc-final (III-4) ◄────────────────── binutils (III-0)
-            │               ├── gcc-size-libstdcxx (III-5) ◄── newlib-nano (III-3)
-            │               │       └── ┐
-            │               └── ────────┤
-            │                           ▼
-            └── gdb (III-6)         pretidy (III-8)
-                    └───────────────►    └── strip_host_objects (III-9)
-                                                └── strip_target_objects (III-10)
-                                                            ├── specs (III-11) ◄── gcc-final (III-4)
-                                                            │           └── package_tbz2 (III-12)
-                                                            └── ─────────────────►    ├── package_bins (III-13, optional)
-                                                                                      └── validate_tool_deps (III-14, macOS only)
+            │       ├── gcc-final (III-4) ◄────────────────── binutils (III-0)
+            │       │       └── ┐
+            │       └── gcc-size-libstdcxx (III-5) ◄── newlib-nano (III-3)
+            │               └── ┤
+            │                   ▼
+            └── gdb (III-6)   pretidy (III-8)
+                    └───────────►    └── strip_host_objects (III-9)
+                                             └── strip_target_objects (III-10) ──────┐
+                                                                                       │
+                         gcc-final (III-4) ──► specs (III-11) ────────────────────────┤
+                                                                                       ▼
+                                                                         package_tbz2 (III-12)
+                                                                              ├── package_bins (III-13, optional)
+                                                                              └── validate_tool_deps (III-14, macOS only)
 ```
 
 ---
