@@ -84,6 +84,31 @@ jobs:
           echo "${STM32_VENV_PATH}/bin" >> "${GITHUB_PATH}"
           echo "STM32_VENV_PATH=${STM32_VENV_PATH}" >> "${GITHUB_ENV}"
 
+      - name: Compute source tree hashes
+        id: src-hashes
+        run: |
+          # Use git tree-object SHAs to derive a stable hash of each source
+          # directory.  git rev-parse HEAD:<path> resolves to the tree SHA for
+          # that directory and changes only when files inside it change.
+          # This avoids hashFiles() scanning the ~217 k-file src/ tree, which
+          # would exceed the 120-second hashFiles timeout.
+          toolchain_src_hash=$(
+            printf '%s\n' \
+              src/binutils \
+              src/gcc \
+              src/gdb \
+              src/newlib \
+              src/libiconv \
+              src/liblongpath-win32 \
+              src/specs \
+            | while read -r dir; do
+                git rev-parse "HEAD:${dir}" 2>/dev/null || true
+              done \
+            | sha256sum \
+            | cut -d' ' -f1
+          )
+          echo "toolchain-src=${toolchain_src_hash}" >> "${GITHUB_OUTPUT}"
+
       - name: Cache build prerequisites
         id: cache-prerequisites
         uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
@@ -102,7 +127,7 @@ jobs:
         uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           path: install-native
-          key: ${{ runner.os }}-toolchain-${{ hashFiles('build-toolchain.sh', 'build-prerequisites.sh', 'build-common.sh') }}-${{ github.sha }}
+          key: ${{ runner.os }}-toolchain-${{ hashFiles('build-toolchain.sh', 'build-prerequisites.sh', 'build-common.sh') }}-${{ steps.src-hashes.outputs.toolchain-src }}
 
       - name: Build toolchain
         if: steps.cache-toolchain.outputs.cache-hit != 'true'
