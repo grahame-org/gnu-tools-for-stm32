@@ -68,7 +68,7 @@ jobs:
             --with-python=no
 
       - name: Build GDB
-        run: make -C build/gdb/gdb -j$(nproc)
+        run: make -C build/gdb all-gdb -j$(nproc)
 
       - name: Run GDB selftests
         run: |
