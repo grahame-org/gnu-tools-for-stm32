@@ -388,24 +388,40 @@ on a Homebrew-installed library not present on a clean target system).
 
 ## Dependency Graph
 
-```
-binutils (III-0)
-    └── gcc-first (III-1)
-            ├── newlib (III-2)
-            │       ├── gcc-final (III-4) ◄────────────────── binutils (III-0)
-            │       │       └── ┐
-            │       └── gcc-size-libstdcxx (III-5) ◄── newlib-nano (III-3)
-            │               └── ┤
-            │                   ▼
-            └── gdb (III-6)   pretidy (III-8)
-                    └───────────►    └── strip_host_objects (III-9)
-                                             └── strip_target_objects (III-10) ──────┐
-                                                                                       │
-                         gcc-final (III-4) ──► specs (III-11) ────────────────────────┤
-                                                                                       ▼
-                                                                         package_tbz2 (III-12)
-                                                                              ├── package_bins (III-13, optional)
-                                                                              └── validate_tool_deps (III-14, macOS only)
+```mermaid
+flowchart TD
+    A["binutils (III-0)"]
+    B["gcc-first (III-1)"]
+    C["newlib (III-2)"]
+    D["newlib-nano (III-3)"]
+    E["gcc-final (III-4)"]
+    F["gcc-size-libstdcxx (III-5)"]
+    G["gdb (III-6)"]
+    H["pretidy (III-8)"]
+    I["strip_host_objects (III-9)"]
+    J["strip_target_objects (III-10)"]
+    K["specs (III-11)"]
+    L["package_tbz2 (III-12)"]
+    M["package_bins (III-13, optional)"]
+    N["validate_tool_deps (III-14, macOS only)"]
+
+    A --> B
+    A --> E
+    B --> C
+    B --> D
+    B --> G
+    C --> E
+    C --> F
+    D --> F
+    E --> K
+    F --> H
+    G --> H
+    H --> I
+    I --> J
+    J --> L
+    K --> L
+    L --> M
+    L --> N
 ```
 
 ---
