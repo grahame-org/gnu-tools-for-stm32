@@ -13,7 +13,7 @@ of `install-native/` it creates or modifies.
 | `newlib` | III-2 | `src/newlib/` | `gcc-first` |
 | `newlib-nano` | III-3 | `src/newlib/` | `gcc-first` |
 | `gcc-final` | III-4 | `src/gcc/` | `binutils`, `newlib` |
-| `gcc-size-libstdcxx` | III-5 | `src/gcc/` | `newlib`, `newlib-nano` |
+| `gcc-size-libstdcxx` | III-5 | `src/gcc/` | `binutils`, `newlib`, `newlib-nano` |
 | `gdb` | III-6 | `src/gdb/` | `binutils` |
 | `pretidy` | III-8 | — | `gdb` |
 | `strip_host_objects` | III-9 | — | `pretidy` |
@@ -202,13 +202,15 @@ nano-specific `newlib.h` header is copied to
 `install-native/arm-none-eabi/include/newlib-nano/`.
 
 **Depends on:**
+- `binutils` — the cross-tools in `build-native/target-libs/bin/` (populated by the
+  `copy_dir` call immediately after the binutils install at stage III-0) are used both
+  by GCC configure (`--with-gnu-as`/`--with-gnu-ld`) and by `copy_multi_libs` (via its
+  `target_gcc` argument).
 - `newlib` — `install-native/arm-none-eabi/lib/` multilib directory structure must
   already exist for `copy_multi_libs` to copy the `_nano` archives into the correct
   per-multilib subdirectories.
 - `newlib-nano` — `build-native/target-libs/arm-none-eabi/` must contain the nano
-  newlib headers and libraries (the sysroot for the build). The cross-tools in
-  `build-native/target-libs/bin/` (copied from `binutils` install at stage III-0 via
-  `copy_dir`) are also used by GCC configure for `--with-gnu-as`/`--with-gnu-ld`.
+  newlib headers and libraries (the sysroot for the build).
 
 **Artifacts written to `install-native/`:**
 
@@ -344,7 +346,7 @@ toolchain content must be in its final state.
 
 | Path | Contents |
 | --- | --- |
-| `share/doc/gcc-arm-none-eabi/license.txt` | Redistributed licence file |
+| `share/doc/gcc-arm-none-eabi/license.txt` | Redistributed license file |
 
 **Package output** (written to `pkg/`, not `install-native/`):
 
@@ -409,6 +411,7 @@ flowchart TD
 
     A --> B
     A --> E
+    A --> F
     A --> G
     B --> C
     B --> D
