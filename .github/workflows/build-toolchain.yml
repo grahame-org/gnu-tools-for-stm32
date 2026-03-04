@@ -181,6 +181,7 @@ jobs:
 
       - name: Compare test_project artifacts against reference binaries
         run: |
+          set -euo pipefail
           if [ ! -d "test_project/reference" ]; then
             echo "ERROR: test_project/reference directory does not exist."
             exit 1
@@ -189,7 +190,14 @@ jobs:
           compared=0
           for ref_file in test_project/reference/*; do
             [ -f "${ref_file}" ] || continue
+            # Skip documentation files
             case "${ref_file}" in *.md) continue ;; esac
+            # Skip .elf and .map files: they embed build-system absolute paths
+            # (DWARF debug info in .elf; linker library paths in .map), which
+            # differ between the Windows/CubeIDE reference build and a Linux CI
+            # build, causing spurious failures.  The .hex and .bin files contain
+            # only load-segment content and are meaningful byte-for-byte checks.
+            case "${ref_file}" in *.elf | *.map) continue ;; esac
             artifact_name=$(basename "${ref_file}")
             built_file="test_project/build/${artifact_name}"
             if [ ! -f "${built_file}" ]; then
