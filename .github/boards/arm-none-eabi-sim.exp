@@ -1,0 +1,26 @@
+# arm-none-eabi-sim.exp
+# DejaGnu board configuration for arm-none-eabi using QEMU system emulation.
+#
+# Targets the Cortex-M3 (lm3s6965evb machine) with semihosting enabled.
+# Semihosting routes newlib syscalls (exit, printf, etc.) to the host via
+# QEMU, making test execution viable without real hardware or a separate OS.
+#
+# Required packages: qemu-system-arm
+# Required script:   arm-none-eabi-run (wrapper in .github/scripts/)
+
+load_generic_config "sim"
+process_multilib_options ""
+
+# Cortex-M3 Thumb configuration — matches the lm3s6965evb QEMU machine.
+set_board_info cflags       "-mcpu=cortex-m3 -mthumb"
+
+# rdimon semihosting provides newlib syscall stubs (_exit, _write, etc.)
+# that communicate with the host via ARM semihosting SWIs.
+set_board_info ldflags      "-specs=rdimon.specs -lrdimon"
+
+# arm-none-eabi-run invokes qemu-system-arm with semihosting enabled.
+set_board_info sim          "arm-none-eabi-run"
+set_board_info is_simulator 1
+
+# Exit codes are propagated natively via semihosting; no testglue wrapper needed.
+set_board_info needs_status_wrapper 0

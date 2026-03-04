@@ -72,7 +72,7 @@ jobs:
             texinfo \
             automake \
             dejagnu \
-            qemu-user
+            qemu-system-arm
           for version in 1.15 1.14; do
             for tool in aclocal automake; do
               target="/usr/bin/${tool}-1.16"
@@ -116,11 +116,19 @@ jobs:
           export JOBS=$(nproc)
           ./build-toolchain.sh --skip_steps=mingw,manual,package_sources,strip,gdb-with-python
 
+      - name: Install DejaGnu board and QEMU wrapper
+        run: |
+          # Install custom board file so DejaGnu can find arm-none-eabi-sim
+          sudo cp .github/boards/arm-none-eabi-sim.exp /usr/share/dejagnu/baseboards/
+          # Install QEMU wrapper so it is on PATH as arm-none-eabi-run
+          sudo cp .github/scripts/arm-none-eabi-run /usr/local/bin/arm-none-eabi-run
+          sudo chmod +x /usr/local/bin/arm-none-eabi-run
+
       - name: Run GCC regression tests
         run: |
           pushd build-native/gcc-final
           make -j$(nproc) check-gcc \
-            RUNTESTFLAGS="${RUNTESTFLAGS} --target_board=arm-sim" \
+            RUNTESTFLAGS="${RUNTESTFLAGS} --target_board=arm-none-eabi-sim" \
             || true
           popd
 

@@ -1,0 +1,20 @@
+#!/bin/bash
+# arm-none-eabi-run — run an arm-none-eabi ELF binary via QEMU system emulation.
+#
+# Called by DejaGnu's sim connector as: arm-none-eabi-run <binary>
+#
+# QEMU's semihosting support intercepts ARM semihosting SWIs emitted by
+# rdimon (-specs=rdimon.specs), routing I/O and exit() calls to the host.
+# This allows test programs compiled for bare-metal ARM to run correctly
+# in CI without real hardware.
+#
+# Machine: lm3s6965evb (Cortex-M3, matches -mcpu=cortex-m3 -mthumb cflags)
+# Timeout: 30 s per test to prevent hangs from infinite loops or deadlocks.
+
+exec timeout 30 qemu-system-arm \
+    -M lm3s6965evb \
+    -nographic \
+    -monitor null \
+    -semihosting-config enable=on,target=native \
+    -kernel "$@" \
+    2>/dev/null
