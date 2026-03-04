@@ -56,7 +56,9 @@ jobs:
           ../../src/binutils/configure \
             --target=arm-none-eabi \
             --disable-nls \
-            --disable-werror
+            --disable-werror \
+            --disable-gdb \
+            --disable-sim
 
       - name: Build libiberty
         run: make -C build/binutils/libiberty -j$(nproc)
