@@ -140,7 +140,7 @@ without an execution engine to restrict the run to compile-and-assemble
 tests only:
 
 ```bash
-cd <build-dir>/gcc
+cd <build-dir>
 make check-gcc RUNTESTFLAGS="--target_board=arm-none-eabi gcc.target/arm/arm.exp"
 ```
 
@@ -239,7 +239,7 @@ make check-gdb RUNTESTFLAGS="--target_board=arm-qemu gdb.arch/arm-*.exp"
 
 ## 4. Newlib (`src/newlib/`)
 
-### 4.1 `make check`
+### 4.1 `check-target-newlib`
 
 **Testsuite location:** `src/newlib/newlib/testsuite/`
 
@@ -254,6 +254,15 @@ requires either physical hardware or a QEMU system-mode emulator with
 semihosting support.
 
 **How to invoke:**
+
+Top-level (recommended — equivalent to the subdir form below):
+
+```bash
+cd <build-dir>
+make check-target-newlib RUNTESTFLAGS="--target_board=arm-qemu-m3-semihosting"
+```
+
+Or directly in the newlib build subdir:
 
 ```bash
 cd <build-dir>/arm-none-eabi/newlib
