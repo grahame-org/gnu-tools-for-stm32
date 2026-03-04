@@ -72,21 +72,27 @@ proc gdb_load { file } {
     global qemu_board_port
     global gdb_prompt
 
-    if { $file == "" } {
+    # Track whether this is a reload (called with an empty filename by
+    # gdb_reload) or an initial load.  On reload the GDB symbol table is
+    # unchanged so gdb_file_cmd must NOT be called: doing so issues the
+    # GDB "file" command which clears every pending breakpoint, causing
+    # runto_main to fail because the breakpoint set before gdb_run_cmd is
+    # invoked is silently removed.
+    set is_reload [expr {$file == ""}]
+    if { $is_reload } {
         set file $qemu_board_last_load_file
     } else {
         set qemu_board_last_load_file $file
+        # Load symbols into GDB only on the initial load.
+        gdb_file_cmd $file
     }
 
-    gdb_file_cmd $file
-
-    # Close any previous QEMU instance before starting a new one.
+    # Kill and reap any previous QEMU instance before starting a new one.
     if { $qemu_board_spawn_id != "" } {
         verbose -log "qemu: closing previous instance $qemu_board_spawn_id"
-        if [catch { close -i $qemu_board_spawn_id }] {
-            warning "qemu: failed to close previous QEMU instance"
-        }
-        wait -i $qemu_board_spawn_id
+        catch { exec kill [exp_pid -i $qemu_board_spawn_id] }
+        catch { close -i $qemu_board_spawn_id }
+        catch { wait -i $qemu_board_spawn_id }
         set qemu_board_spawn_id ""
     }
 
@@ -103,12 +109,30 @@ proc gdb_load { file } {
     verbose -log "Spawning QEMU: $cmd"
     eval $cmd
     set qemu_board_spawn_id $spawn_id
+    set qemu_pid [exp_pid -i $qemu_board_spawn_id]
 
-    verbose -log "qemu: spawned with spawn id $qemu_board_spawn_id,\
-        pid [exp_pid $qemu_board_spawn_id]"
+    verbose -log "qemu: spawned with spawn id $qemu_board_spawn_id, pid $qemu_pid"
 
     # Give QEMU a moment to open its GDB listener before we connect.
     after 500
+
+    # Check whether QEMU has already exited.  This happens when the binary
+    # does not have a valid Cortex-M vector table (e.g. compiled with
+    # -nostartfiles): QEMU's reset logic reads address 0x0 and 0x4 and
+    # faults if no ELF segment is mapped there.
+    if { [catch { exec kill -0 $qemu_pid }] } {
+        verbose -log "qemu: QEMU (pid $qemu_pid) exited before GDB could connect"
+        catch { wait -i $qemu_board_spawn_id }
+        set qemu_board_spawn_id ""
+        if { $is_reload } {
+            # A live QEMU instance is required on reload.
+            return -1
+        }
+        # On the initial load the file command already loaded the binary's
+        # symbols into GDB.  Tests that only inspect debug information
+        # (without executing the program) can continue successfully.
+        return 0
+    }
 
     # Connect GDB to the QEMU GDB remote stub.
     send_gdb "target remote :${qemu_board_port}\n"
@@ -119,13 +143,11 @@ proc gdb_load { file } {
         timeout {
             verbose -log \
                 "qemu: timeout waiting for connection on port ${qemu_board_port}"
-            if { $qemu_board_spawn_id != "" } {
-                catch { close -i $qemu_board_spawn_id }
-                wait -i $qemu_board_spawn_id
-                set qemu_board_spawn_id ""
-            }
-            error \
-                "unable to connect to QEMU GDB stub on port ${qemu_board_port}"
+            catch { exec kill $qemu_pid }
+            catch { close -i $qemu_board_spawn_id }
+            catch { wait -i $qemu_board_spawn_id }
+            set qemu_board_spawn_id ""
+            return -1
         }
     }
 
