@@ -30,6 +30,7 @@ jobs:
               - 'build-prerequisites.sh'
               - 'build-common.sh'
               - '.github/workflows/build-toolchain.yml'
+              - 'test_project/**'
 
   build:
     needs: check-changes
