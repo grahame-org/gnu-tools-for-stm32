@@ -1215,41 +1215,6 @@ jobs:
           SERVER_URL_STRIPPED="${SERVER_URL#https://}"
           git remote set-url origin "https://x-access-token:${{ github.token }}@${SERVER_URL_STRIPPED}/${REPO_NAME}.git"
           echo "Git configured with standard GitHub Actions identity"
-      - name: Ensure memory branch exists
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
-        with:
-          script: |
-            const branchName = 'memory/audit-workflows';
-            try {
-              await github.rest.repos.getBranch({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                branch: branchName
-              });
-              core.info(`Branch ${branchName} already exists`);
-            } catch (e) {
-              if (e.status !== 404) throw e;
-              core.info(`Branch ${branchName} not found, creating orphan branch via API...`);
-              const { data: emptyTree } = await github.rest.git.createTree({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                tree: []
-              });
-              const { data: commit } = await github.rest.git.createCommit({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                message: 'Initialize memory branch',
-                tree: emptyTree.sha,
-                parents: []
-              });
-              await github.rest.git.createRef({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                ref: `refs/heads/${branchName}`,
-                sha: commit.sha
-              });
-              core.info(`Branch ${branchName} created successfully`);
-            }
       - name: Download repo-memory artifact (default)
         uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
         continue-on-error: true
