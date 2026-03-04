@@ -8,9 +8,9 @@ on:
   workflow_dispatch:
     inputs:
       runtestflags:
-        description: 'RUNTESTFLAGS value to scope the GCC test run (e.g. "execute.exp")'
+        description: 'RUNTESTFLAGS value to scope the GCC test run. compile.exp (default) compiles only — no QEMU needed. execute.exp also runs programs via QEMU system emulation with semihosting.'
         required: false
-        default: 'execute.exp'
+        default: 'compile.exp'
       unexpected_failures_threshold:
         description: 'Maximum number of unexpected failures allowed before the workflow fails'
         required: false
@@ -25,7 +25,7 @@ jobs:
     permissions:
       contents: read
     env:
-      RUNTESTFLAGS: ${{ github.event.inputs.runtestflags || 'execute.exp' }}
+      RUNTESTFLAGS: ${{ github.event.inputs.runtestflags || 'compile.exp' }}
       UNEXPECTED_FAILURES_THRESHOLD: ${{ github.event.inputs.unexpected_failures_threshold || '0' }}
     steps:
       - name: Checkout repository

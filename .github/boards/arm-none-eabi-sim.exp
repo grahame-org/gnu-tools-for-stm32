@@ -1,12 +1,15 @@
 # arm-none-eabi-sim.exp
-# DejaGnu board configuration for arm-none-eabi using QEMU system emulation.
+# DejaGnu board configuration for arm-none-eabi cross-compilation and QEMU execution.
 #
-# Targets the Cortex-M3 (lm3s6965evb machine) with semihosting enabled.
-# Semihosting routes newlib syscalls (exit, printf, etc.) to the host via
-# QEMU, making test execution viable without real hardware or a separate OS.
+# For compile-only tests (compile.exp, the default): only cflags are used.
+# The execution settings below apply only when running execute tests (execute.exp).
 #
-# Required packages: qemu-system-arm
-# Required script:   arm-none-eabi-run (wrapper in .github/scripts/)
+# Execution targets the Cortex-M3 (lm3s6965evb QEMU machine) with semihosting
+# enabled. Semihosting routes newlib syscalls (exit, printf, etc.) to the host
+# via QEMU, making test execution viable without real hardware or a separate OS.
+#
+# Required packages: qemu-system-arm (only needed for execute tests)
+# Required script:   arm-none-eabi-run (wrapper in .github/scripts/, only for execute tests)
 
 load_generic_config "sim"
 process_multilib_options ""
