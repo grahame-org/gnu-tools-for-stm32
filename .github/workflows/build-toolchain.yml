@@ -10,7 +10,30 @@ on:
 permissions: {}
 
 jobs:
+  check-changes:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      should-build: ${{ steps.filter.outputs.build || 'true' }}
+    steps:
+      - name: Check for build-relevant file changes
+        if: github.event_name == 'pull_request'
+        id: filter
+        uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
+        with:
+          filters: |
+            build:
+              - 'src/**'
+              - 'build-toolchain.sh'
+              - 'build-prerequisites.sh'
+              - 'build-common.sh'
+              - '.github/workflows/build-toolchain.yml'
+
   build:
+    needs: check-changes
+    if: needs.check-changes.outputs.should-build == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 360
     permissions:
@@ -135,3 +158,18 @@ jobs:
         run: |
           export JOBS=$(nproc)
           ./build-toolchain.sh --skip_steps=mingw,mingw-gdb-with-python,gdb-with-python,manual,package_sources
+
+  build-status:
+    runs-on: ubuntu-latest
+    needs: [check-changes, build]
+    if: always()
+    steps:
+      - name: Report build status
+        run: |
+          if [[ "${{ needs.check-changes.result }}" == "failure" || "${{ needs.check-changes.result }}" == "cancelled" ]]; then
+            echo "check-changes job failed or was cancelled" && exit 1
+          fi
+          if [[ "${{ needs.build.result }}" == "failure" || "${{ needs.build.result }}" == "cancelled" ]]; then
+            echo "Build failed or was cancelled" && exit 1
+          fi
+          echo "Build skipped or succeeded"
