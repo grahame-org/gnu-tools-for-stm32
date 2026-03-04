@@ -140,7 +140,7 @@ without an execution engine to restrict the run to compile-and-assemble
 tests only:
 
 ```bash
-cd <build-dir>/gcc
+cd <build-dir>
 make check-gcc RUNTESTFLAGS="--target_board=arm-none-eabi gcc.target/arm/arm.exp"
 ```
 
@@ -199,23 +199,24 @@ for CI without modification.
 
 **Running against QEMU (gdbserver mode):**
 
-The recommended CI approach is to use `gdbserver` and `qemu-system-arm` in
-user-mode or system-mode. A board file such as the following sketch would be
-placed in `gdb/testsuite/boards/arm-qemu.exp`:
+The recommended CI approach is to use `gdbserver` together with QEMU (either
+user-mode `qemu-arm` or system-mode `qemu-system-arm`). A board file such as
+the following sketch would be placed in `gdb/testsuite/boards/arm-qemu.exp`:
 
 ```tcl
 # boards/arm-qemu.exp — skeleton for QEMU-based GDB testing (replace values as needed)
 load_lib gdbserver-support.exp
 set_board_info gdb_protocol "remote"
-set_board_info gdb_server_prog "qemu-arm"   ;# for user-mode QEMU
-# Replace the port/socket below with the actual connection endpoint:
-set_board_info connect_port 1234
+set_board_info gdb_server_prog "gdbserver"
+# Replace the host/port below with the actual connection endpoint:
+set_board_info sockethost "localhost"
+set_board_info gdb,socketport 1234
 ```
 
 Then invoke:
 
 ```bash
-cd <build-dir>/gdb
+cd <build-dir>
 make check-gdb RUNTESTFLAGS="--target_board=arm-qemu gdb.arch/arm-*.exp"
 ```
 
@@ -238,7 +239,7 @@ make check-gdb RUNTESTFLAGS="--target_board=arm-qemu gdb.arch/arm-*.exp"
 
 ## 4. Newlib (`src/newlib/`)
 
-### 4.1 `make check`
+### 4.1 `check-target-newlib`
 
 **Testsuite location:** `src/newlib/newlib/testsuite/`
 
@@ -253,6 +254,15 @@ requires either physical hardware or a QEMU system-mode emulator with
 semihosting support.
 
 **How to invoke:**
+
+Top-level (recommended — equivalent to the subdir form below):
+
+```bash
+cd <build-dir>
+make check-target-newlib RUNTESTFLAGS="--target_board=arm-qemu-m3-semihosting"
+```
+
+Or directly in the newlib build subdir:
 
 ```bash
 cd <build-dir>/arm-none-eabi/newlib
