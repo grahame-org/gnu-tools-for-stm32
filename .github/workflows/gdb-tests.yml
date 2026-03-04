@@ -38,6 +38,8 @@ jobs:
             dejagnu \
             texinfo \
             automake \
+            libgmp-dev \
+            libmpfr-dev \
             python3 \
             python3-dev \
             gcc-arm-none-eabi
