@@ -226,14 +226,14 @@ nano-specific `newlib.h` header is copied to
 **Description:** Builds the `arm-none-eabi-gdb` debugger. For native
 (non-PPA) builds, only the no-Python variant is produced: `skip_gdb_with_python`
 is initialised to `yes` and there is no command-line option that sets it to
-`no`, so the Python-enabled `arm-none-eabi-gdb-py` build path at line 584 of
-`build-toolchain.sh` is currently unreachable. (For PPA builds, GDB is
-instead compiled with `--with-python=python3` into the single
-`arm-none-eabi-gdb` binary.)
+`no`, so the Python-enabled `arm-none-eabi-gdb-py` build path in
+`build-toolchain.sh` (guarded by the `skip_gdb_with_python` check) is currently
+unreachable. (For PPA builds, GDB is instead compiled with `--with-python=python3`
+into the single `arm-none-eabi-gdb` binary.)
 
 **Depends on:**
-- `binutils` — GDB configure uses the same sysroot and `install-native/`
-  prefix established by the binutils stage.
+- `binutils` — GDB reuses the `install-native/` prefix and target layout
+  established by the binutils stage.
 
 **Artifacts written to `install-native/`:**
 
@@ -291,8 +291,10 @@ executables to reduce package size (skipped for debug builds, i.e., whenever
 **Description:** Strips debug info (`.comment`, `.note` sections, debug
 symbols) from target-side static libraries and object files using
 `arm-none-eabi-strip`. The `libg.a` and `libg_nano.a` debug archives are
-exempt (they intentionally contain debug info); hard links are broken before
-stripping to avoid aliasing. Skipped when `--skip_steps=strip` is passed.
+exempt (they intentionally contain debug info); before stripping the other
+target libraries, any hard links that point to these debug archives are
+broken so they cannot be modified via aliasing. Skipped when
+`--skip_steps=strip` is passed.
 
 **Depends on:** `strip_host_objects` (III-9).
 
@@ -407,14 +409,13 @@ flowchart TD
 
     A --> B
     A --> E
+    A --> G
     B --> C
     B --> D
-    B --> G
     C --> E
     C --> F
     D --> F
     E --> K
-    F --> H
     G --> H
     H --> I
     I --> J
