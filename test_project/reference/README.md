@@ -6,9 +6,10 @@ It is expected that when the test_project is built using the dockerised version 
 
 ## Artefacts compared in CI
 
-Only `.bin` and `.hex` files are compared byte-for-byte in CI. The `.elf` and `.map` files are excluded from comparison because they embed build-system absolute paths that differ between the Windows/CubeIDE reference build and a Linux CI build:
+Only `.bin` files are compared byte-for-byte in CI. The `.elf`, `.map`, and `.hex` files are excluded from comparison:
 
-- `.elf` — DWARF debug-info sections contain absolute source and toolchain paths.
+- `.elf` — DWARF debug-info sections contain absolute source and toolchain paths that differ between Windows and Linux builds.
 - `.map` — linker map contains absolute paths to the toolchain library archives.
+- `.hex` — Intel HEX encoding can vary between `objcopy` versions and platforms.
 
-The `.bin` and `.hex` outputs are raw load-segment dumps and do not contain these paths, so they are suitable for a reproducible byte-for-byte check.
+The `.bin` output is a raw binary dump of the load segments and does not contain build-system paths, making it the only artifact suitable for a reproducible byte-for-byte check across platforms.
