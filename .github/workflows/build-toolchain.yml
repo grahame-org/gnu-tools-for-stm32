@@ -179,6 +179,52 @@ jobs:
             -S test_project
           cmake --build test_project/build --verbose -- -j "$(nproc)"
 
+      - name: Compare test_project artifacts against reference binaries
+        run: |
+          set -euo pipefail
+          if [ ! -d "test_project/reference" ]; then
+            echo "ERROR: test_project/reference directory does not exist."
+            exit 1
+          fi
+          PASS=true
+          compared=0
+          for ref_file in test_project/reference/*; do
+            [ -f "${ref_file}" ] || continue
+            # Skip documentation files
+            case "${ref_file}" in *.md) continue ;; esac
+            # Skip files known to differ between the Windows/CubeIDE reference
+            # build and a Linux CI build:
+            #   .elf — DWARF debug-info sections embed absolute source/toolchain paths.
+            #   .map — linker map contains absolute paths to toolchain library archives.
+            #   .hex — Intel HEX encoding can vary between objcopy versions/platforms.
+            # Only .bin (raw binary dump of load segments) is a meaningful
+            # byte-for-byte check across platforms.
+            case "${ref_file}" in *.elf | *.map | *.hex) continue ;; esac
+            artifact_name=$(basename "${ref_file}")
+            built_file="test_project/build/${artifact_name}"
+            if [ ! -f "${built_file}" ]; then
+              echo "FAIL: ${artifact_name} not found in build output"
+              PASS=false
+            elif cmp --silent "${ref_file}" "${built_file}"; then
+              echo "PASS: ${artifact_name} matches reference"
+            else
+              echo "FAIL: ${artifact_name} differs from reference"
+              echo "  reference size : $(wc -c < "${ref_file}") bytes"
+              echo "  built size     : $(wc -c < "${built_file}") bytes"
+              PASS=false
+            fi
+            compared=$((compared + 1))
+          done
+          if [ "${compared}" -eq 0 ]; then
+            echo "ERROR: No reference artifacts found to compare."
+            exit 1
+          fi
+          if [ "${PASS}" != "true" ]; then
+            echo "One or more artifacts differ from the reference binaries."
+            exit 1
+          fi
+          echo "All artifacts match reference binaries."
+
   build-status:
     runs-on: ubuntu-latest
     needs: [check-changes, build]
