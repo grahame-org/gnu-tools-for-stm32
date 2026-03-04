@@ -90,6 +90,20 @@ proc gdb_load { file } {
     # Kill and reap any previous QEMU instance before starting a new one.
     if { $qemu_board_spawn_id != "" } {
         verbose -log "qemu: closing previous instance $qemu_board_spawn_id"
+        # Disconnect GDB cleanly before killing QEMU.  This ensures GDB marks
+        # all pending breakpoints as "not inserted" so they are properly
+        # re-inserted when the next "target remote" connection is established.
+        # Without this step, killing QEMU drops the TCP connection abruptly;
+        # GDB's remote layer keeps breakpoints flagged as already-inserted,
+        # so the new QEMU instance starts with no breakpoints set and the
+        # program runs past "main" without stopping.
+        send_gdb "disconnect\n"
+        gdb_expect 5 {
+            -re "$gdb_prompt $" { }
+            timeout {
+                verbose -log "qemu: timed out waiting for disconnect to complete"
+            }
+        }
         catch { exec kill [exp_pid -i $qemu_board_spawn_id] }
         catch { close -i $qemu_board_spawn_id }
         catch { wait -i $qemu_board_spawn_id }
@@ -124,14 +138,7 @@ proc gdb_load { file } {
         verbose -log "qemu: QEMU (pid $qemu_pid) exited before GDB could connect"
         catch { wait -i $qemu_board_spawn_id }
         set qemu_board_spawn_id ""
-        if { $is_reload } {
-            # A live QEMU instance is required on reload.
-            return -1
-        }
-        # On the initial load the file command already loaded the binary's
-        # symbols into GDB.  Tests that only inspect debug information
-        # (without executing the program) can continue successfully.
-        return 0
+        return -1
     }
 
     # Connect GDB to the QEMU GDB remote stub.

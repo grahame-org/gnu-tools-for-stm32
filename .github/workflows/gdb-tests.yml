@@ -19,12 +19,24 @@ jobs:
       fail-fast: false
       matrix:
         test-group:
-          - name: gdb.base
-            tests: "gdb.base/*.exp"
           - name: gdb.dwarf2
             tests: "gdb.dwarf2/*.exp"
+            # debug-names tests use get_func_info with -nostartfiles, which
+            # fails to link on arm-none-eabi 13.2.1 / newlib 4.4 because
+            # libg.a references _fini that is only provided by crtn.o (a
+            # startup file).  Skip them so the rest of gdb.dwarf2 can run.
+            ignore: >-
+              --ignore=debug-names.exp
+              --ignore=debug-names-bad-cu-index.exp
+              --ignore=debug-names-non-ascending-cu.exp
+              --ignore=debug-names-tu.exp
+              --ignore=debug-names-tu-dwarf5.exp
           - name: gdb.arch
             tests: "gdb.arch/*.exp"
+            # arm-bl-branch-dest.exp links its test binary at 0xb0000000,
+            # which mps2-an385 has no memory mapped for.  The CPU enters
+            # LOCKUP, GDB never sees a breakpoint hit, and the test times out.
+            ignore: "--ignore=arm-bl-branch-dest.exp"
     steps:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -67,7 +79,7 @@ jobs:
       - name: Run GDB regression tests
         run: |
           make -C build/gdb/gdb check \
-            RUNTESTFLAGS="--target_board=qemu" \
+            RUNTESTFLAGS="--target_board=qemu ${{ matrix.test-group.ignore }}" \
             TESTS="${{ matrix.test-group.tests }}"
 
       - name: Upload test results
