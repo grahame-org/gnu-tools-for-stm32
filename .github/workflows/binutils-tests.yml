@@ -33,7 +33,23 @@ jobs:
             automake \
             gcc-arm-none-eabi
 
+      # Caching strategy: the binutils build directory is cached with a key based on
+      # the binutils source file hashes. On a cache hit the configure and build steps
+      # are skipped, and tests run directly against the cached build directory.
+      # This avoids rebuilding binutils from scratch when its source has not changed.
+      # The full toolchain (install-native/) is separately cached by build-toolchain.yml
+      # and shared with workflows that need the installed cross-compilation tools.
+      - name: Cache binutils build
+        id: cache-binutils-build
+        uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        with:
+          path: build/binutils
+          key: ${{ runner.os }}-binutils-build-${{ hashFiles('src/binutils/**') }}
+          restore-keys: |
+            ${{ runner.os }}-binutils-build-
+
       - name: Configure binutils
+        if: steps.cache-binutils-build.outputs.cache-hit != 'true'
         run: |
           mkdir -p build/binutils
           cd build/binutils
@@ -48,6 +64,7 @@ jobs:
             --with-zstd=no
 
       - name: Build binutils
+        if: steps.cache-binutils-build.outputs.cache-hit != 'true'
         run: make -C build/binutils -j$(nproc)
 
       - name: Run binutils regression tests

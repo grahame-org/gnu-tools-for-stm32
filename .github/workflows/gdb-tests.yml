@@ -1,0 +1,104 @@
+name: GDB Tests
+
+on:
+  push:
+    branches:
+      - 13.3.rel1
+  pull_request:
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  gdb-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            yacc \
+            flex \
+            git \
+            dejagnu \
+            texinfo \
+            automake \
+            gcc \
+            g++ \
+            python3 \
+            python3-dev \
+            gcc-arm-none-eabi
+
+      # Caching strategy: the host prerequisite libraries (gmp, mpfr, expat, zlib) are
+      # cached with a key based on their source file hashes. The same cache key is used
+      # by build-toolchain.yml, allowing these two workflows to share the pre-built host
+      # libraries and avoid redundant builds.
+      - name: Cache build prerequisites
+        id: cache-prerequisites
+        uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        with:
+          path: build-native/host-libs
+          key: ${{ runner.os }}-prerequisites-${{ hashFiles('build-prerequisites.sh', 'build-common.sh', 'src/gmp/**', 'src/mpfr/**', 'src/mpc/**', 'src/isl/**', 'src/expat/**', 'src/zlib*/**') }}
+
+      - name: Build prerequisites
+        if: steps.cache-prerequisites.outputs.cache-hit != 'true'
+        run: |
+          export JOBS=$(nproc)
+          ./build-prerequisites.sh --skip_steps=mingw,howto,package_sources
+
+      # Caching strategy: the GDB build directory is cached with a key based on the GDB
+      # source file hashes. On a cache hit the configure and build steps are skipped,
+      # and tests run directly against the cached build directory. This avoids rebuilding
+      # GDB from scratch when its source has not changed.
+      # The full toolchain (install-native/) is separately cached by build-toolchain.yml
+      # and shared with workflows that need the complete installed cross-compilation tools.
+      - name: Cache GDB build
+        id: cache-gdb-build
+        uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        with:
+          path: build/gdb
+          key: ${{ runner.os }}-gdb-build-${{ hashFiles('src/gdb/**') }}
+          restore-keys: |
+            ${{ runner.os }}-gdb-build-
+
+      - name: Configure GDB
+        if: steps.cache-gdb-build.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p build/gdb
+          cd build/gdb
+          ../../src/gdb/configure \
+            --target=arm-none-eabi \
+            --disable-nls \
+            --disable-werror \
+            --disable-sim \
+            --enable-interwork \
+            --with-expat=yes \
+            --with-libexpat-prefix=../../build-native/host-libs/usr \
+            --with-python=no
+
+      - name: Build GDB
+        if: steps.cache-gdb-build.outputs.cache-hit != 'true'
+        run: make -C build/gdb -j$(nproc) all-gdb
+
+      - name: Run GDB regression tests
+        run: |
+          rc=0
+          make -C build/gdb check-gdb || rc=$((rc | $?))
+          exit $rc
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: gdb-test-results
+          path: |
+            build/gdb/**/*.sum
+            build/gdb/**/*.log

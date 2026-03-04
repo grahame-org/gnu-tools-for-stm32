@@ -1,0 +1,111 @@
+name: Newlib Tests
+
+on:
+  push:
+    branches:
+      - 13.3.rel1
+  pull_request:
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  newlib-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            yacc \
+            flex \
+            git \
+            dejagnu \
+            texinfo \
+            automake \
+            gcc-arm-none-eabi
+
+      # Caching strategy: restore the pre-built toolchain from the cache populated by
+      # build-toolchain.yml. If a cache hit occurs the install-native/bin/ cross-compiler
+      # is used to configure and build newlib, avoiding the need to install the system
+      # cross-compiler package. If no cache is available the system gcc-arm-none-eabi
+      # package installed above is used as a fallback cross-compiler.
+      - name: Restore built toolchain from cache
+        id: restore-toolchain
+        uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        with:
+          path: install-native
+          key: ${{ runner.os }}-toolchain-${{ hashFiles('build-toolchain.sh', 'build-common.sh', 'build-prerequisites.sh', 'src/gcc/**', 'src/binutils/**', 'src/gdb/**', 'src/newlib/**', 'src/gmp/**', 'src/mpfr/**', 'src/mpc/**', 'src/isl/**', 'src/expat/**', 'src/zlib*/**') }}
+          restore-keys: |
+            ${{ runner.os }}-toolchain-
+
+      - name: Set cross-compiler path
+        id: set-cross-compiler
+        run: |
+          if [ -f install-native/bin/arm-none-eabi-gcc ]; then
+            echo "CC=install-native/bin/arm-none-eabi-gcc" >> "$GITHUB_ENV"
+            echo "cross_prefix=install-native/bin/arm-none-eabi-" >> "$GITHUB_OUTPUT"
+            echo "toolchain_source=cached" >> "$GITHUB_OUTPUT"
+          else
+            echo "CC=arm-none-eabi-gcc" >> "$GITHUB_ENV"
+            echo "cross_prefix=arm-none-eabi-" >> "$GITHUB_OUTPUT"
+            echo "toolchain_source=system" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Caching strategy: the newlib build directory is cached with a key based on the
+      # newlib source file hashes. On a cache hit the configure and build steps are
+      # skipped, and tests run directly against the cached build directory. This avoids
+      # rebuilding newlib from scratch when its source has not changed.
+      - name: Cache newlib build
+        id: cache-newlib-build
+        uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        with:
+          path: build/newlib
+          key: ${{ runner.os }}-newlib-build-${{ hashFiles('src/newlib/**') }}-${{ steps.set-cross-compiler.outputs.toolchain_source }}
+          restore-keys: |
+            ${{ runner.os }}-newlib-build-${{ hashFiles('src/newlib/**') }}-
+            ${{ runner.os }}-newlib-build-
+
+      - name: Configure newlib
+        if: steps.cache-newlib-build.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p build/newlib
+          cd build/newlib
+          ../../src/newlib/configure \
+            --target=arm-none-eabi \
+            --disable-nls \
+            --disable-werror \
+            --enable-interwork \
+            --enable-multilib \
+            --with-float=soft \
+            CC_FOR_TARGET="${{ steps.set-cross-compiler.outputs.cross_prefix }}gcc" \
+            AS_FOR_TARGET="${{ steps.set-cross-compiler.outputs.cross_prefix }}as" \
+            AR_FOR_TARGET="${{ steps.set-cross-compiler.outputs.cross_prefix }}ar" \
+            RANLIB_FOR_TARGET="${{ steps.set-cross-compiler.outputs.cross_prefix }}ranlib"
+
+      - name: Build newlib
+        if: steps.cache-newlib-build.outputs.cache-hit != 'true'
+        run: make -C build/newlib -j$(nproc)
+
+      - name: Run newlib tests
+        run: |
+          rc=0
+          make -C build/newlib check || rc=$((rc | $?))
+          exit $rc
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: newlib-test-results
+          path: |
+            build/newlib/**/*.sum
+            build/newlib/**/*.log
