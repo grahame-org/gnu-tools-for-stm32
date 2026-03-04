@@ -30,7 +30,8 @@ jobs:
             git \
             dejagnu \
             texinfo \
-            automake
+            automake \
+            gcc-arm-none-eabi
 
       - name: Configure binutils
         run: |
