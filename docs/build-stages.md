@@ -7,7 +7,7 @@ of `install-native/` it creates or modifies.
 ## Summary
 
 | Stage ID | Task label | Source directory | Depends on |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | `binutils` | III-0 | `src/binutils/` | — |
 | `gcc-first` | III-1 | `src/gcc/` | `binutils` |
 | `newlib` | III-2 | `src/newlib/` | `gcc-first` |
@@ -47,7 +47,7 @@ sysroot can reference it without polluting the live installation.
 **Artifacts written to `install-native/`:**
 
 | Path | Contents |
-|------|----------|
+| --- | --- |
 | `bin/arm-none-eabi-as` | Cross-assembler |
 | `bin/arm-none-eabi-ld` | Cross-linker |
 | `bin/arm-none-eabi-ar` | Archive manager |
@@ -82,11 +82,19 @@ runtime libraries (`libgcc`, `libstdc++`, etc.) are not yet built.
 **Artifacts written to `install-native/`:**
 
 | Path | Contents |
-|------|----------|
+| --- | --- |
 | `bin/arm-none-eabi-gcc` | Minimal C cross-compiler |
 | `bin/arm-none-eabi-cpp` | C pre-processor |
 | `bin/arm-none-eabi-gcc-<ver>` | Versioned compiler alias |
 | `lib/gcc/arm-none-eabi/<ver>/` | Compiler support files (`cc1`, `collect2`, `lto1`, `lto-wrapper`, spec files) |
+
+**Artifacts deleted from `install-native/`:**
+
+| Action | Path |
+| --- | --- |
+| Deleted | `bin/arm-none-eabi-gccbug` |
+| Deleted | `lib/libiberty.a` |
+| Deleted | `include/` (top-level GCC host include tree) |
 
 ---
 
@@ -107,7 +115,7 @@ headers and pre-built archives directly into `install-native/arm-none-eabi/`.
 **Artifacts written to `install-native/`:**
 
 | Path | Contents |
-|------|----------|
+| --- | --- |
 | `arm-none-eabi/include/` | newlib public headers (`stdio.h`, `stdlib.h`, `string.h`, `sys/`, etc.) |
 | `arm-none-eabi/lib/` | `libc.a`, `libm.a`, `libg.a`, `librdimon.a`, `librdimon-v2m.a`, `libnosys.a`, `nosys.specs`, `rdimon.specs`, `nano.specs`, per-multilib `*.o` (crt0) |
 | `share/doc/gcc-arm-none-eabi/` | libc/libm PDF and HTML documentation (unless `--skip_steps=manual`) |
@@ -131,9 +139,9 @@ intermediate staging directory `build-native/target-libs/` so that the later
 **Artifacts written to `build-native/target-libs/` (staging only):**
 
 | Path | Contents |
-|------|----------|
+| --- | --- |
 | `arm-none-eabi/lib/` | Nano `libc.a`, `libm.a`, `libg.a`, `librdimon.a`, `librdimon-v2m.a`, per-multilib `nano.specs`, `rdimon.specs`, `nosys.specs`, `*crt0.o` |
-| `arm-none-eabi/include/newlib.h` | Nano-configured newlib feature header (later copied to `install-native/`) |
+| `arm-none-eabi/include/` | Full newlib-nano header tree; `newlib.h` within this tree is the nano-configured newlib feature header later copied to `install-native/` |
 
 > **Note:** `install-native/` is **not** modified by this stage. The nano
 > artifacts reach `install-native/` only after stage III-5 (`gcc-size-libstdcxx`)
@@ -158,7 +166,7 @@ all multilibs. This supersedes the minimal compiler installed by `gcc-first`.
 **Artifacts written to `install-native/`:**
 
 | Path | Contents |
-|------|----------|
+| --- | --- |
 | `bin/arm-none-eabi-gcc` | Full C cross-compiler (replaces gcc-first version) |
 | `bin/arm-none-eabi-g++` | C++ cross-compiler |
 | `bin/arm-none-eabi-gcov` | Coverage tool |
@@ -169,6 +177,16 @@ all multilibs. This supersedes the minimal compiler installed by `gcc-first`.
 | `arm-none-eabi/lib/` | `libstdc++.a`, `libsupc++.a`, per-multilib variants |
 | `arm-none-eabi/include/c++/` | C++ standard-library headers |
 | `share/doc/gcc-arm-none-eabi/` | GCC HTML/PDF documentation (unless `--skip_steps=manual`) |
+
+**Artifacts deleted from `install-native/`:**
+
+| Action | Path |
+| --- | --- |
+| Deleted | `bin/arm-none-eabi-gccbug` |
+| Deleted | `arm-none-eabi/lib/**/libiberty.a` (all libiberty copies under arm-none-eabi/lib) |
+| Deleted | `lib/libiberty.a` |
+| Deleted | `include/` (top-level GCC host include tree) |
+| Removed | `arm-none-eabi/usr` symlink (temporary symlink created at stage start) |
 
 ---
 
@@ -193,7 +211,7 @@ nano-specific `newlib.h` header is copied to
 **Artifacts written to `install-native/`:**
 
 | Path | Contents |
-|------|----------|
+| --- | --- |
 | `arm-none-eabi/lib/` (per multilib) | `libstdc++_nano.a`, `libsupc++_nano.a`, `libc_nano.a`, `libg_nano.a`, `librdimon_nano.a`, `librdimon-v2m_nano.a`, `nano.specs`, `rdimon.specs`, `nosys.specs`, `*crt0.o` |
 | `arm-none-eabi/include/newlib-nano/newlib.h` | Nano-configured newlib feature header |
 
@@ -203,9 +221,13 @@ nano-specific `newlib.h` header is copied to
 
 **Source directory:** `src/gdb/`
 
-**Description:** Builds the `arm-none-eabi-gdb` debugger. Optionally also
-builds a Python-enabled variant (`arm-none-eabi-gdb-py`) when
-`--skip_steps=gdb-with-python` is not set.
+**Description:** Builds the `arm-none-eabi-gdb` debugger. For native
+(non-PPA) builds, only the no-Python variant is produced: `skip_gdb_with_python`
+is initialised to `yes` and there is no command-line option that sets it to
+`no`, so the Python-enabled `arm-none-eabi-gdb-py` build path at line 584 of
+`build-toolchain.sh` is currently unreachable. (For PPA builds, GDB is
+instead compiled with `--with-python=python3` into the single
+`arm-none-eabi-gdb` binary.)
 
 **Depends on:**
 - `binutils` — GDB configure uses the same sysroot and `install-native/`
@@ -214,9 +236,8 @@ builds a Python-enabled variant (`arm-none-eabi-gdb-py`) when
 **Artifacts written to `install-native/`:**
 
 | Path | Contents |
-|------|----------|
+| --- | --- |
 | `bin/arm-none-eabi-gdb` | Cross-debugger (no Python) |
-| `bin/arm-none-eabi-gdb-py` | Cross-debugger with Python scripting (optional) |
 | `arm-none-eabi/share/gdb/` | GDB data directory (pretty-printers, architecture XML) |
 | `share/doc/gcc-arm-none-eabi/` | GDB HTML/PDF documentation (unless `--skip_steps=manual`) |
 
@@ -235,7 +256,7 @@ anywhere under `install-native/`.
 **Artifacts modified in `install-native/`:**
 
 | Action | Path |
-|--------|------|
+| --- | --- |
 | Deleted | `lib/libiberty.a` |
 | Deleted | All `**/*.la` files |
 
@@ -253,7 +274,7 @@ executables to reduce package size (skipped when `--build_type=native,debug`).
 **Artifacts modified in `install-native/`:**
 
 | Action | Path |
-|--------|------|
+| --- | --- |
 | Stripped | `bin/arm-none-eabi-*` (all host executables) |
 | Stripped | `arm-none-eabi/bin/*` (hard-linked copies) |
 | Stripped | `lib/gcc/arm-none-eabi/<ver>/` executables (`cc1`, `lto1`, etc.) |
@@ -275,7 +296,7 @@ stripping to avoid aliasing. Skipped when `--skip_steps=strip` is passed.
 **Artifacts modified in `install-native/`:**
 
 | Action | Path |
-|--------|------|
+| --- | --- |
 | Stripped | `arm-none-eabi/lib/**/*.a` (except `libg.a`, `libg_nano.a`) |
 | Stripped | `arm-none-eabi/lib/**/*.o` |
 | Stripped | `lib/gcc/arm-none-eabi/<ver>/**/*.a` |
@@ -297,7 +318,7 @@ installed.
 **Artifacts written to `install-native/`:**
 
 | Path | Contents |
-|------|----------|
+| --- | --- |
 | `arm-none-eabi/lib/<multilib>/nano_c_standard_cpp.specs` | Spec for C-nano + standard C++ linking |
 | `arm-none-eabi/lib/<multilib>/standard_c_nano_cpp.specs` | Spec for standard C + nano C++ linking |
 
@@ -317,13 +338,13 @@ toolchain content must be in its final state.
 **Artifacts written to `install-native/`:**
 
 | Path | Contents |
-|------|----------|
+| --- | --- |
 | `share/doc/gcc-arm-none-eabi/license.txt` | Redistributed licence file |
 
 **Package output** (written to `pkg/`, not `install-native/`):
 
 | Path | Contents |
-|------|----------|
+| --- | --- |
 | `pkg/<PACKAGE_NAME_NATIVE>.tar.bz2` | Distributable native toolchain tarball |
 
 ---
@@ -341,7 +362,7 @@ install trees for the ST-internal release workflow. Only runs when
 **Artifacts (written to `pkg/`, not `install-native/`):**
 
 | Path | Contents |
-|------|----------|
+| --- | --- |
 | `pkg/<PACKAGE_NAME_NATIVE>-build.tar.gz` | Compressed `build-native/` tree |
 | `pkg/<PACKAGE_NAME_NATIVE>-install.tar.gz` | Compressed `install-native/` tree |
 
