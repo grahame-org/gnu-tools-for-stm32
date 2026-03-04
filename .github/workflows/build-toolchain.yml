@@ -30,6 +30,7 @@ jobs:
               - 'build-prerequisites.sh'
               - 'build-common.sh'
               - '.github/workflows/build-toolchain.yml'
+              - 'test_project/**'
 
   build:
     needs: check-changes
@@ -159,12 +160,21 @@ jobs:
           export JOBS=$(nproc)
           ./build-toolchain.sh --skip_steps=mingw,mingw-gdb-with-python,gdb-with-python,manual,package_sources
 
-      - name: Build test_project with newly compiled toolchain
+      - name: Build test_project with toolchain
         run: |
           export PATH="${GITHUB_WORKSPACE}/install-native/bin:${PATH}"
+          # Verify the toolchain under test is found before invoking cmake
+          actual=$(command -v arm-none-eabi-gcc)
+          if [[ "${actual}" != "${GITHUB_WORKSPACE}/install-native/bin/arm-none-eabi-gcc" ]]; then
+            echo "ERROR: arm-none-eabi-gcc not resolved to install-native/bin (got: ${actual})" >&2
+            exit 1
+          fi
+          arm-none-eabi-gcc --version
           rm -rf test_project/build && mkdir -p test_project/build
           cmake -G "Unix Makefiles" \
             -DCMAKE_TOOLCHAIN_FILE="${GITHUB_WORKSPACE}/test_project/arm-none-eabi-gcc.cmake" \
+            -DCMAKE_C_COMPILER="${GITHUB_WORKSPACE}/install-native/bin/arm-none-eabi-gcc" \
+            -DCMAKE_CXX_COMPILER="${GITHUB_WORKSPACE}/install-native/bin/arm-none-eabi-g++" \
             -B test_project/build \
             -S test_project
           cmake --build test_project/build --verbose -- -j "$(nproc)"
