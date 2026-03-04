@@ -88,9 +88,17 @@ jobs:
 
       - name: Run GCC selftests
         run: |
+          set -o pipefail
           build/gcc/gcc/xgcc -B build/gcc/gcc \
+            -xc -S -o /dev/null -nostdinc \
             -fself-test=src/gcc/gcc/testsuite/selftests \
+            /dev/null \
             2>&1 | tee gcc-selftest-results.txt
+          build/gcc/gcc/xgcc -B build/gcc/gcc \
+            -xc++ -S -o /dev/null -nostdinc \
+            -fself-test=src/gcc/gcc/testsuite/selftests \
+            /dev/null \
+            2>&1 | tee -a gcc-selftest-results.txt
 
       - name: Check for test failures
         run: |
