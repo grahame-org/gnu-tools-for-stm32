@@ -1,0 +1,87 @@
+name: GDB Regression Tests
+
+# Caching strategy:
+#
+# The GDB build artifacts (build/gdb) are cached using a key derived from the GDB
+# source files. On cache hit, the configure and build steps are skipped, and tests
+# run directly against the cached build directory. The cache key automatically
+# invalidates when GDB source files change.
+
+on:
+  push:
+    branches:
+      - 13.3.rel1
+  pull_request:
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  gdb-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            yacc \
+            flex \
+            git \
+            dejagnu \
+            texinfo \
+            automake \
+            python3 \
+            python3-dev \
+            gcc-arm-none-eabi
+
+      - name: Cache GDB build
+        id: cache-gdb
+        uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        with:
+          path: build/gdb
+          key: ${{ runner.os }}-gdb-build-${{ hashFiles('src/gdb/**') }}
+
+      - name: Configure GDB
+        if: steps.cache-gdb.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p build/gdb
+          cd build/gdb
+          ../../src/gdb/configure \
+            --target=arm-none-eabi \
+            --disable-nls \
+            --disable-werror \
+            --disable-sim \
+            --disable-gas \
+            --disable-binutils \
+            --disable-ld \
+            --disable-gprof \
+            --with-python=python3 \
+            --with-lzma=no \
+            --with-zstd=no
+
+      - name: Build GDB
+        if: steps.cache-gdb.outputs.cache-hit != 'true'
+        run: make -C build/gdb -j$(nproc) all-gdb
+
+      - name: Run GDB regression tests
+        run: |
+          rc=0
+          make -C build/gdb check-gdb || rc=$((rc | $?))
+          exit $rc
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: gdb-test-results
+          path: |
+            build/gdb/**/*.sum
+            build/gdb/**/*.log

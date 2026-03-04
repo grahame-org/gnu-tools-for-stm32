@@ -1,0 +1,82 @@
+name: Newlib Regression Tests
+
+# Caching strategy:
+#
+# The newlib build artifacts (build/newlib) are cached using a key derived from the
+# newlib source files. On cache hit, the configure and build steps are skipped, and
+# tests run directly against the cached build directory. The cache key automatically
+# invalidates when newlib source files change.
+
+on:
+  push:
+    branches:
+      - 13.3.rel1
+  pull_request:
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  newlib-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            yacc \
+            flex \
+            git \
+            dejagnu \
+            texinfo \
+            automake \
+            gcc-arm-none-eabi
+
+      - name: Cache newlib build
+        id: cache-newlib
+        uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        with:
+          path: build/newlib
+          key: ${{ runner.os }}-newlib-build-${{ hashFiles('src/newlib/**') }}
+
+      - name: Configure newlib
+        if: steps.cache-newlib.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p build/newlib
+          cd build/newlib
+          ../../src/newlib/configure \
+            --target=arm-none-eabi \
+            --disable-nls \
+            --disable-werror \
+            --enable-newlib-io-long-long \
+            --enable-newlib-io-c99-formats \
+            --enable-newlib-register-fini \
+            --enable-newlib-retargetable-locking \
+            --disable-newlib-supplied-syscalls
+
+      - name: Build newlib
+        if: steps.cache-newlib.outputs.cache-hit != 'true'
+        run: make -C build/newlib -j$(nproc)
+
+      - name: Run newlib regression tests
+        run: |
+          rc=0
+          make -C build/newlib check || rc=$((rc | $?))
+          exit $rc
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: newlib-test-results
+          path: |
+            build/newlib/**/*.sum
+            build/newlib/**/*.log
