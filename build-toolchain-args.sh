@@ -5,7 +5,7 @@
 
 _toolchain_usage() {
 cat<<EOF
-Usage: build-toolchain.sh [--build_type=...] [--skip_steps=...]
+Usage: build-toolchain.sh [--build_type=...] [--skip_steps=...] [--skip_stages=...]
 
 This script will build GNU Tools Arm Embedded toolchain.
 
@@ -38,15 +38,30 @@ OPTIONS:
                             package_bins
                             package_sources
                             strip
+
+  --skip_stages=STAGES  specify which individual native build stages to skip.
+                        Provide a comma-separated list of stages to skip more
+                        than one.  The caller is responsible for ensuring that
+                        install-native/ contains the stage's artifacts before
+                        calling this script; skipping a stage that has not
+                        previously been built may silently corrupt the build.
+                        Available stages are:
+                            binutils
+                            gcc-first
+                            newlib
+                            newlib-nano
+                            gcc-final
+                            gcc-size-libstdcxx
+                            gdb
 EOF
 }
 
 # parse_toolchain_args: parse command-line arguments for build-toolchain.sh.
-# Sets global variables: skip_steps, build_type, MULTILIB_LIST, is_ppa_release,
-# is_native_build, is_debug_build, skip_manual, skip_package_bins,
-# skip_package_sources, skip_md5_checksum, skip_gdb_with_python,
-# skip_mingw32_gdb_with_python, skip_native_build, skip_strip_target_libraries,
-# skip_mingw32, BUILD_OPTIONS
+# Sets global variables: skip_steps, skip_stages, build_type, MULTILIB_LIST,
+# is_ppa_release, is_native_build, is_debug_build, skip_manual,
+# skip_package_bins, skip_package_sources, skip_md5_checksum,
+# skip_gdb_with_python, skip_mingw32_gdb_with_python, skip_native_build,
+# skip_strip_target_libraries, skip_mingw32, BUILD_OPTIONS
 parse_toolchain_args() {
     skip_mingw32=no
     BUILD_OPTIONS="-g -O2"
@@ -58,6 +73,7 @@ parse_toolchain_args() {
     skip_package_sources=no
     skip_md5_checksum=no
     skip_steps=
+    skip_stages=
     skip_gdb_with_python=yes
     skip_mingw32_gdb_with_python=yes
     skip_native_build=no
@@ -66,17 +82,19 @@ parse_toolchain_args() {
 
     MULTILIB_LIST="--with-multilib-list=rmprofile,aprofile"
 
-    if [ $# -gt 3 ] ; then
-        _toolchain_usage
-    fi
-
     for ac_arg in "$@"; do
         case $ac_arg in
             --skip_steps=*)
-                skip_steps=$(echo $ac_arg | sed -e "s/--skip_steps=//g" -e "s/,/ /g")
+                skip_steps=${ac_arg#--skip_steps=}
+                skip_steps=${skip_steps//,/ }
+                ;;
+            --skip_stages=*)
+                skip_stages=${ac_arg#--skip_stages=}
+                skip_stages=${skip_stages//,/ }
                 ;;
             --build_type=*)
-                build_type=$(echo $ac_arg | sed -e "s/--build_type=//g" -e "s/,/ /g")
+                build_type=${ac_arg#--build_type=}
+                build_type=${build_type//,/ }
                 ;;
             --with-multilib-list=*)
                 MULTILIB_LIST="--with-multilib-list=${ac_arg##*=}"

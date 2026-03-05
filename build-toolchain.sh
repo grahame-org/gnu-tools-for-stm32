@@ -42,7 +42,7 @@ script_path=$(cd $(dirname $0) && pwd -P)
 
 # This file contains the sequence of commands used to build the
 # GNU Tools Arm Embedded toolchain.
-. $script_path/build-toolchain-args.sh
+. "$script_path/build-toolchain-args.sh"
 parse_toolchain_args "$@"
 
 # Validate --skip_stages values and define helper function.
@@ -64,7 +64,7 @@ if [ "x$skip_stages" != "x" ]; then
                 ;;
             *)
                echo "Unknown build stage: $ss" 1>&2
-               usage
+               _toolchain_usage
                exit 1
                ;;
         esac

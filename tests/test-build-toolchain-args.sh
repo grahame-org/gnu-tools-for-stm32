@@ -92,11 +92,38 @@ parse_toolchain_args --skip_steps=gdb-with-python
 assert_eq "--skip_steps=gdb-with-python sets skip_gdb_with_python=yes" "yes" "$skip_gdb_with_python"
 
 # ---------------------------------------------------------------------------
-# Test group 2: --build_type parsing
+# Test group 2: --skip_stages parsing
 # ---------------------------------------------------------------------------
 
 echo ""
-echo "=== Group 2: --build_type parsing ==="
+echo "=== Group 2: --skip_stages parsing ==="
+
+parse_toolchain_args --skip_stages=binutils,gcc-first
+assert_eq "--skip_stages=binutils,gcc-first produces space-separated value" \
+    "binutils gcc-first" "$skip_stages"
+
+parse_toolchain_args --skip_stages=
+assert_eq "--skip_stages= (empty) produces empty variable" "" "$skip_stages"
+
+parse_toolchain_args --skip_stages=newlib
+assert_eq "--skip_stages=newlib sets skip_stages=newlib" "newlib" "$skip_stages"
+
+parse_toolchain_args --skip_stages=gcc-final,gdb
+assert_eq "--skip_stages=gcc-final,gdb sets skip_stages correctly" \
+    "gcc-final gdb" "$skip_stages"
+
+parse_toolchain_args --skip_stages=newlib-nano
+assert_eq "--skip_stages=newlib-nano is accepted" "newlib-nano" "$skip_stages"
+
+parse_toolchain_args --skip_stages=gcc-size-libstdcxx
+assert_eq "--skip_stages=gcc-size-libstdcxx is accepted" "gcc-size-libstdcxx" "$skip_stages"
+
+# ---------------------------------------------------------------------------
+# Test group 3: --build_type parsing
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "=== Group 3: --build_type parsing ==="
 
 parse_toolchain_args --build_type=native
 assert_eq "--build_type=native sets is_native_build=yes" "yes" "$is_native_build"
@@ -116,14 +143,15 @@ assert_eq "--build_type=ppa,debug sets is_ppa_release=yes" "yes" "$is_ppa_releas
 assert_eq "--build_type=ppa,debug sets is_debug_build=yes" "yes" "$is_debug_build"
 
 # ---------------------------------------------------------------------------
-# Test group 3: defaults when no flags given
+# Test group 4: defaults when no flags given
 # ---------------------------------------------------------------------------
 
 echo ""
-echo "=== Group 3: defaults when no flags given ==="
+echo "=== Group 4: defaults when no flags given ==="
 
 parse_toolchain_args
 assert_eq "default skip_steps is empty"       ""    "$skip_steps"
+assert_eq "default skip_stages is empty"      ""    "$skip_stages"
 assert_eq "default build_type is empty"       ""    "$build_type"
 assert_eq "default is_native_build=yes"       "yes" "$is_native_build"
 assert_eq "default is_ppa_release=no"         "no"  "$is_ppa_release"
@@ -141,11 +169,11 @@ assert_eq "default MULTILIB_LIST" \
     "--with-multilib-list=rmprofile,aprofile" "$MULTILIB_LIST"
 
 # ---------------------------------------------------------------------------
-# Test group 4: --with-multilib-list parsing
+# Test group 5: --with-multilib-list parsing
 # ---------------------------------------------------------------------------
 
 echo ""
-echo "=== Group 4: --with-multilib-list parsing ==="
+echo "=== Group 5: --with-multilib-list parsing ==="
 
 parse_toolchain_args --with-multilib-list=rmprofile
 assert_eq "--with-multilib-list=rmprofile sets MULTILIB_LIST" \
@@ -156,11 +184,11 @@ assert_eq "--with-multilib-list=rmprofile,aprofile preserves comma" \
     "--with-multilib-list=rmprofile,aprofile" "$MULTILIB_LIST"
 
 # ---------------------------------------------------------------------------
-# Test group 5: multiple flags combined
+# Test group 6: multiple flags combined
 # ---------------------------------------------------------------------------
 
 echo ""
-echo "=== Group 5: Multiple flags combined ==="
+echo "=== Group 6: Multiple flags combined ==="
 
 parse_toolchain_args --build_type=native --skip_steps=manual,strip
 assert_eq "combined: is_native_build=yes"          "yes" "$is_native_build"
@@ -173,12 +201,17 @@ assert_eq "combined 3 flags: skip_package_sources=yes" "yes" "$skip_package_sour
 assert_eq "combined 3 flags: MULTILIB_LIST" \
     "--with-multilib-list=rmprofile" "$MULTILIB_LIST"
 
+parse_toolchain_args --build_type=native --skip_steps=strip --skip_stages=binutils,gdb
+assert_eq "combined 4 flags: is_native_build=yes"      "yes" "$is_native_build"
+assert_eq "combined 4 flags: skip_strip_target_libraries=yes" "yes" "$skip_strip_target_libraries"
+assert_eq "combined 4 flags: skip_stages=binutils gdb" "binutils gdb" "$skip_stages"
+
 # ---------------------------------------------------------------------------
-# Test group 6: error conditions — unrecognised arguments exit non-zero
+# Test group 7: error conditions — unrecognised arguments exit non-zero
 # ---------------------------------------------------------------------------
 
 echo ""
-echo "=== Group 6: Error conditions ==="
+echo "=== Group 7: Error conditions ==="
 
 assert_nonzero_exit "unrecognised flag exits non-zero" \
     bash -c '. "$1/build-toolchain-args.sh"; parse_toolchain_args --unknown-flag' _ "$REPO_ROOT"
