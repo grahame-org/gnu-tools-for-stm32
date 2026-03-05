@@ -102,7 +102,7 @@ jobs:
 
       - name: Check for test failures
         run: |
-          if grep -E '^(FAIL|ERROR)' gcc-selftest-results.txt; then
+          if grep -E '(^FAIL|^ERROR|FAIL:|ERROR:)' gcc-selftest-results.txt; then
             echo "GCC selftests reported failures or errors"
             exit 1
           fi
