@@ -52,7 +52,6 @@ jobs:
             libgmp-dev \
             libmpfr-dev \
             libreadline-dev \
-            python3-dev \
             texinfo \
             flex \
             bison
@@ -74,7 +73,7 @@ jobs:
         run: |
           set -o pipefail
           build/gdb/gdb/gdb --batch -ex "maintenance selftest" 2>&1 | tee gdb-selftest-results.txt
-          ! grep -q "^FAIL:" gdb-selftest-results.txt
+          ! grep -q "Self test failed:" gdb-selftest-results.txt
 
       - name: Upload selftest results
         if: always()
