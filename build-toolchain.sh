@@ -45,6 +45,32 @@ script_path=$(cd $(dirname $0) && pwd -P)
 . $script_path/build-toolchain-args.sh
 parse_toolchain_args "$@"
 
+# Validate --skip_stages values and define helper function.
+stage_is_skipped()
+{
+    local stage="$1"
+    for s in $skip_stages; do
+        if [ "$s" = "$stage" ]; then
+            return 0
+        fi
+    done
+    return 1
+}
+
+if [ "x$skip_stages" != "x" ]; then
+    for ss in $skip_stages; do
+        case $ss in
+            binutils|gcc-first|newlib|newlib-nano|gcc-final|gcc-size-libstdcxx|gdb)
+                ;;
+            *)
+               echo "Unknown build stage: $ss" 1>&2
+               usage
+               exit 1
+               ;;
+        esac
+    done
+fi
+
 if dpkg-query -W lbzip2 > /dev/null 2>&1; then
     echo "Using multi-threaded bzip2 compression"
     TAR_FLAGS="--use-compress-program=lbzip2"
@@ -100,6 +126,9 @@ fi
 cd $SRCDIR
 
 if [ "x$skip_native_build" != "xyes" ] ; then
+    if stage_is_skipped "binutils"; then
+        echo "Skipping stage: binutils (cache hit)"
+    else
     echo Task [III-0] /$HOST_NATIVE/binutils/ | tee -a "$BUILDDIR_NATIVE/.stage"
     rm -rf $BUILDDIR_NATIVE/binutils && mkdir -p $BUILDDIR_NATIVE/binutils
     pushd $BUILDDIR_NATIVE/binutils
@@ -140,7 +169,11 @@ if [ "x$skip_native_build" != "xyes" ] ; then
     pushd $INSTALLDIR_NATIVE
     rm -rf ./lib
     popd
+    fi  # binutils stage
 
+    if stage_is_skipped "gcc-first"; then
+        echo "Skipping stage: gcc-first (cache hit)"
+    else
     echo Task [III-1] /$HOST_NATIVE/gcc-first/ | tee -a "$BUILDDIR_NATIVE/.stage"
     rm -rf $BUILDDIR_NATIVE/gcc-first && mkdir -p $BUILDDIR_NATIVE/gcc-first
     pushd $BUILDDIR_NATIVE/gcc-first
@@ -189,7 +222,11 @@ if [ "x$skip_native_build" != "xyes" ] ; then
     rm -rf ./lib/libiberty.a
     rm -rf  include
     popd
+    fi  # gcc-first stage
 
+    if stage_is_skipped "newlib"; then
+        echo "Skipping stage: newlib (cache hit)"
+    else
     echo Task [III-2] /$HOST_NATIVE/newlib/ | tee -a "$BUILDDIR_NATIVE/.stage"
     saveenv
     prepend_path PATH $INSTALLDIR_NATIVE/bin
@@ -231,7 +268,11 @@ if [ "x$skip_native_build" != "xyes" ] ; then
 
     popd
     restoreenv
+    fi  # newlib stage
 
+    if stage_is_skipped "newlib-nano"; then
+        echo "Skipping stage: newlib-nano (cache hit)"
+    else
     echo Task [III-3] /$HOST_NATIVE/newlib-nano/ | tee -a "$BUILDDIR_NATIVE/.stage"
     saveenv
     prepend_path PATH $INSTALLDIR_NATIVE/bin
@@ -262,7 +303,11 @@ if [ "x$skip_native_build" != "xyes" ] ; then
 
     popd
     restoreenv
+    fi  # newlib-nano stage
 
+    if stage_is_skipped "gcc-final"; then
+        echo "Skipping stage: gcc-final (cache hit)"
+    else
     echo Task [III-4] /$HOST_NATIVE/gcc-final/ | tee -a "$BUILDDIR_NATIVE/.stage"
     rm -f $INSTALLDIR_NATIVE/arm-none-eabi/usr
     ln -s . $INSTALLDIR_NATIVE/arm-none-eabi/usr
@@ -329,7 +374,11 @@ if [ "x$skip_native_build" != "xyes" ] ; then
 
     rm -f $INSTALLDIR_NATIVE/arm-none-eabi/usr
     popd
+    fi  # gcc-final stage
 
+    if stage_is_skipped "gcc-size-libstdcxx"; then
+        echo "Skipping stage: gcc-size-libstdcxx (cache hit)"
+    else
     echo Task [III-5] /$HOST_NATIVE/gcc-size-libstdcxx/ | tee -a "$BUILDDIR_NATIVE/.stage"
     rm -f $BUILDDIR_NATIVE/target-libs/arm-none-eabi/usr
     ln -s . $BUILDDIR_NATIVE/target-libs/arm-none-eabi/usr
@@ -380,7 +429,11 @@ if [ "x$skip_native_build" != "xyes" ] ; then
           $INSTALLDIR_NATIVE/arm-none-eabi/include/newlib-nano/newlib.h
 
     popd
+    fi  # gcc-size-libstdcxx stage
 
+    if stage_is_skipped "gdb"; then
+        echo "Skipping stage: gdb (cache hit)"
+    else
     echo Task [III-6] /$HOST_NATIVE/gdb/ | tee -a "$BUILDDIR_NATIVE/.stage"
     build_gdb()
     {
@@ -441,6 +494,7 @@ if [ "x$skip_native_build" != "xyes" ] ; then
             build_gdb "--with-python=python3 --program-prefix=$TARGET-  --program-suffix=-py"
         fi
     fi
+    fi  # gdb stage
 
     echo Task [III-8] /$HOST_NATIVE/pretidy/ | tee -a "$BUILDDIR_NATIVE/.stage"
     rm -rf $INSTALLDIR_NATIVE/lib/libiberty.a
