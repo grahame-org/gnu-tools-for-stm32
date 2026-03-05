@@ -58,8 +58,32 @@ jobs:
       - name: Build libiberty
         run: make -C build/libiberty -j$(nproc)
 
+      - name: Smoke-test failure detection
+        run: |
+          # Before running the full test suite, sanity-check that test-demangle
+          # signals failures correctly by feeding it a known-wrong expected
+          # result and confirming it exits non-zero.
+          # This step only validates the test binary's exit status; the
+          # make/tee/pipefail failure propagation is exercised in the next step.
+          make -C build/libiberty/testsuite test-demangle
+          if printf '\n_Z3foov\ndeliberately-wrong-output\n' | \
+              build/libiberty/testsuite/test-demangle; then
+            echo "ERROR: smoke test failed - test-demangle should exit non-zero on failure" >&2
+            exit 1
+          fi
+          echo "OK: failure detection confirmed (test-demangle exited non-zero as expected)"
+
       - name: Run libiberty tests
         run: |
+          # Failure-detection mechanism:
+          # - configure sets CHECK=really-check for standalone builds (no --with-target-subdir),
+          #   so 'make check' expands to 'make really-check' via Makefile.in's 'check: @CHECK@'
+          # - really-check runs 6 test targets: check-cplus-dem, check-d-demangle,
+          #   check-rust-demangle (all using test-demangle), check-pexecute,
+          #   check-expandargv, and check-strtol; each test binary exits non-zero on failure
+          # - make exits non-zero when any recipe command fails, propagating the failure
+          # - set -o pipefail ensures make's non-zero exit propagates through the tee
+          #   pipeline so this step (and the CI job) correctly fails on test failures
           set -o pipefail
           mkdir -p build/libiberty/testsuite
           make -C build/libiberty check 2>&1 | tee build/libiberty/testsuite/libiberty-tests.log
