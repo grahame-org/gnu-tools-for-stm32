@@ -60,6 +60,15 @@ jobs:
 
       - name: Run libiberty tests
         run: |
+          # Failure-detection mechanism:
+          # - configure sets CHECK=really-check for standalone builds (no --with-target-subdir),
+          #   so 'make check' expands to 'make really-check' via Makefile.in's 'check: @CHECK@'
+          # - really-check runs 6 test targets: check-cplus-dem, check-d-demangle,
+          #   check-rust-demangle (all using test-demangle), check-pexecute,
+          #   check-expandargv, and check-strtol; each test binary exits non-zero on failure
+          # - make exits non-zero when any recipe command fails, propagating the failure
+          # - set -o pipefail ensures make's non-zero exit propagates through the tee
+          #   pipeline so this step (and the CI job) correctly fails on test failures
           set -o pipefail
           mkdir -p build/libiberty/testsuite
           make -C build/libiberty check 2>&1 | tee build/libiberty/testsuite/libiberty-tests.log
