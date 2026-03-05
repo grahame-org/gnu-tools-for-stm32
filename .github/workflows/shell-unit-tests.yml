@@ -26,6 +26,8 @@ jobs:
           filters: |
             test:
               - 'build-common.sh'
+              - 'build-toolchain.sh'
+              - 'build-toolchain-args.sh'
               - 'tests/**'
               - '.github/workflows/shell-unit-tests.yml'
 
@@ -42,7 +44,9 @@ jobs:
           persist-credentials: false
 
       - name: Run shell unit tests
-        run: bash tests/test-build-common.sh
+        run: |
+          bash tests/test-build-common.sh
+          bash tests/test-build-toolchain-args.sh
 
   shell-unit-tests-status:
     runs-on: ubuntu-latest
