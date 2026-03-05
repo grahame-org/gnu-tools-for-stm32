@@ -27,14 +27,14 @@
 
 error () {
     set +u
-    echo "$0: error: $@" >&2
+    echo "$0: error: $*" >&2
     exit 1
     set -u
 }
 
 warning () {
     set +u
-    echo "$0: warning: $@" >&2
+    echo "$0: warning: $*" >&2
     set -u
 }
 
