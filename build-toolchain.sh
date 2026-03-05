@@ -80,8 +80,8 @@ OPTIONS:
                             strip
 
   --skip_stages=STAGES  specify which individual native build stages to skip.
-                        Concatenate them with comma for skipping more than one
-                        stage.  The caller is responsible for ensuring that
+                        Provide a comma-separated list of stages to skip more
+                        than one.  The caller is responsible for ensuring that
                         install-native/ contains the stage's artifacts before
                         calling this script; skipping a stage that has not
                         previously been built may silently corrupt the build.
@@ -95,10 +95,6 @@ OPTIONS:
                             gdb
 EOF
 }
-
-if [ $# -gt 4 ] ; then
-    usage
-fi
 
 skip_mingw32=no
 BUILD_OPTIONS="-g -O2"
@@ -122,13 +118,16 @@ MULTILIB_LIST="--with-multilib-list=rmprofile,aprofile"
 for ac_arg; do
     case $ac_arg in
         --skip_steps=*)
-            skip_steps=$(echo $ac_arg | sed -e "s/--skip_steps=//g" -e "s/,/ /g")
+            skip_steps=${ac_arg#--skip_steps=}
+            skip_steps=${skip_steps//,/ }
             ;;
         --skip_stages=*)
-            skip_stages=$(echo $ac_arg | sed -e "s/--skip_stages=//g" -e "s/,/ /g")
+            skip_stages=${ac_arg#--skip_stages=}
+            skip_stages=${skip_stages//,/ }
             ;;
         --build_type=*)
-            build_type=$(echo $ac_arg | sed -e "s/--build_type=//g" -e "s/,/ /g")
+            build_type=${ac_arg#--build_type=}
+            build_type=${build_type//,/ }
             ;;
         --with-multilib-list=*)
             MULTILIB_LIST="--with-multilib-list=${ac_arg##*=}"
