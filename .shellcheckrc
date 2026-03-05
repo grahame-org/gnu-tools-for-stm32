@@ -1,0 +1,20 @@
+# ShellCheck configuration for gnu-tools-for-stm32 build scripts.
+#
+# shell=bash avoids SC2148 (no shebang) on sourced scripts like build-common.sh.
+shell=bash
+
+# Globally suppress findings that are intentional legacy patterns across all
+# three build scripts and are not masking real bugs:
+#
+#   SC2034 – variable assigned but never used: the build-common.sh "setup"
+#            section intentionally sets exported env-var constants consumed by
+#            the sourcing scripts (build-toolchain.sh, build-prerequisites.sh).
+#
+#   SC2268 – avoid x-prefix comparisons ([ "x$v" = "x" ]): this is a historic
+#            POSIX portability idiom used throughout; changing it would be a
+#            large cosmetic-only churn with no correctness benefit.
+#
+#   SC2016 – single-quoted $ expansion: eval statements intentionally use
+#            literal $ to defer variable expansion until eval executes, not at
+#            the point the string is constructed.
+disable=SC2034,SC2268,SC2016
