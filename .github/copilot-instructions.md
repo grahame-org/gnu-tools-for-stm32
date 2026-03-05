@@ -113,6 +113,10 @@ check-changes job (dorny/paths-filter)
         └── <name>-status job (always() — keeps required checks green when skipped)
 ```
 
+Each `check-changes` job exposes a boolean output named after the action it gates
+(`should-build` in `build-toolchain.yml`; `should-test` in all test workflows),
+and the main job's `if:` condition references that output.
+
 | Workflow file | Purpose | Triggers on |
 |---------------|---------|-------------|
 | `build-toolchain.yml` | Build full toolchain + validate test_project | `src/**`, build scripts, `test_project/**` |
@@ -138,7 +142,8 @@ make check-gas check-ld check-binutils
 mkdir -p build/gdb && cd build/gdb
 ../../src/gdb/configure --disable-nls --disable-werror --enable-unit-tests --with-python=no
 make all-gdb -j$(nproc)
-./gdb/gdb --batch -ex "maintenance selftest" 2>&1 | grep -v "Self test failed:" || echo "All passed"
+./gdb/gdb --batch -ex "maintenance selftest" 2>&1 | tee gdb-selftest.log
+if grep -q "Self test failed:" gdb-selftest.log; then echo "GDB selftests FAILED"; exit 1; fi
 ```
 Note: GDB selftest output is `Self test failed: <msg>` per failure and
 `Ran N unit tests, M failed` as summary. It does **not** output `FAIL:` lines.
@@ -212,9 +217,11 @@ timeout that would occur scanning `src/**` directly.
 
 When creating a new workflow:
 1. Add a `check-changes` job using `dorny/paths-filter` to gate on relevant
-   file paths.
-2. Make the main job `needs: check-changes` with
-   `if: needs.check-changes.outputs.should-test == 'true'`.
+   file paths and expose a boolean output (e.g., `should-test` or `should-build`).
+2. Make the main job `needs: check-changes` with an `if:` condition referencing
+   the output name you defined (e.g.,
+   `if: needs.check-changes.outputs.should-test == 'true'` or
+   `if: needs.check-changes.outputs.should-build == 'true'`).
 3. Add a `<name>-status` job with `needs: [check-changes, <main-job>]` and
    `if: always()` so required checks stay green when the job is skipped.
 4. Pin all third-party actions to a full commit SHA with a version comment,
@@ -225,8 +232,8 @@ When creating a new workflow:
 
 ## Commit Message Convention
 
-All commit messages (and **PR titles**, which become the squash commit message)
-must follow [Conventional Commits](https://www.conventionalcommits.org/):
+**PR titles** (which become the squash commit message) must follow
+[Conventional Commits](https://www.conventionalcommits.org/):
 
 ```
 <type>[(optional scope)][!]: <description>
