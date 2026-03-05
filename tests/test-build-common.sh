@@ -233,10 +233,10 @@ echo "=== Group 9: Error conditions ==="
 reset_stack
 
 assert_nonzero_exit "saveenvvar before saveenv exits non-zero" \
-    bash -c ". $REPO_ROOT/build-common.sh; stack_level=0; saveenvvar SOME_VAR value"
+    bash -c '. "$1/build-common.sh"; stack_level=0; saveenvvar SOME_VAR value' _ "$REPO_ROOT"
 
 assert_nonzero_exit "restoreenv on empty stack exits non-zero" \
-    bash -c ". $REPO_ROOT/build-common.sh; stack_level=0; restoreenv"
+    bash -c '. "$1/build-common.sh"; stack_level=0; restoreenv' _ "$REPO_ROOT"
 
 # ---------------------------------------------------------------------------
 # Summary
