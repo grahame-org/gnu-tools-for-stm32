@@ -58,6 +58,21 @@ jobs:
       - name: Build libiberty
         run: make -C build/libiberty -j$(nproc)
 
+      - name: Smoke-test failure detection
+        run: |
+          # Verify that the test framework correctly surfaces failures before
+          # running the real test suite. Build test-demangle, feed it a
+          # known-wrong expected result, and confirm it exits non-zero.
+          # This guards against silent test infrastructure regressions where
+          # failures are swallowed rather than reported.
+          make -C build/libiberty/testsuite test-demangle
+          if printf '\n_Z3foov\ndeliberately-wrong-output\n' | \
+              build/libiberty/testsuite/test-demangle; then
+            echo "ERROR: smoke test failed - test-demangle should exit non-zero on failure" >&2
+            exit 1
+          fi
+          echo "OK: failure detection confirmed (test-demangle exited non-zero as expected)"
+
       - name: Run libiberty tests
         run: |
           # Failure-detection mechanism:
