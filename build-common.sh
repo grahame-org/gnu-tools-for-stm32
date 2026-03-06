@@ -25,6 +25,9 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+# shellcheck shell=bash
+# This script is sourced (not executed directly), so it has no shebang line.
+
 error () {
     set +u
     echo "$0: error: $*" >&2
