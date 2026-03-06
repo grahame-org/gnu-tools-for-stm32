@@ -38,7 +38,7 @@ umask 022
 exec < /dev/null
 
 # shellcheck disable=SC2046
-script_path=`cd $(dirname $0) && pwd -P`
+script_path=$(cd $(dirname $0) && pwd -P)
 . $script_path/build-common.sh
 
 # This file contains the sequence of commands used to build the prerequisites
@@ -75,7 +75,7 @@ skip_native_build=no
 for ac_arg; do
     case $ac_arg in
         --skip_steps=*)
-            skip_steps=`echo $ac_arg | sed -e "s/--skip_steps=//g" -e "s/,/ /g"`
+            skip_steps=$(echo $ac_arg | sed -e "s/--skip_steps=//g" -e "s/,/ /g")
             ;;
         --help|-h)
             usage
