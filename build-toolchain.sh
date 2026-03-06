@@ -276,7 +276,10 @@ fi
 
 if [ "x$skip_native_build" != "xyes" ] ; then
     mkdir -p $BUILDDIR_NATIVE
-    rm -rf $INSTALLDIR_NATIVE && mkdir -p $INSTALLDIR_NATIVE
+    if [ "x$skip_stages" == "x" ] ; then
+        rm -rf $INSTALLDIR_NATIVE
+    fi
+    mkdir -p $INSTALLDIR_NATIVE
     rm -rf $PACKAGEDIR && mkdir -p $PACKAGEDIR
 fi
 
