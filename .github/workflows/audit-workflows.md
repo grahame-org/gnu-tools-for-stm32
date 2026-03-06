@@ -17,7 +17,6 @@ tools:
     description: "Historical audit data and patterns"
     file-glob: ["memory/audit-workflows/*.json", "memory/audit-workflows/*.jsonl", "memory/audit-workflows/*.csv", "memory/audit-workflows/*.md"]
     max-file-size: 102400  # 100KB
-    max-patch-size: 1048576  # 1MB — increased for large repositories (~217k files)
   timeout: 300
 safe-outputs:
   upload-asset:
@@ -181,4 +180,4 @@ This repository contains a very large number of source files (~217,000 files acr
 
 **Required**: Before running the memory push step, ensure the `memory/audit-workflows` branch exists in the remote repository. If it does not exist, create it as an empty orphan branch via the GitHub REST API (create an empty git tree, create a root commit with that tree and no parents, then create the `refs/heads/memory/audit-workflows` ref pointing to that commit). This pre-creation means `push_repo_memory` will always take the existing-branch code path (fetch → checkout → copy files → push) rather than the orphan-branch path, avoiding the buffer overflow entirely.
 
-**Buffer size guidance**: The total size of the repository directly affects the memory required to process git operations. When adapting this workflow to a repository with a large number of files, take the repository size into account when choosing values for `max-patch-size` (and `max-file-size`) in the frontmatter — the larger the repository, the larger these buffers should be. For this repository the `max-patch-size` in the frontmatter has been set to `1048576` (1 MB) to accommodate the volume of toolchain source files. If further buffer overflows occur, increase this value proportionally.
+**Buffer size guidance**: The total size of the repository directly affects the memory required to process git operations. The root cause of the `spawnSync git ENOBUFS` failure is not a configurable frontmatter field — it is triggered by `git rm -rf .` when creating a new orphan branch on a large repository, and its output overwhelms the Node.js child-process buffer. The fix is to **pre-create the `memory/audit-workflows` orphan branch** (described above) so the buffer-exhausting code path is never reached. The frontmatter `repo-memory` tool supports `max-file-size` and `max-file-count` to limit the sizes and number of individual memory files committed, but these do not affect the git subprocess buffer used during branch initialisation. When adapting this workflow to another repository, always check whether the target `memory/` branch already exists before the first run; if not, create it as an empty orphan via the GitHub REST API.
