@@ -21,21 +21,22 @@ Comprehensive strategies for analyzing CI workflows to identify optimization opp
 Read and understand the current CI workflow structure:
 
 ```bash
-# Read the CI workflow configuration
-cat .github/workflows/ci.yml
-
-# Understand the job structure
-# - lint (runs first)
-# - test (depends on lint)
-# - integration (depends on test, matrix strategy)
-# - build (depends on lint)
-# etc.
+# List and read all CI workflow files
+ls .github/workflows/*.yml
 ```
+
+Most test/build workflows in this repository use a consistent three-job pattern:
+- `check-changes` — uses `dorny/paths-filter` to detect relevant file changes; exposes a boolean output (e.g., `should-build` or `should-test`)
+- Main job — gated with `if:` on the `check-changes` output; skipped on pull requests when no relevant files changed
+- `<name>-status` — runs with `if: always()` so required status checks stay green when the main job is skipped
+
+Note: some lightweight workflows (e.g., `commitlint.yml`) are single-job workflows that intentionally do not follow this pattern.
 
 **Key aspects to analyze:**
 - Job dependencies and parallelization opportunities
-- Cache usage patterns (Go cache, Node cache)
 - Matrix strategy effectiveness
+- Cache usage patterns (stage caches keyed on source-tree hashes via `git rev-parse HEAD:<dir>`)
+- Paths-filter correctness — do the watched paths in each workflow match the files that actually affect that component?
 - Timeout configurations
 - Concurrency groups
 - Artifact retention policies
@@ -44,63 +45,27 @@ cat .github/workflows/ci.yml
 
 ### Critical: Ensure ALL Tests are Executed
 
-**Step 1: Get complete list of all tests**
+**Step 1: Discover test assets**
 ```bash
-# List all test functions in the repository
-go test -list='^Test' ./... 2>&1 | grep -E '^Test' > /tmp/all-tests.txt
+# Find all shell test scripts
+ls tests/test-*.sh
 
-# Count total tests
-TOTAL_TESTS=$(wc -l < /tmp/all-tests.txt)
-echo "Total tests found: $TOTAL_TESTS"
+# Find all CI workflow files
+ls .github/workflows/*.yml
 ```
 
-**Step 2: Analyze unit test coverage**
-```bash
-# Unit tests run all non-integration tests
-# Verify the test job's command captures all non-integration tests
-# Current: go test -v -parallel=8 -timeout=3m -tags '!integration' -run='^Test' ./...
+**Step 2: Verify CI coverage**
 
-# Get list of integration tests (tests with integration build tag)
-grep -r "//go:build integration" --include="*_test.go" . | cut -d: -f1 | sort -u > /tmp/integration-test-files.txt
+For each test script discovered in `tests/`, confirm there is a corresponding CI workflow step that invokes it. Cross-reference test script names against the workflow YAML files to spot any orphaned tests.
 
-# Estimate number of integration tests
-echo "Files with integration tests:"
-wc -l < /tmp/integration-test-files.txt
-```
+**Step 3: Verify paths-filter correctness for each workflow**
 
-**Step 3: Analyze integration test matrix coverage**
-```bash
-# The integration job has a matrix with specific patterns
-# Each matrix entry targets specific packages and test patterns
-
-# CRITICAL CHECK: Are there tests that don't match ANY pattern?
-
-# Extract all integration test patterns from ci.yml
-cat .github/workflows/ci.yml | grep -A 2 'pattern:' | grep 'pattern:' > /tmp/matrix-patterns.txt
-
-# Check for catch-all groups
-cat .github/workflows/ci.yml | grep -B 2 'pattern: ""' | grep 'name:' > /tmp/catchall-groups.txt
-```
-
-**Step 4: Identify coverage gaps**
-```bash
-# Check if each package with tests is covered by at least one matrix group
-# Compare packages with tests vs. packages in CI matrix
-# Identify any "orphaned" tests not executed by any job
-```
+For every CI workflow, check that its `dorny/paths-filter` paths list covers all the source directories and files that can affect that component. A common mistake is adding a new source directory without updating the corresponding workflow's filter.
 
 **Required Action if Gaps Found:**
-If any tests are not covered by the CI matrix, propose adding:
-1. **Catch-all matrix groups** for packages with specific patterns but no catch-all
-2. **New matrix entries** for packages not in the matrix at all
-
-Example fix for missing catch-all (add to `.github/workflows/ci.yml`):
-```yaml
-# Add to the integration job's matrix.include section:
-- name: "CLI Other"  # Catch-all for tests not matched by specific patterns
-  packages: "./pkg/cli"
-  pattern: ""  # Empty pattern runs all remaining tests
-```
+If any tests or relevant source paths are not covered:
+1. **Missing path entries** — add entries to the workflow's `dorny/paths-filter` block so it triggers on the right changes
+2. **Orphaned test scripts** — add invocations to the appropriate workflow job so every test in `tests/` is executed by CI
 
 ## Phase 3: Test Performance Optimization
 
@@ -110,9 +75,9 @@ Example fix for missing catch-all (add to `.github/workflows/ci.yml`):
 - Suggest rebalancing to minimize longest-running group
 
 ### B. Test Parallelization Within Jobs
-- Check if tests run sequentially when they could run in parallel
-- Suggest using `go test -parallel=N` to increase parallelism
-- Analyze if `-count=1` is necessary for all tests
+- Check if independent test or build jobs run sequentially when they could run in parallel
+- Build stages use `jobs: $(nproc)` for multi-core compilation; verify this pattern is applied consistently
+- Analyze if any stage cache steps could be parallelized or reordered to reduce wall-clock time
 
 ### C. Test Selection Optimization
 - Suggest path-based test filtering to skip irrelevant tests

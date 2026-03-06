@@ -74,7 +74,7 @@ Use GitHub tools to:
 For each merged PR or recent commit:
 - Use `pull_request_read` with `method: get_files` to list changed files
 - Use `get_commit` to see file changes in recent commits
-- Focus on source code files (`.go`, `.js`, `.ts`, `.tsx`, `.cjs`, `.py`, `.cs`, etc.)
+- Focus on source code files — primarily shell scripts (`.sh`) in the repository root, CI workflow YAML files (`.github/workflows/*.yml`), and C/C++ sources under `src/`
 - Exclude test files, lock files, and generated files
 
 ### 1.3 Determine Scope
@@ -94,41 +94,26 @@ If **files were changed**, proceed to Phase 2.
 
 Before simplifying, review the project's coding standards from relevant documentation:
 
-- For Go projects: Check `AGENTS.md`, `DEVGUIDE.md`, or similar files
-- For JavaScript/TypeScript: Look for `CLAUDE.md`, style guides, or coding conventions
-- For Python: Check for style guides, PEP 8 adherence, or project-specific conventions
-- For .NET/C#: Check `.editorconfig`, `Directory.Build.props`, or coding conventions in docs
+- Check `CONTRIBUTING.md` for commit message conventions and contribution guidelines
+- Check `.github/copilot-instructions.md` for project-specific conventions
+- Review existing build scripts in the repository root to understand established patterns before modifying any of them
 
 **Key Standards to Apply:**
 
-For **JavaScript/TypeScript** projects:
-- Use ES modules with proper import sorting and extensions
-- Prefer `function` keyword over arrow functions for top-level functions
-- Use explicit return type annotations for top-level functions
-- Follow proper React component patterns with explicit Props types
-- Use proper error handling patterns (avoid try/catch when possible)
-- Maintain consistent naming conventions
+For **shell scripts** (`.sh` files — the primary source language of this repository):
+- Follow POSIX-compatible shell scripting where possible
+- Use `"${var}"` quoting consistently to avoid word-splitting issues
+- Prefer explicit conditionals matching the existing style throughout the codebase
+- Use descriptive function and variable names
+- Keep functions focused and small
+- Avoid shellcheck warnings
+- Identify and follow the patterns already established in the codebase
 
-For **Go** projects:
-- Use `any` instead of `interface{}`
-- Follow console formatting for CLI output
-- Use semantic type aliases for domain concepts
-- Prefer small, focused files (200-500 lines ideal)
-- Use table-driven tests with descriptive names
-
-For **Python** projects:
-- Follow PEP 8 style guide
-- Use type hints for function signatures
-- Prefer explicit over implicit code
-- Use list/dict comprehensions where they improve clarity (not complexity)
-
-For **.NET/C#** projects:
-- Follow Microsoft C# coding conventions
-- Use `var` only when the type is obvious from the right side
-- Use file-scoped namespaces (`namespace X;`) where supported
-- Prefer pattern matching over type casting
-- Use `async`/`await` consistently, avoid `.Result` or `.Wait()`
-- Use nullable reference types and annotate nullability
+For **CI workflow YAML files** (`.github/workflows/*.yml`):
+- Follow the existing workflow structure pattern: `check-changes` job → main job (gated on path changes) → `<name>-status` job (`if: always()`)
+- Pin all third-party actions to full commit SHAs with version comments
+- Set `permissions: {}` at workflow level; grant minimum permissions per-job
+- Use `dorny/paths-filter` for change-based gating on pull requests
 
 ### 2.2 Simplification Principles
 
@@ -206,17 +191,8 @@ Use the **edit** tool to modify files:
 After making simplifications, run the project's test suite to ensure no functionality was broken:
 
 ```bash
-# For Go projects
-make test-unit
-
-# For JavaScript/TypeScript projects
-npm test
-
-# For Python projects
-pytest
-
-# For .NET projects
-dotnet test
+# Shell unit tests — discover and run all test scripts in the tests/ directory
+for t in tests/test-*.sh; do bash "$t"; done
 ```
 
 If tests fail:
@@ -230,38 +206,19 @@ If tests fail:
 Ensure code style is consistent:
 
 ```bash
-# For Go projects
-make lint
-
-# For JavaScript/TypeScript projects
-npm run lint
-
-# For Python projects
-flake8 . || pylint .
-
-# For .NET projects
-dotnet format --verify-no-changes
+# Check any modified shell scripts with shellcheck (if available)
+shellcheck <modified-script>.sh
 ```
 
 Fix any linting issues introduced by the simplifications.
 
 ### 3.3 Check Build
 
-Verify the project still builds successfully:
+Verify the shell scripts are syntactically valid:
 
 ```bash
-# For Go projects
-make build
-
-# For JavaScript/TypeScript projects
-npm run build
-
-# For Python projects
-# (typically no build step, but check imports)
-python -m py_compile changed_files.py
-
-# For .NET projects
-dotnet build
+# Syntax-check each modified shell script
+bash -n <modified-script>.sh && echo "OK"
 ```
 
 ## Phase 4: Create Pull Request
@@ -320,9 +277,8 @@ Recent changes from:
 
 ### Testing
 
-- ✅ All tests pass (`make test-unit`)
-- ✅ Linting passes (`make lint`)
-- ✅ Build succeeds (`make build`)
+- ✅ All tests pass (all scripts in `tests/` run without failures)
+- ✅ Shell syntax valid (`bash -n` passes for each modified script)
 - ✅ No functional changes - behavior is identical
 
 ### Review Focus
