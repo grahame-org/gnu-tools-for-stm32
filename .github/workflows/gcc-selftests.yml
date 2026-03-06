@@ -84,7 +84,7 @@ jobs:
 
       - name: Build host GCC
         if: steps.cache-gcc.outputs.cache-hit != 'true'
-        run: make -C build/gcc -j$(nproc) all-gcc
+        run: make -C build/gcc -j"$(nproc)" all-gcc
 
       - name: Run GCC selftests
         run: |

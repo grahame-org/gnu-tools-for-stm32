@@ -71,7 +71,7 @@ jobs:
             --with-zstd=no
 
       - name: Build binutils
-        run: make -C build/binutils -j$(nproc)
+        run: make -C build/binutils -j"$(nproc)"
 
       - name: Run binutils regression tests
         run: |

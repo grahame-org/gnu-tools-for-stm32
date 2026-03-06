@@ -144,7 +144,8 @@ jobs:
       - name: Build prerequisites
         if: steps.cache-prerequisites.outputs.cache-hit != 'true'
         run: |
-          export JOBS=$(nproc)
+          JOBS=$(nproc)
+          export JOBS
           ./build-prerequisites.sh --skip_steps=mingw,howto,package_sources
 
       - name: Cache toolchain build
@@ -157,7 +158,8 @@ jobs:
       - name: Build toolchain
         if: steps.cache-toolchain.outputs.cache-hit != 'true'
         run: |
-          export JOBS=$(nproc)
+          JOBS=$(nproc)
+          export JOBS
           ./build-toolchain.sh --skip_steps=mingw,mingw-gdb-with-python,gdb-with-python,manual,package_sources
 
       - name: Build test_project with toolchain

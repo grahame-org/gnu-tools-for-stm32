@@ -56,7 +56,7 @@ jobs:
           ../../src/binutils/libiberty/configure
 
       - name: Build libiberty
-        run: make -C build/libiberty -j$(nproc)
+        run: make -C build/libiberty -j"$(nproc)"
 
       - name: Smoke-test failure detection
         run: |
