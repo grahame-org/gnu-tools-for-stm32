@@ -25,13 +25,16 @@ Read and understand the current CI workflow structure:
 ls .github/workflows/*.yml
 ```
 
-This repository uses a consistent three-job pattern across all CI workflows:
+Most test/build workflows in this repository use a consistent three-job pattern:
 - `check-changes` — uses `dorny/paths-filter` to detect relevant file changes; exposes a boolean output (e.g., `should-build` or `should-test`)
 - Main job — gated with `if:` on the `check-changes` output; skipped on pull requests when no relevant files changed
 - `<name>-status` — runs with `if: always()` so required status checks stay green when the main job is skipped
 
+Note: some lightweight workflows (e.g., `commitlint.yml`) are single-job workflows that intentionally do not follow this pattern.
+
 **Key aspects to analyze:**
 - Job dependencies and parallelization opportunities
+- Matrix strategy effectiveness
 - Cache usage patterns (stage caches keyed on source-tree hashes via `git rev-parse HEAD:<dir>`)
 - Paths-filter correctness — do the watched paths in each workflow match the files that actually affect that component?
 - Timeout configurations

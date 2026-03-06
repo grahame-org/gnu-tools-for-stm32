@@ -20,7 +20,7 @@ safe-outputs:
     expires: 2d
     title-prefix: "[plan] "
     labels: [plan, ai-generated]
-    max: 50  # Maximum 5 sub-issues per group
+    max: 50  # Maximum 50 sub-issues per group
     group: true
   close-discussion:
     required-category: "Ideas"
