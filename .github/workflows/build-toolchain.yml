@@ -26,6 +26,7 @@ jobs:
           filters: |
             build:
               - 'src/**'
+              - 'build-binutils.sh'
               - 'build-toolchain.sh'
               - 'build-prerequisites.sh'
               - 'build-common.sh'
@@ -152,6 +153,7 @@ jobs:
         run: |
           hash_dir() { git rev-parse HEAD:"$1" 2>/dev/null || echo "missing-$1"; }
           scripts_hash=$(echo "$(hash_dir build-toolchain.sh)$(hash_dir build-common.sh)" | sha256sum | cut -d' ' -f1)
+          binutils_scripts_hash=$(echo "$(hash_dir build-binutils.sh)$(hash_dir build-common.sh)" | sha256sum | cut -d' ' -f1)
           prereqs_key="${{ steps.cache-prerequisites.outputs.cache-primary-key }}"
 
           binutils_src=$(hash_dir src/binutils)
@@ -160,7 +162,7 @@ jobs:
           gdb_src=$(hash_dir src/gdb)
           specs_src=$(hash_dir src/specs)
 
-          key_binutils=$(printf '%s' "${{ runner.os }}-stage-binutils-${scripts_hash}-${prereqs_key}-${binutils_src}" | sha256sum | cut -d' ' -f1)
+          key_binutils=$(printf '%s' "${{ runner.os }}-stage-binutils-${binutils_scripts_hash}-${prereqs_key}-${binutils_src}" | sha256sum | cut -d' ' -f1)
           key_gcc_first=$(printf '%s' "${{ runner.os }}-stage-gcc-first-${scripts_hash}-${key_binutils}-${gcc_src}" | sha256sum | cut -d' ' -f1)
           key_newlib=$(printf '%s' "${{ runner.os }}-stage-newlib-${scripts_hash}-${key_gcc_first}-${newlib_src}" | sha256sum | cut -d' ' -f1)
           key_newlib_nano=$(printf '%s' "${{ runner.os }}-stage-newlib-nano-${scripts_hash}-${key_newlib}-${newlib_src}" | sha256sum | cut -d' ' -f1)
@@ -192,9 +194,8 @@ jobs:
         if: steps.cache-binutils.outputs.cache-hit != 'true' && steps.cache-toolchain.outputs.cache-hit != 'true'
         run: |
           export JOBS=$(nproc)
-          ./build-toolchain.sh \
-            --skip_steps=mingw,mingw-gdb-with-python,gdb-with-python,manual,package_sources \
-            --skip_stages=gcc-first,newlib,newlib-nano,gcc-final,gcc-size-libstdcxx,gdb
+          ./build-binutils.sh \
+            --skip_steps=mingw,mingw-gdb-with-python,gdb-with-python,manual,package_sources
 
       - name: Save cache – binutils
         if: steps.cache-binutils.outputs.cache-hit != 'true' && steps.cache-toolchain.outputs.cache-hit != 'true'
