@@ -203,6 +203,54 @@ jobs:
           path: install-native
           key: ${{ runner.os }}-stage-v1-${{ steps.stage-hashes.outputs.binutils }}
 
+      # --- Stage: gcc-first ---
+      - name: Restore cache – gcc-first
+        id: cache-gcc-first
+        uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        if: steps.cache-binutils.outputs.cache-hit != 'true'
+        with:
+          path: install-native
+          key: ${{ runner.os }}-stage-v1-${{ steps.stage-hashes.outputs.gcc-first }}
+
+      - name: Build stage – gcc-first
+        if: steps.cache-gcc-first.outputs.cache-hit != 'true' && steps.cache-toolchain.outputs.cache-hit != 'true'
+        run: |
+          export JOBS=$(nproc)
+          ./build-toolchain.sh \
+            --skip_steps=mingw,mingw-gdb-with-python,gdb-with-python,manual,package_sources \
+            --skip_stages=newlib,newlib-nano,gcc-final,gcc-size-libstdcxx,gdb
+
+      - name: Save cache – gcc-first
+        if: steps.cache-gcc-first.outputs.cache-hit != 'true' && steps.cache-toolchain.outputs.cache-hit != 'true'
+        uses: actions/cache/save@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        with:
+          path: install-native
+          key: ${{ runner.os }}-stage-v1-${{ steps.stage-hashes.outputs.gcc-first }}
+
+      # --- Stage: newlib ---
+      - name: Restore cache – newlib
+        id: cache-newlib
+        uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        if: steps.cache-gcc-first.outputs.cache-hit != 'true'
+        with:
+          path: install-native
+          key: ${{ runner.os }}-stage-v1-${{ steps.stage-hashes.outputs.newlib }}
+
+      - name: Build stage – newlib
+        if: steps.cache-newlib.outputs.cache-hit != 'true' && steps.cache-toolchain.outputs.cache-hit != 'true'
+        run: |
+          export JOBS=$(nproc)
+          ./build-toolchain.sh \
+            --skip_steps=mingw,mingw-gdb-with-python,gdb-with-python,manual,package_sources \
+            --skip_stages=binutils,gcc-first,newlib-nano,gcc-final,gcc-size-libstdcxx,gdb
+
+      - name: Save cache – newlib
+        if: steps.cache-newlib.outputs.cache-hit != 'true' && steps.cache-toolchain.outputs.cache-hit != 'true'
+        uses: actions/cache/save@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        with:
+          path: install-native
+          key: ${{ runner.os }}-stage-v1-${{ steps.stage-hashes.outputs.newlib }}
+
       - name: Cache toolchain build
         id: cache-toolchain
         uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
