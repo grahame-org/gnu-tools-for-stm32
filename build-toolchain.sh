@@ -746,14 +746,18 @@ if [ "x$skip_native_build" != "xyes" ] ; then
     pushd $BUILDDIR_NATIVE
     ln -s $INSTALLDIR_NATIVE $INSTALL_PACKAGE_NAME
 
-    # Make the package tarball.
+    # Make the package tarball (only include subdirs that exist; some may be
+    # absent in partial/per-stage builds, e.g. lib is removed after binutils).
+    tar_dirs=()
+    for _dir in arm-none-eabi bin lib share; do
+        if [ -d "$INSTALLDIR_NATIVE/$_dir" ]; then
+            tar_dirs+=("$INSTALL_PACKAGE_NAME/$_dir")
+        fi
+    done
     ${TAR} cjf $PACKAGEDIR/$PACKAGE_NAME_NATIVE.tar.bz2   \
         --exclude=host-$HOST_NATIVE             \
         --exclude=host-$HOST_MINGW              \
-        $INSTALL_PACKAGE_NAME/arm-none-eabi     \
-        $INSTALL_PACKAGE_NAME/bin               \
-        $INSTALL_PACKAGE_NAME/lib               \
-        $INSTALL_PACKAGE_NAME/share
+        "${tar_dirs[@]}"
 
     # Remove stale links.
     rm -f $INSTALL_PACKAGE_NAME
