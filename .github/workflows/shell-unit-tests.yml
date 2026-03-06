@@ -26,6 +26,7 @@ jobs:
           filters: |
             test:
               - 'build-common.sh'
+              - 'build-gcc-first.sh'
               - 'build-toolchain.sh'
               - 'build-toolchain-args.sh'
               - 'tests/**'

@@ -177,54 +177,7 @@ if [ "x$skip_native_build" != "xyes" ] ; then
     if stage_is_skipped "gcc-first"; then
         echo "Skipping stage: gcc-first (cache hit)"
     else
-    echo Task [III-1] /$HOST_NATIVE/gcc-first/ | tee -a "$BUILDDIR_NATIVE/.stage"
-    rm -rf $BUILDDIR_NATIVE/gcc-first && mkdir -p $BUILDDIR_NATIVE/gcc-first
-    pushd $BUILDDIR_NATIVE/gcc-first
-    $SRCDIR/$GCC/configure --target=$TARGET \
-        --prefix=$INSTALLDIR_NATIVE \
-        --libexecdir=$INSTALLDIR_NATIVE/lib \
-        --infodir=$INSTALLDIR_NATIVE_DOC/info \
-        --mandir=$INSTALLDIR_NATIVE_DOC/man \
-        --htmldir=$INSTALLDIR_NATIVE_DOC/html \
-        --pdfdir=$INSTALLDIR_NATIVE_DOC/pdf \
-        --enable-checking=release \
-        --enable-languages=c \
-        --disable-decimal-float \
-        --disable-libffi \
-        --disable-libgomp \
-        --disable-libmudflap \
-        --disable-libquadmath \
-        --disable-libssp \
-        --disable-libstdcxx-pch \
-        --disable-nls \
-        --disable-shared \
-        --disable-threads \
-        --disable-tls \
-        --disable-libatomic \
-        --disable-libsanitizer \
-        --with-newlib \
-        --without-headers \
-        --with-gnu-as \
-        --with-gnu-ld \
-        --with-python-dir=share/gcc-arm-none-eabi \
-        --with-sysroot=$INSTALLDIR_NATIVE/arm-none-eabi \
-        --with-zstd=no \
-        ${GCC_CONFIG_OPTS}                              \
-        "${GCC_CONFIG_OPTS_LCPP}"                              \
-        "--with-pkgversion=$PKGVERSION" \
-        ${MULTILIB_LIST}
-
-    make -j$JOBS CXXFLAGS="$BUILD_OPTIONS" all-gcc
-
-    make install-gcc
-
-    popd
-
-    pushd $INSTALLDIR_NATIVE
-    rm -rf bin/arm-none-eabi-gccbug
-    rm -rf ./lib/libiberty.a
-    rm -rf  include
-    popd
+        "$script_path/build-gcc-first.sh" "$@"
     fi  # gcc-first stage
 
     if stage_is_skipped "newlib"; then
