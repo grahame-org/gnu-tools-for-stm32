@@ -58,6 +58,18 @@ assert_nonzero_exit() {
     fi
 }
 
+assert_zero_exit() {
+    local desc="$1"
+    shift
+    if "$@" 2>/dev/null; then
+        _PASS=$((_PASS + 1))
+        echo "  PASS: $desc"
+    else
+        _FAIL=$((_FAIL + 1))
+        echo "  FAIL: $desc (expected zero exit)"
+    fi
+}
+
 reset_stack() {
     # Reset global stack state between test groups
     stack_level=0
@@ -237,6 +249,46 @@ assert_nonzero_exit "saveenvvar before saveenv exits non-zero" \
 
 assert_nonzero_exit "restoreenv on empty stack exits non-zero" \
     bash -c '. "$1/build-common.sh"; stack_level=0; restoreenv' _ "$REPO_ROOT"
+
+# ---------------------------------------------------------------------------
+# Test group 10: break_hardlink
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "=== Group 10: break_hardlink ==="
+
+_BHL_TMPDIR=$(mktemp -d)
+trap 'rm -rf "$_BHL_TMPDIR"' EXIT
+
+# Subshell wrappers are required for tests that expect break_hardlink to call
+# error() (which calls exit 1) so the exit doesn't abort this test script.
+
+assert_zero_exit "break_hardlink with no args returns 0 (warns but continues)" \
+    bash -c '. "$1/build-common.sh"; break_hardlink' _ "$REPO_ROOT"
+
+assert_nonzero_exit "break_hardlink with non-existent file returns 1" \
+    bash -c '. "$1/build-common.sh"; break_hardlink "$2/no_such_file"' _ "$REPO_ROOT" "$_BHL_TMPDIR"
+
+# Regular file: should succeed and leave the file intact
+echo "original content" > "$_BHL_TMPDIR/solo"
+assert_zero_exit "break_hardlink on a regular file returns 0" \
+    bash -c '. "$1/build-common.sh"; break_hardlink "$2/solo"' _ "$REPO_ROOT" "$_BHL_TMPDIR"
+assert_eq "file still exists after break_hardlink on regular file" \
+    "original content" "$(cat "$_BHL_TMPDIR/solo")"
+
+# File with a hard link: break_hardlink should reduce the link count to 1
+echo "shared content" > "$_BHL_TMPDIR/original"
+ln "$_BHL_TMPDIR/original" "$_BHL_TMPDIR/hardlink"
+assert_eq "hard link count is 2 before break_hardlink" \
+    "2" "$(stat -c '%h' "$_BHL_TMPDIR/original")"
+assert_zero_exit "break_hardlink on file with a hard link returns 0" \
+    break_hardlink "$_BHL_TMPDIR/original"
+assert_eq "break_hardlink reduces link count to 1" \
+    "1" "$(stat -c '%h' "$_BHL_TMPDIR/original")"
+assert_eq "file content preserved after break_hardlink" \
+    "shared content" "$(cat "$_BHL_TMPDIR/original")"
+
+rm -rf "$_BHL_TMPDIR"
 
 # ---------------------------------------------------------------------------
 # Summary
