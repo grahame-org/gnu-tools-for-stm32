@@ -43,147 +43,29 @@ script_path=$(cd $(dirname $0) && pwd -P)
 
 # This file contains the sequence of commands used to build the
 # GNU Tools Arm Embedded toolchain.
-usage ()
+. "$script_path/build-toolchain-args.sh"
+parse_toolchain_args "$@"
+
+# Validate --skip_stages values and define helper function.
+stage_is_skipped()
 {
-cat<<EOF
-Usage: $0 [--build_type=...] [--skip_steps=...]
-
-This script will build GNU Tools Arm Embedded toolchain.
-
-OPTIONS:
-  --build_type=TYPE     specify build type to either ppa or native.
-                        If followed by keyword debug, the produced binaries
-                        will be debuggable.  The default case will be
-                        non-debug native build.
-
-                        Example usages are as:
-                        --build_type=native
-                        --build_type=ppa
-                        --build_type=native,debug
-                        --build_type=ppa,debug
-
-  --with-multilib-list  specify list of multilibs included with the build.
-                        For example:
-                        --with-multilib-list=rmprofile
-                        --with-multilib-list=rmprofile,aprofile  (Default value)
-
-  --skip_steps=STEPS    specify which build steps you want to skip.  Concatenate
-                        them with comma for skipping more than one steps.
-                        Available steps are:
-                            gdb-with-python
-                            manual
-                            md5_checksum
-                            mingw[32]
-                            mingw[32]-gdb-with-python
-                            native
-                            package_bins
-                            package_sources
-                            strip
-EOF
+    local stage="$1"
+    for s in $skip_stages; do
+        if [ "$s" = "$stage" ]; then
+            return 0
+        fi
+    done
+    return 1
 }
 
-if [ $# -gt 3 ] ; then
-    usage
-fi
-
-skip_mingw32=no
-BUILD_OPTIONS="-g -O2"
-is_ppa_release=no
-is_native_build=yes
-is_debug_build=no
-skip_manual=no
-skip_package_bins=no
-skip_package_sources=no
-skip_md5_checksum=no
-skip_steps=
-skip_gdb_with_python=yes
-skip_mingw32_gdb_with_python=yes
-skip_native_build=no
-skip_strip_target_libraries=no
-build_type=
-
-MULTILIB_LIST="--with-multilib-list=rmprofile,aprofile"
-
-for ac_arg; do
-    case $ac_arg in
-        --skip_steps=*)
-            skip_steps=$(echo $ac_arg | sed -e "s/--skip_steps=//g" -e "s/,/ /g")
-            ;;
-        --build_type=*)
-            build_type=$(echo $ac_arg | sed -e "s/--build_type=//g" -e "s/,/ /g")
-            ;;
-        --with-multilib-list=*)
-            MULTILIB_LIST="--with-multilib-list=${ac_arg##*=}"
-            ;;
-        *)
-            usage
-            exit 1
-            ;;
-    esac
-done
-
-if [ "x$build_type" != "x" ]; then
-  for bt in $build_type; do
-    case $bt in
-      ppa)
-        is_ppa_release=yes
-        is_native_build=no
-        skip_gdb_with_python=yes
-        ;;
-      native)
-        is_native_build=yes
-        is_ppa_release=no
-        ;;
-      debug)
-        BUILD_OPTIONS="-g -O0"
-        is_debug_build=yes
-        ;;
-      *)
-        echo "Unknown build type: $bt" 1>&2
-        usage
-        exit 1
-        ;;
-    esac
-  done
-else
-  is_ppa_release=no
-  is_native_build=yes
-fi
-
-if [ "x$skip_steps" != "x" ]; then
-    for ss in $skip_steps; do
+if [ "x$skip_stages" != "x" ]; then
+    for ss in $skip_stages; do
         case $ss in
-            manual)
-                skip_manual=yes
-                ;;
-            package_bins)
-                skip_package_bins=yes
-                ;;
-            package_sources)
-                skip_package_sources=yes
-                ;;
-            md5_checksum)
-                skip_md5_checksum=yes
-                ;;
-            gdb-with-python)
-                skip_gdb_with_python=yes
-                ;;
-            mingw|mingw32)
-                skip_mingw32=yes
-                skip_mingw32_gdb_with_python=yes
-                ;;
-            mingw-gdb-with-python|mingw32-gdb-with-python)
-                skip_mingw32_gdb_with_python=yes
-                ;;
-            native)
-                skip_native_build=yes
-                ;;
-            strip)
-                skip_strip_target_libraries=yes
+            binutils|gcc-first|newlib|newlib-nano|gcc-final|gcc-size-libstdcxx|gdb)
                 ;;
             *)
-               echo "Unknown build steps: $ss" 1>&2
-               usage
+               echo "Unknown build stage: $ss" 1>&2
+               _toolchain_usage
                exit 1
                ;;
         esac
@@ -245,6 +127,9 @@ fi
 cd $SRCDIR
 
 if [ "x$skip_native_build" != "xyes" ] ; then
+    if stage_is_skipped "binutils"; then
+        echo "Skipping stage: binutils (cache hit)"
+    else
     echo Task [III-0] /$HOST_NATIVE/binutils/ | tee -a "$BUILDDIR_NATIVE/.stage"
     rm -rf $BUILDDIR_NATIVE/binutils && mkdir -p $BUILDDIR_NATIVE/binutils
     pushd $BUILDDIR_NATIVE/binutils
@@ -285,7 +170,11 @@ if [ "x$skip_native_build" != "xyes" ] ; then
     pushd $INSTALLDIR_NATIVE
     rm -rf ./lib
     popd
+    fi  # binutils stage
 
+    if stage_is_skipped "gcc-first"; then
+        echo "Skipping stage: gcc-first (cache hit)"
+    else
     echo Task [III-1] /$HOST_NATIVE/gcc-first/ | tee -a "$BUILDDIR_NATIVE/.stage"
     rm -rf $BUILDDIR_NATIVE/gcc-first && mkdir -p $BUILDDIR_NATIVE/gcc-first
     pushd $BUILDDIR_NATIVE/gcc-first
@@ -334,7 +223,11 @@ if [ "x$skip_native_build" != "xyes" ] ; then
     rm -rf ./lib/libiberty.a
     rm -rf  include
     popd
+    fi  # gcc-first stage
 
+    if stage_is_skipped "newlib"; then
+        echo "Skipping stage: newlib (cache hit)"
+    else
     echo Task [III-2] /$HOST_NATIVE/newlib/ | tee -a "$BUILDDIR_NATIVE/.stage"
     saveenv
     prepend_path PATH $INSTALLDIR_NATIVE/bin
@@ -376,7 +269,11 @@ if [ "x$skip_native_build" != "xyes" ] ; then
 
     popd
     restoreenv
+    fi  # newlib stage
 
+    if stage_is_skipped "newlib-nano"; then
+        echo "Skipping stage: newlib-nano (cache hit)"
+    else
     echo Task [III-3] /$HOST_NATIVE/newlib-nano/ | tee -a "$BUILDDIR_NATIVE/.stage"
     saveenv
     prepend_path PATH $INSTALLDIR_NATIVE/bin
@@ -407,7 +304,11 @@ if [ "x$skip_native_build" != "xyes" ] ; then
 
     popd
     restoreenv
+    fi  # newlib-nano stage
 
+    if stage_is_skipped "gcc-final"; then
+        echo "Skipping stage: gcc-final (cache hit)"
+    else
     echo Task [III-4] /$HOST_NATIVE/gcc-final/ | tee -a "$BUILDDIR_NATIVE/.stage"
     rm -f $INSTALLDIR_NATIVE/arm-none-eabi/usr
     ln -s . $INSTALLDIR_NATIVE/arm-none-eabi/usr
@@ -474,7 +375,11 @@ if [ "x$skip_native_build" != "xyes" ] ; then
 
     rm -f $INSTALLDIR_NATIVE/arm-none-eabi/usr
     popd
+    fi  # gcc-final stage
 
+    if stage_is_skipped "gcc-size-libstdcxx"; then
+        echo "Skipping stage: gcc-size-libstdcxx (cache hit)"
+    else
     echo Task [III-5] /$HOST_NATIVE/gcc-size-libstdcxx/ | tee -a "$BUILDDIR_NATIVE/.stage"
     rm -f $BUILDDIR_NATIVE/target-libs/arm-none-eabi/usr
     ln -s . $BUILDDIR_NATIVE/target-libs/arm-none-eabi/usr
@@ -525,7 +430,11 @@ if [ "x$skip_native_build" != "xyes" ] ; then
           $INSTALLDIR_NATIVE/arm-none-eabi/include/newlib-nano/newlib.h
 
     popd
+    fi  # gcc-size-libstdcxx stage
 
+    if stage_is_skipped "gdb"; then
+        echo "Skipping stage: gdb (cache hit)"
+    else
     echo Task [III-6] /$HOST_NATIVE/gdb/ | tee -a "$BUILDDIR_NATIVE/.stage"
     build_gdb()
     {
@@ -586,6 +495,7 @@ if [ "x$skip_native_build" != "xyes" ] ; then
             build_gdb "--with-python=python3 --program-prefix=$TARGET-  --program-suffix=-py"
         fi
     fi
+    fi  # gdb stage
 
     echo Task [III-8] /$HOST_NATIVE/pretidy/ | tee -a "$BUILDDIR_NATIVE/.stage"
     rm -rf $INSTALLDIR_NATIVE/lib/libiberty.a
@@ -603,14 +513,16 @@ if [ "x$skip_native_build" != "xyes" ] ; then
             strip_binary strip $bin
         done
 
-        if [ "x$BUILD" == "xx86_64-apple-darwin10" ]; then
-            STRIP_BINARIES=$(find $INSTALLDIR_NATIVE/lib/gcc/arm-none-eabi/$GCC_VER/ -maxdepth 1 -name \* -perm +111 -and ! -type d)
-        else
-            STRIP_BINARIES=$(find $INSTALLDIR_NATIVE/lib/gcc/arm-none-eabi/$GCC_VER/ -maxdepth 1 -name \* -perm /111 -and ! -type d)
+        if [ -d "$INSTALLDIR_NATIVE/lib/gcc/arm-none-eabi/$GCC_VER" ]; then
+            if [ "x$BUILD" == "xx86_64-apple-darwin10" ]; then
+                STRIP_BINARIES=$(find $INSTALLDIR_NATIVE/lib/gcc/arm-none-eabi/$GCC_VER/ -maxdepth 1 -name \* -perm +111 -and ! -type d)
+            else
+                STRIP_BINARIES=$(find $INSTALLDIR_NATIVE/lib/gcc/arm-none-eabi/$GCC_VER/ -maxdepth 1 -name \* -perm /111 -and ! -type d)
+            fi
+            for bin in $STRIP_BINARIES ; do
+                strip_binary strip $bin
+            done
         fi
-        for bin in $STRIP_BINARIES ; do
-            strip_binary strip $bin
-        done
     fi
 
     echo Task [III-10] /$HOST_NATIVE/strip_target_objects/ | tee -a "$BUILDDIR_NATIVE/.stage"
@@ -632,24 +544,28 @@ if [ "x$skip_native_build" != "xyes" ] ; then
             arm-none-eabi-strip --remove-section=.comment --remove-section=.note --strip-debug --enable-deterministic-archives --keep-section=.debug_frame $target_obj || true
         done
 
-        TARGET_LIBRARIES=$(find $INSTALLDIR_NATIVE/lib/gcc/arm-none-eabi/$GCC_VER -name \*.a)
-        for target_lib in $TARGET_LIBRARIES ; do
-            arm-none-eabi-strip --remove-section=.comment --remove-section=.note --strip-debug --enable-deterministic-archives --keep-section=.debug_frame $target_lib || true
-        done
+        if [ -d "$INSTALLDIR_NATIVE/lib/gcc/arm-none-eabi/$GCC_VER" ]; then
+            TARGET_LIBRARIES=$(find $INSTALLDIR_NATIVE/lib/gcc/arm-none-eabi/$GCC_VER -name \*.a)
+            for target_lib in $TARGET_LIBRARIES ; do
+                arm-none-eabi-strip --remove-section=.comment --remove-section=.note --strip-debug --enable-deterministic-archives --keep-section=.debug_frame $target_lib || true
+            done
 
-        TARGET_OBJECTS=$(find $INSTALLDIR_NATIVE/lib/gcc/arm-none-eabi/$GCC_VER -name \*.o)
-        for target_obj in $TARGET_OBJECTS ; do
-            arm-none-eabi-strip --remove-section=.comment --remove-section=.note --strip-debug --enable-deterministic-archives --keep-section=.debug_frame $target_obj || true
-        done
+            TARGET_OBJECTS=$(find $INSTALLDIR_NATIVE/lib/gcc/arm-none-eabi/$GCC_VER -name \*.o)
+            for target_obj in $TARGET_OBJECTS ; do
+                arm-none-eabi-strip --remove-section=.comment --remove-section=.note --strip-debug --enable-deterministic-archives --keep-section=.debug_frame $target_obj || true
+            done
+        fi
     fi
     restoreenv
 
     echo Task [III-11] /$HOST_NATIVE/specs/ | tee -a "$BUILDDIR_NATIVE/.stage"
-    pushd $BUILDDIR_NATIVE
-    $INSTALLDIR_NATIVE/bin/arm-none-eabi-gcc -print-multi-lib | cut -d';' -f 1 | while read dir; do
-      cp -v $SRCDIR/specs/{nano_c_standard_cpp,standard_c_nano_cpp}.specs $INSTALLDIR_NATIVE/arm-none-eabi/lib/$dir/
-    done
-    popd
+    if [ -x "$INSTALLDIR_NATIVE/bin/arm-none-eabi-gcc" ]; then
+        pushd $BUILDDIR_NATIVE
+        $INSTALLDIR_NATIVE/bin/arm-none-eabi-gcc -print-multi-lib | cut -d';' -f 1 | while read dir; do
+          cp -v $SRCDIR/specs/{nano_c_standard_cpp,standard_c_nano_cpp}.specs $INSTALLDIR_NATIVE/arm-none-eabi/lib/$dir/
+        done
+        popd
+    fi
 
     # PPA release needn't following steps, so we exit here.
     if [ "x$is_ppa_release" == "xyes" ] ; then
@@ -669,14 +585,18 @@ if [ "x$skip_native_build" != "xyes" ] ; then
     pushd $BUILDDIR_NATIVE
     ln -s $INSTALLDIR_NATIVE $INSTALL_PACKAGE_NAME
 
-    # Make the package tarball.
+    # Make the package tarball (only include subdirs that exist; some may be
+    # absent in partial/per-stage builds, e.g. lib is removed after binutils).
+    tar_dirs=()
+    for _dir in arm-none-eabi bin lib share; do
+        if [ -d "$INSTALLDIR_NATIVE/$_dir" ]; then
+            tar_dirs+=("$INSTALL_PACKAGE_NAME/$_dir")
+        fi
+    done
     ${TAR} cjf $PACKAGEDIR/$PACKAGE_NAME_NATIVE.tar.bz2   \
         --exclude=host-$HOST_NATIVE             \
         --exclude=host-$HOST_MINGW              \
-        $INSTALL_PACKAGE_NAME/arm-none-eabi     \
-        $INSTALL_PACKAGE_NAME/bin               \
-        $INSTALL_PACKAGE_NAME/lib               \
-        $INSTALL_PACKAGE_NAME/share
+        "${tar_dirs[@]}"
 
     # Remove stale links.
     rm -f $INSTALL_PACKAGE_NAME
