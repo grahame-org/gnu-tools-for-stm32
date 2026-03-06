@@ -1,6 +1,6 @@
 # ShellCheck configuration for gnu-tools-for-stm32 build scripts.
 
-# Bulk suppresions have been implemented to support adding shellsheck
+# Bulk suppressions have been implemented to support adding shellcheck
 # to the CI without generating a lot of noise. They shall be incrementally
 # fixed in future PRs
 #
