@@ -153,7 +153,7 @@ jobs:
         run: |
           hash_dir() { git rev-parse HEAD:"$1" 2>/dev/null || echo "missing-$1"; }
           scripts_hash=$(echo "$(hash_dir build-toolchain.sh)$(hash_dir build-common.sh)" | sha256sum | cut -d' ' -f1)
-          gcc_first_scripts_hash=$(echo "$(hash_dir build-gcc-first.sh)$(hash_dir build-common.sh)" | sha256sum | cut -d' ' -f1)
+          gcc_first_scripts_hash=$(echo "$(hash_dir build-gcc-first.sh)$(hash_dir build-toolchain-args.sh)$(hash_dir build-common.sh)" | sha256sum | cut -d' ' -f1)
           prereqs_key="${{ steps.cache-prerequisites.outputs.cache-primary-key }}"
 
           binutils_src=$(hash_dir src/binutils)
@@ -211,7 +211,7 @@ jobs:
         uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           path: install-native
-          key: ${{ runner.os }}-stage-v1-${{ steps.stage-hashes.outputs.gcc-first }}
+          key: ${{ runner.os }}-stage-v1-${{ steps.stage-hashes.outputs['gcc-first'] }}
 
       - name: Build stage – gcc-first
         if: steps.cache-gcc-first.outputs.cache-hit != 'true' && steps.cache-toolchain.outputs.cache-hit != 'true'
@@ -225,7 +225,7 @@ jobs:
         uses: actions/cache/save@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           path: install-native
-          key: ${{ runner.os }}-stage-v1-${{ steps.stage-hashes.outputs.gcc-first }}
+          key: ${{ runner.os }}-stage-v1-${{ steps.stage-hashes.outputs['gcc-first'] }}
 
       - name: Cache toolchain build
         id: cache-toolchain
