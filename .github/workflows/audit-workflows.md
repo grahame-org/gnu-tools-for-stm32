@@ -17,6 +17,7 @@ tools:
     description: "Historical audit data and patterns"
     file-glob: ["memory/audit-workflows/*.json", "memory/audit-workflows/*.jsonl", "memory/audit-workflows/*.csv", "memory/audit-workflows/*.md"]
     max-file-size: 102400  # 100KB
+    max-patch-size: 1048576  # 1MB — increased for large repositories (~217k files)
   timeout: 300
 safe-outputs:
   upload-asset:
@@ -179,3 +180,5 @@ Always create discussion with findings and update repo memory.
 This repository contains a very large number of source files (~217,000 files across GCC, binutils, GDB, newlib, and other toolchain components). When the `memory/audit-workflows` branch does not yet exist, the `push_repo_memory` step disables sparse-checkout (expanding the entire working tree), creates an orphan branch, and then runs `git rm -rf .` to clear it. On this repository the output of that command exceeds the Node.js `spawnSync` buffer limit (1 MB), causing the job to fail with `spawnSync git ENOBUFS`.
 
 **Required**: Before running the memory push step, ensure the `memory/audit-workflows` branch exists in the remote repository. If it does not exist, create it as an empty orphan branch via the GitHub REST API (create an empty git tree, create a root commit with that tree and no parents, then create the `refs/heads/memory/audit-workflows` ref pointing to that commit). This pre-creation means `push_repo_memory` will always take the existing-branch code path (fetch → checkout → copy files → push) rather than the orphan-branch path, avoiding the buffer overflow entirely.
+
+**Buffer size guidance**: The total size of the repository directly affects the memory required to process git operations. When adapting this workflow to a repository with a large number of files, take the repository size into account when choosing values for `max-patch-size` (and `max-file-size`) in the frontmatter — the larger the repository, the larger these buffers should be. For this repository the `max-patch-size` in the frontmatter has been set to `1048576` (1 MB) to accommodate the volume of toolchain source files. If further buffer overflows occur, increase this value proportionally.
