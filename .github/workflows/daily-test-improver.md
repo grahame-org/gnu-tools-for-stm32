@@ -338,3 +338,13 @@ Maintain a single open issue titled `[Test Improver] Monthly Activity {YYYY}-{MM
 - If the test expectations are correct and the code fails them: **file an issue** describing the potential bug. Do not silently "fix" the test.
 - Only adjust test expectations when you have verified the original expectation was incorrect.
 - Document your reasoning in the PR or issue.
+
+## Large-Repository Compatibility
+
+This repository contains a very large number of source files (~217,000 files across GCC, binutils, GDB, newlib, and other toolchain components). When the `memory/daily-test-improver` branch does not yet exist, the `push_repo_memory` step disables sparse-checkout (expanding the entire working tree), creates an orphan branch, and then runs `git rm -rf .` to clear it. On this repository the output of that command exceeds the Node.js `spawnSync` buffer limit (1 MB), causing the job to fail with `spawnSync git ENOBUFS`.
+
+**Workaround applied in `daily-test-improver.lock.yml`**: An "Ensure memory branch exists" step has been manually added to the `push_repo_memory` job (immediately before the push step). It pre-creates the `memory/daily-test-improver` branch as an empty orphan commit via the GitHub REST API when the branch does not exist. This forces `push_repo_memory` to always take the existing-branch code path (fetch → checkout → copy files → push), avoiding the buffer overflow.
+
+**If `gh aw compile` is run**, the lock file is regenerated and this manual step is lost. It must be re-applied: create an empty git tree, create a root commit with that tree and no parents, then create the `refs/heads/memory/daily-test-improver` ref pointing to that commit. The "Ensure memory branch exists" step in the current `daily-test-improver.lock.yml` shows the exact `gh api` commands to use.
+
+**Note**: once the `memory/daily-test-improver` branch exists after any successful push, subsequent compiled runs will work without this step — the compiled lock.yml takes the existing-branch path automatically. The step only needs to be maintained for the case where the branch has been deleted before a compiled run executes.

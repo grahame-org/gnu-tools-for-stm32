@@ -1620,6 +1620,52 @@ jobs:
         with:
           name: repo-memory-default
           path: /tmp/gh-aw/repo-memory/default
+      # INTENTIONAL MANUAL EDIT — must be re-applied after every `gh aw compile`.
+      #
+      # Problem: push_repo_memory.cjs fails with "spawnSync git ENOBUFS" when the
+      # memory/daily-test-improver branch does not yet exist. The script creates an orphan
+      # branch via `git checkout --orphan` then runs `git rm -rf .`, whose output
+      # (~217k filenames) overflows the 1 MB Node.js spawnSync buffer on this repo.
+      #
+      # gh-aw v0.53.6 limitation: there is no frontmatter mechanism to add a step to
+      # the auto-generated push_repo_memory job. All alternatives were verified:
+      #   - `steps:` / `post-steps:` → inject into the agent job, which cannot have
+      #     `contents: write` (blocked by gh-aw's security enforcement even with
+      #     `strict: false`; error: "The agent job must not have write permissions").
+      #   - `safe-outputs: steps:` → injects into the safe_outputs job only, not
+      #     push_repo_memory.
+      #   - `jobs:` custom entries → cannot override auto-generated jobs (error:
+      #     "job 'push_repo_memory' already exists") and custom jobs are not
+      #     automatically added to push_repo_memory's `needs:`.
+      #
+      # Workaround: pre-create memory/daily-test-improver as an empty orphan branch via
+      # the GitHub REST API before push_repo_memory.cjs runs. This forces the script
+      # to take the existing-branch path (fetch → checkout → diff → push) instead of
+      # the orphan-creation path, avoiding the buffer overflow entirely.
+      #
+      # Note: once the branch exists after the first successful run, subsequent runs
+      # (including runs from a freshly compiled lock.yml) will work without this step.
+      # Re-apply this step only if the branch has been deleted and the compiled
+      # lock.yml is deployed before a new run creates it.
+      - name: Ensure memory branch exists
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          if ! gh api "repos/${REPO}/git/ref/heads/memory/daily-test-improver" --silent 2>/dev/null; then
+            echo "Branch memory/daily-test-improver does not exist, creating empty orphan branch..."
+            TREE_SHA=$(echo '{"tree":[]}' | gh api "repos/${REPO}/git/trees" \
+              --method POST --input - --jq '.sha')
+            COMMIT_SHA=$(jq -n --arg tree "${TREE_SHA}" \
+              '{"message":"Initialize memory/daily-test-improver branch","tree":$tree,"parents":[]}' | \
+              gh api "repos/${REPO}/git/commits" --method POST --input - --jq '.sha')
+            jq -n --arg sha "${COMMIT_SHA}" \
+              '{"ref":"refs/heads/memory/daily-test-improver","sha":$sha}' | \
+              gh api "repos/${REPO}/git/refs" --method POST --input - >/dev/null
+            echo "Created empty orphan branch memory/daily-test-improver successfully"
+          else
+            echo "Branch memory/daily-test-improver already exists, skipping creation"
+          fi
       - name: Push repo-memory changes (default)
         id: push_repo_memory_default
         if: always()
