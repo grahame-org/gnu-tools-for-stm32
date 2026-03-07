@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Unit tests for saveenv/restoreenv/saveenvvar/prependenvvar/prepend_path
-# in build-common.sh.
+# Unit tests for saveenv/restoreenv/saveenvvar/prependenvvar/prepend_path,
+# break_hardlink, copy_dir, and copy_dir_clean in build-common.sh.
 #
 # Run with: bash tests/test-build-common.sh
 
@@ -287,6 +287,84 @@ assert_eq "break_hardlink reduces link count to 1" \
     "1" "$(stat -c '%h' "$_BHL_TMPDIR/original")"
 assert_eq "file content preserved after break_hardlink" \
     "shared content" "$(cat "$_BHL_TMPDIR/original")"
+
+# ---------------------------------------------------------------------------
+# Test group 11: copy_dir
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "=== Group 11: copy_dir ==="
+
+_CD_TMPDIR=$(mktemp -d)
+
+# Create source tree: top-level file + subdir with file
+mkdir -p "$_CD_TMPDIR/src/subdir"
+echo "top" > "$_CD_TMPDIR/src/top.txt"
+echo "nested" > "$_CD_TMPDIR/src/subdir/nested.txt"
+
+copy_dir "$_CD_TMPDIR/src" "$_CD_TMPDIR/dst"
+
+assert_eq "copy_dir copies top-level file" \
+    "top" "$(cat "$_CD_TMPDIR/dst/top.txt")"
+assert_eq "copy_dir copies nested file" \
+    "nested" "$(cat "$_CD_TMPDIR/dst/subdir/nested.txt")"
+
+# copy_dir should create the destination directory when it does not exist
+copy_dir "$_CD_TMPDIR/src" "$_CD_TMPDIR/dst2/inner"
+assert_eq "copy_dir creates destination directory if absent" \
+    "top" "$(cat "$_CD_TMPDIR/dst2/inner/top.txt")"
+
+rm -rf "$_CD_TMPDIR"
+
+# ---------------------------------------------------------------------------
+# Test group 12: copy_dir_clean
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "=== Group 12: copy_dir_clean ==="
+
+_CDC_TMPDIR=$(mktemp -d)
+
+mkdir -p "$_CDC_TMPDIR/src/.git"
+mkdir -p "$_CDC_TMPDIR/src/CVS"
+mkdir -p "$_CDC_TMPDIR/src/.svn"
+mkdir -p "$_CDC_TMPDIR/src/.pc"
+mkdir -p "$_CDC_TMPDIR/src/normal_subdir"
+echo "keep me" > "$_CDC_TMPDIR/src/normal.txt"
+echo "keep me too" > "$_CDC_TMPDIR/src/normal_subdir/child.txt"
+echo "git object" > "$_CDC_TMPDIR/src/.git/object"
+echo "cvs entry" > "$_CDC_TMPDIR/src/CVS/Entries"
+echo "svn entry" > "$_CDC_TMPDIR/src/.svn/entries"
+echo "quilt patch" > "$_CDC_TMPDIR/src/.pc/series"
+echo "backup" > "$_CDC_TMPDIR/src/file.txt~"
+echo "orig" > "$_CDC_TMPDIR/src/patch.orig"
+echo "rej" > "$_CDC_TMPDIR/src/patch.rej"
+echo "emacs lock" > "$_CDC_TMPDIR/src/.#lockfile"
+
+copy_dir_clean "$_CDC_TMPDIR/src" "$_CDC_TMPDIR/dst"
+
+assert_eq "copy_dir_clean copies regular file" \
+    "keep me" "$(cat "$_CDC_TMPDIR/dst/normal.txt")"
+assert_eq "copy_dir_clean copies nested file in regular subdir" \
+    "keep me too" "$(cat "$_CDC_TMPDIR/dst/normal_subdir/child.txt")"
+assert_eq "copy_dir_clean excludes .git directory" \
+    "" "$([ -e "$_CDC_TMPDIR/dst/.git" ] && echo "exists" || true)"
+assert_eq "copy_dir_clean excludes CVS directory" \
+    "" "$([ -e "$_CDC_TMPDIR/dst/CVS" ] && echo "exists" || true)"
+assert_eq "copy_dir_clean excludes .svn directory" \
+    "" "$([ -e "$_CDC_TMPDIR/dst/.svn" ] && echo "exists" || true)"
+assert_eq "copy_dir_clean excludes .pc directory" \
+    "" "$([ -e "$_CDC_TMPDIR/dst/.pc" ] && echo "exists" || true)"
+assert_eq "copy_dir_clean excludes *~ backup files" \
+    "" "$([ -e "$_CDC_TMPDIR/dst/file.txt~" ] && echo "exists" || true)"
+assert_eq "copy_dir_clean excludes *.orig files" \
+    "" "$([ -e "$_CDC_TMPDIR/dst/patch.orig" ] && echo "exists" || true)"
+assert_eq "copy_dir_clean excludes *.rej files" \
+    "" "$([ -e "$_CDC_TMPDIR/dst/patch.rej" ] && echo "exists" || true)"
+assert_eq "copy_dir_clean excludes .#* emacs lock files" \
+    "" "$([ -e "$_CDC_TMPDIR/dst/.#lockfile" ] && echo "exists" || true)"
+
+rm -rf "$_CDC_TMPDIR"
 
 # ---------------------------------------------------------------------------
 # Summary

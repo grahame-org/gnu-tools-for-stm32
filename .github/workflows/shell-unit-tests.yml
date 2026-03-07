@@ -28,6 +28,7 @@ jobs:
             test:
               - 'build-binutils.sh'
               - 'build-common.sh'
+              - 'build-gcc-first.sh'
               - 'build-toolchain.sh'
               - 'build-toolchain-args.sh'
               - 'tests/**'
