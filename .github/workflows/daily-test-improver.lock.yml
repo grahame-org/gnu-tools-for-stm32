@@ -1628,7 +1628,7 @@ jobs:
       # output (~217k filenames) overflows the 1 MB Node.js spawnSync buffer on
       # this repo.
       #
-      # gh-aw v0.53.6 limitation: there is no frontmatter mechanism to add a step to
+      # gh-aw limitation: there is no frontmatter mechanism to add a step to
       # the auto-generated push_repo_memory job. All alternatives were verified:
       #   - `steps:` / `post-steps:` → inject into the agent job, which cannot have
       #     `contents: write` (blocked by gh-aw's security enforcement even with
