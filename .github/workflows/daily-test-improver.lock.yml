@@ -33,7 +33,7 @@
 #
 # Source: githubnext/agentics/workflows/daily-test-improver.md@b466f28f0f65b68d6f2b10b15b44f51d787b93be
 #
-# gh-aw-metadata: {"schema_version":"v1","frontmatter_hash":"c48e37ffd8e075fd225b52a2088e7b75d1d333d818982587994c49e88743e889","compiler_version":"v0.54.0"}
+# gh-aw-metadata: {"schema_version":"v1","frontmatter_hash":"214cd09e846b8ae9aaef79099108b59ab5ff39185e84384788e2845d91f347e8","compiler_version":"v0.54.0"}
 
 name: "Daily Test Improver"
 "on":
@@ -283,7 +283,7 @@ jobs:
           GH_AW_GITHUB_WORKSPACE: ${{ github.workspace }}
           GH_AW_IS_PR_COMMENT: ${{ github.event.issue.pull_request && 'true' || '' }}
           GH_AW_MEMORY_BRANCH_NAME: 'memory/daily-test-improver'
-          GH_AW_MEMORY_CONSTRAINTS: "\n\n**Constraints:**\n- **Max File Size**: 102400 bytes (0.10 MB) per file\n- **Max File Count**: 100 files per commit\n- **Max Patch Size**: 10240 bytes (10 KB) total per push (max: 100 KB)\n"
+          GH_AW_MEMORY_CONSTRAINTS: "\n\n**Constraints:**\n- **Max File Size**: 10240000 bytes (9.77 MB) per file\n- **Max File Count**: 100 files per commit\n- **Max Patch Size**: 10240 bytes (10 KB) total per push (max: 100 KB)\n"
           GH_AW_MEMORY_DESCRIPTION: ''
           GH_AW_MEMORY_DIR: '/tmp/gh-aw/repo-memory/default/'
           GH_AW_MEMORY_TARGET_REPO: ' of the current repository'
@@ -1632,7 +1632,7 @@ jobs:
           MEMORY_ID: default
           TARGET_REPO: ${{ github.repository }}
           BRANCH_NAME: memory/daily-test-improver
-          MAX_FILE_SIZE: 102400
+          MAX_FILE_SIZE: 10240000
           MAX_FILE_COUNT: 100
           MAX_PATCH_SIZE: 10240
           ALLOWED_EXTENSIONS: '[]'
