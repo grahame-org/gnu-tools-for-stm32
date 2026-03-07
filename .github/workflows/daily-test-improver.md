@@ -53,7 +53,8 @@ tools:
   bash: true
   github:
     toolsets: [all]
-  repo-memory: true
+  repo-memory:
+    max-file-size: 102400  # 100KB
 
 source: githubnext/agentics/workflows/daily-test-improver.md@b466f28f0f65b68d6f2b10b15b44f51d787b93be
 engine: copilot
