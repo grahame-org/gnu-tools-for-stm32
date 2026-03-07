@@ -721,7 +721,7 @@ if [ "$skip_mingw32" != "yes" ] ; then
     saveenvvar STRIP $HOST_MINGW_TOOL-strip
     saveenvvar NM $HOST_MINGW_TOOL-nm
 
-    echo Task [IV-0] /$HOST_MINGW/host_unpack/ | tee -a "$BUILDDIR_MINGW/.stage"
+    echo "Task [IV-0] /$HOST_MINGW/host_unpack/" | tee -a "$BUILDDIR_MINGW/.stage"
     rm -rf $BUILDDIR_MINGW/tools-$OBJ_SUFFIX_NATIVE && mkdir $BUILDDIR_MINGW/tools-$OBJ_SUFFIX_NATIVE
     pushd $BUILDDIR_MINGW/tools-$OBJ_SUFFIX_NATIVE
     ln -s . $INSTALL_PACKAGE_NAME
@@ -729,7 +729,7 @@ if [ "$skip_mingw32" != "yes" ] ; then
     rm $INSTALL_PACKAGE_NAME
     popd
 
-    echo Task [IV-1] /$HOST_MINGW/binutils/ | tee -a "$BUILDDIR_MINGW/.stage"
+    echo "Task [IV-1] /$HOST_MINGW/binutils/" | tee -a "$BUILDDIR_MINGW/.stage"
     prepend_path PATH $BUILDDIR_MINGW/tools-$OBJ_SUFFIX_NATIVE/bin
     rm -rf $BUILDDIR_MINGW/binutils && mkdir -p $BUILDDIR_MINGW/binutils
     pushd $BUILDDIR_MINGW/binutils
@@ -769,7 +769,7 @@ if [ "$skip_mingw32" != "yes" ] ; then
     rm -rf ./lib
     popd
 
-    echo Task [IV-2] /$HOST_MINGW/copy_libs/ | tee -a "$BUILDDIR_MINGW/.stage"
+    echo "Task [IV-2] /$HOST_MINGW/copy_libs/" | tee -a "$BUILDDIR_MINGW/.stage"
     if [ "$skip_manual" != "yes" ]; then
         copy_dir $BUILDDIR_MINGW/tools-$OBJ_SUFFIX_NATIVE/share/doc/gcc-arm-none-eabi/html $INSTALLDIR_MINGW_DOC/html
         copy_dir $BUILDDIR_MINGW/tools-$OBJ_SUFFIX_NATIVE/share/doc/gcc-arm-none-eabi/pdf $INSTALLDIR_MINGW_DOC/pdf
@@ -779,7 +779,7 @@ if [ "$skip_mingw32" != "yes" ] ; then
     copy_dir $BUILDDIR_MINGW/tools-$OBJ_SUFFIX_NATIVE/arm-none-eabi/include/c++ $INSTALLDIR_MINGW/arm-none-eabi/include/c++
     copy_dir $BUILDDIR_MINGW/tools-$OBJ_SUFFIX_NATIVE/lib/gcc/arm-none-eabi $INSTALLDIR_MINGW/lib/gcc/arm-none-eabi
 
-    echo Task [IV-3] /$HOST_MINGW/gcc-final/ | tee -a "$BUILDDIR_MINGW/.stage"
+    echo "Task [IV-3] /$HOST_MINGW/gcc-final/" | tee -a "$BUILDDIR_MINGW/.stage"
     saveenv
     saveenvvar AR_FOR_TARGET $TARGET-ar
     saveenvvar NM_FOR_TARGET $TARGET-nm
@@ -855,7 +855,7 @@ if [ "$skip_mingw32" != "yes" ] ; then
     find $INSTALLDIR_MINGW -name 'liblto_plugin.so*' -exec rm -vf \{\} \;
     restoreenv
 
-    echo Task [IV-4] /$HOST_MINGW/gdb/ | tee -a "$BUILDDIR_MINGW/.stage"
+    echo "Task [IV-4] /$HOST_MINGW/gdb/" | tee -a "$BUILDDIR_MINGW/.stage"
     build_mingw_gdb()
     {
         MINGW_GDB_CONF_OPTS=$1
@@ -912,7 +912,7 @@ if [ "$skip_mingw32" != "yes" ] ; then
         build_mingw_gdb "--with-python=$script_path/python-config.sh --program-suffix=-py --program-prefix=$TARGET- $build_mingw_gdb_conf_opts"
     fi
 
-    echo Task [IV-5] /$HOST_MINGW/pretidy/ | tee -a "$BUILDDIR_MINGW/.stage"
+    echo "Task [IV-5] /$HOST_MINGW/pretidy/" | tee -a "$BUILDDIR_MINGW/.stage"
     pushd $INSTALLDIR_MINGW
     rm -rf ./lib/libiberty.a
     rm -rf $INSTALLDIR_MINGW_DOC/info
@@ -920,10 +920,10 @@ if [ "$skip_mingw32" != "yes" ] ; then
 
     find $INSTALLDIR_MINGW -name '*.la' -exec rm '{}' ';'
 
-    echo Task [IV-6] /Validate executables/
+    echo "Task [IV-6] /Validate executables/"
     $SRCDIR/liblongpath-win32/helper.py --validate $INSTALLDIR_MINGW  --triplet $HOST_MINGW_TOOL
 
-    echo Task [IV-6] /$HOST_MINGW/strip_host_objects/ | tee -a "$BUILDDIR_MINGW/.stage"
+    echo "Task [IV-6] /$HOST_MINGW/strip_host_objects/" | tee -a "$BUILDDIR_MINGW/.stage"
     STRIP_BINARIES=$(find $INSTALLDIR_MINGW/bin/ -name arm-none-eabi-\*.exe)
     if [ "$is_debug_build" == "no" ] ; then
         for bin in $STRIP_BINARIES ; do
@@ -941,7 +941,7 @@ if [ "$skip_mingw32" != "yes" ] ; then
         done
     fi
 
-    echo Task [IV-7] /$HOST_MINGW/installation/ | tee -a "$BUILDDIR_MINGW/.stage"
+    echo "Task [IV-7] /$HOST_MINGW/installation/" | tee -a "$BUILDDIR_MINGW/.stage"
     rm -f $PACKAGEDIR/$PACKAGE_NAME_MINGW.exe
     pushd $BUILDDIR_MINGW
     rm -f $INSTALL_PACKAGE_NAME
@@ -951,7 +951,7 @@ if [ "$skip_mingw32" != "yes" ] ; then
     popd
     restoreenv
 
-    echo Task [IV-8] /Package toolchain in zip format/
+    echo "Task [IV-8] /Package toolchain in zip format/"
     # shellcheck disable=SC2046
     pushd $(dirname $INSTALLDIR_MINGW)
     # shellcheck disable=SC2046
@@ -962,7 +962,7 @@ if [ "$skip_mingw32" != "yes" ] ; then
     popd
 
     if [ "$skip_package_bins" != "yes" ]; then
-        echo Task [IV-10] /Package toolchain in ST version/
+        echo "Task [IV-10] /Package toolchain in ST version/"
         pushd $ROOT
         time ${TAR} czf $PACKAGEDIR/${PACKAGE_NAME_MINGW}-build.tar.gz --owner=0 --group=0 build-mingw/
         time ${TAR} czf $PACKAGEDIR/${PACKAGE_NAME_MINGW}-install.tar.gz --owner=0 --group=0 install-mingw/
@@ -971,7 +971,7 @@ if [ "$skip_mingw32" != "yes" ] ; then
 fi #end of if [ "$skip_mingw32" != "yes" ] ;
 
 if [ "$skip_package_sources" != "yes" ]; then
-    echo Task [V-0] /package_sources/
+    echo "Task [V-0] /package_sources/"
     pushd "$PACKAGEDIR"
     rm -rf "$PACKAGE_NAME" && mkdir -p "$PACKAGE_NAME/src"
     pack_dir_clean "$SRCDIR" "$BINUTILS" "$PACKAGE_NAME/src/$BINUTILS.tar.bz2" \
@@ -1011,7 +1011,7 @@ if [ "$skip_package_sources" != "yes" ]; then
 fi
 
 if [ "$skip_md5_checksum" != "yes" ]; then
-    echo Task [V-1] /md5_checksum/
+    echo "Task [V-1] /md5_checksum/"
     pushd "$PACKAGEDIR"
     MD5_CHECKSUM_FILE="md5-$(uname -m)-$(uname | tr '[:upper:]' '[:lower:]').txt"
     rm -rf "$MD5_CHECKSUM_FILE"
