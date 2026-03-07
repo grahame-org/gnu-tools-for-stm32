@@ -12,7 +12,7 @@ permissions: {}
 
 jobs:
   check-changes:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     permissions:
       contents: read
       pull-requests: read
@@ -84,7 +84,7 @@ jobs:
           path: gdb-selftest-results.txt
 
   gdb-selftests-status:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     needs: [check-changes, gdb-selftests]
     if: always()
     steps:
