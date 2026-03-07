@@ -12,7 +12,7 @@ permissions: {}
 
 jobs:
   check-changes:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     permissions:
       contents: read
       pull-requests: read
@@ -92,7 +92,7 @@ jobs:
             build/binutils/**/*.log
 
   binutils-tests-status:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     needs: [check-changes, binutils-tests]
     if: always()
     steps:
