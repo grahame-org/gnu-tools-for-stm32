@@ -299,9 +299,11 @@ the squash commit message).
      creation path in `push_repo_memory.cjs` fails with `spawnSync git ENOBUFS`.
   2. **`safe_outputs` job**: `"base_branch":"${{ github.ref_name }}"` added to the
      `create_pull_request` and `push_to_pull_request_branch` handler configs inside
-     `GH_AW_SAFE_OUTPUTS_HANDLER_CONFIG`. This is already expressed via
-     `base-branch: "${{ github.ref_name }}"` in the `.md` frontmatter; if
-     `gh aw compile` is ever run, these are re-generated automatically.
+     `GH_AW_SAFE_OUTPUTS_HANDLER_CONFIG`. This cannot be expressed in the `.md`
+     frontmatter because `github.ref_name` is not in gh-aw's allowed expressions
+     list (only numeric/ID/SHA-type context expressions are allowed). The expression
+     is valid GitHub Actions YAML and is evaluated correctly at runtime in the
+     lock.yml. Must be re-applied manually after `gh aw compile`.
 
 ---
 
