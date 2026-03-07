@@ -283,7 +283,7 @@ jobs:
           GH_AW_GITHUB_WORKSPACE: ${{ github.workspace }}
           GH_AW_IS_PR_COMMENT: ${{ github.event.issue.pull_request && 'true' || '' }}
           GH_AW_MEMORY_BRANCH_NAME: 'memory/daily-test-improver'
-          GH_AW_MEMORY_CONSTRAINTS: "\n\n**Constraints:**\n- **Max File Size**: 10240 bytes (0.01 MB) per file\n- **Max File Count**: 100 files per commit\n- **Max Patch Size**: 10240 bytes (10 KB) total per push (max: 100 KB)\n"
+          GH_AW_MEMORY_CONSTRAINTS: "\n\n**Constraints:**\n- **Max File Size**: 102400 bytes (100 KiB) per file\n- **Max File Count**: 100 files per commit\n- **Max Patch Size**: 102400 bytes (100 KiB) total per push (max: 100 KiB)\n"
           GH_AW_MEMORY_DESCRIPTION: ''
           GH_AW_MEMORY_DIR: '/tmp/gh-aw/repo-memory/default/'
           GH_AW_MEMORY_TARGET_REPO: ' of the current repository'
