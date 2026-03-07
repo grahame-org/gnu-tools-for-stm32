@@ -328,15 +328,18 @@ _CDC_TMPDIR=$(mktemp -d)
 mkdir -p "$_CDC_TMPDIR/src/.git"
 mkdir -p "$_CDC_TMPDIR/src/CVS"
 mkdir -p "$_CDC_TMPDIR/src/.svn"
+mkdir -p "$_CDC_TMPDIR/src/.pc"
 mkdir -p "$_CDC_TMPDIR/src/normal_subdir"
 echo "keep me" > "$_CDC_TMPDIR/src/normal.txt"
 echo "keep me too" > "$_CDC_TMPDIR/src/normal_subdir/child.txt"
 echo "git object" > "$_CDC_TMPDIR/src/.git/object"
 echo "cvs entry" > "$_CDC_TMPDIR/src/CVS/Entries"
 echo "svn entry" > "$_CDC_TMPDIR/src/.svn/entries"
+echo "quilt patch" > "$_CDC_TMPDIR/src/.pc/series"
 echo "backup" > "$_CDC_TMPDIR/src/file.txt~"
 echo "orig" > "$_CDC_TMPDIR/src/patch.orig"
 echo "rej" > "$_CDC_TMPDIR/src/patch.rej"
+echo "emacs lock" > "$_CDC_TMPDIR/src/.#lockfile"
 
 copy_dir_clean "$_CDC_TMPDIR/src" "$_CDC_TMPDIR/dst"
 
@@ -350,12 +353,16 @@ assert_eq "copy_dir_clean excludes CVS directory" \
     "" "$(ls "$_CDC_TMPDIR/dst/CVS" 2>/dev/null || true)"
 assert_eq "copy_dir_clean excludes .svn directory" \
     "" "$(ls "$_CDC_TMPDIR/dst/.svn" 2>/dev/null || true)"
+assert_eq "copy_dir_clean excludes .pc directory" \
+    "" "$(ls "$_CDC_TMPDIR/dst/.pc" 2>/dev/null || true)"
 assert_eq "copy_dir_clean excludes *~ backup files" \
     "" "$(ls "$_CDC_TMPDIR/dst/file.txt~" 2>/dev/null || true)"
 assert_eq "copy_dir_clean excludes *.orig files" \
     "" "$(ls "$_CDC_TMPDIR/dst/patch.orig" 2>/dev/null || true)"
 assert_eq "copy_dir_clean excludes *.rej files" \
     "" "$(ls "$_CDC_TMPDIR/dst/patch.rej" 2>/dev/null || true)"
+assert_eq "copy_dir_clean excludes .#* emacs lock files" \
+    "" "$(ls "$_CDC_TMPDIR/dst/.#lockfile" 2>/dev/null || true)"
 
 rm -rf "$_CDC_TMPDIR"
 
