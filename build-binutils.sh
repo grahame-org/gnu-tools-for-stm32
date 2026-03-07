@@ -35,8 +35,8 @@
 #   ./build-binutils.sh [--build_type=...] [--skip_steps=...]
 #
 # The script accepts the same --build_type and --skip_steps flags as
-# build-toolchain.sh.  The --skip_stages flag is accepted but ignored (this
-# script always builds the binutils stage).
+# build-toolchain.sh.  The --skip_stages flag is accepted but ignored (only
+# the binutils stage is handled here; skipping is still controlled by --skip_steps).
 
 set -e
 set -x
