@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 # build-toolchain-args.sh
 # Sourceable helper: defines parse_toolchain_args() for build-toolchain.sh.
 # Can be sourced from test scripts to unit-test argument parsing without
@@ -106,71 +107,64 @@ parse_toolchain_args() {
         esac
     done
 
-    if [ "x$build_type" != "x" ]; then
-      for bt in $build_type; do
+    for bt in $build_type; do
         case $bt in
-          ppa)
-            is_ppa_release=yes
-            is_native_build=no
-            skip_gdb_with_python=yes
-            ;;
-          native)
-            is_native_build=yes
-            is_ppa_release=no
-            ;;
-          debug)
-            BUILD_OPTIONS="-g -O0"
-            is_debug_build=yes
-            ;;
-          *)
-            echo "Unknown build type: $bt" 1>&2
-            _toolchain_usage
-            exit 1
-            ;;
+            ppa)
+                is_ppa_release=yes
+                is_native_build=no
+                skip_gdb_with_python=yes
+                ;;
+            native)
+                is_native_build=yes
+                is_ppa_release=no
+                ;;
+            debug)
+                BUILD_OPTIONS="-g -O0"
+                is_debug_build=yes
+                ;;
+            *)
+                echo "Unknown build type: $bt" 1>&2
+                _toolchain_usage
+                exit 1
+                ;;
         esac
-      done
-    else
-      is_ppa_release=no
-      is_native_build=yes
-    fi
+    done
 
-    if [ "x$skip_steps" != "x" ]; then
-        for ss in $skip_steps; do
-            case $ss in
-                manual)
-                    skip_manual=yes
-                    ;;
-                package_bins)
-                    skip_package_bins=yes
-                    ;;
-                package_sources)
-                    skip_package_sources=yes
-                    ;;
-                md5_checksum)
-                    skip_md5_checksum=yes
-                    ;;
-                gdb-with-python)
-                    skip_gdb_with_python=yes
-                    ;;
-                mingw|mingw32)
-                    skip_mingw32=yes
-                    skip_mingw32_gdb_with_python=yes
-                    ;;
-                mingw-gdb-with-python|mingw32-gdb-with-python)
-                    skip_mingw32_gdb_with_python=yes
-                    ;;
-                native)
-                    skip_native_build=yes
-                    ;;
-                strip)
-                    skip_strip_target_libraries=yes
-                    ;;
-                *)
-                   echo "Unknown build steps: $ss" 1>&2
-                   _toolchain_usage
-                   exit 1
-                   ;;
-            esac
-        done
-    fi
+    for ss in $skip_steps; do
+        case $ss in
+            manual)
+                skip_manual=yes
+                ;;
+            package_bins)
+                skip_package_bins=yes
+                ;;
+            package_sources)
+                skip_package_sources=yes
+                ;;
+            md5_checksum)
+                skip_md5_checksum=yes
+                ;;
+            gdb-with-python)
+                skip_gdb_with_python=yes
+                ;;
+            mingw|mingw32)
+                skip_mingw32=yes
+                skip_mingw32_gdb_with_python=yes
+                ;;
+            mingw-gdb-with-python|mingw32-gdb-with-python)
+                skip_mingw32_gdb_with_python=yes
+                ;;
+            native)
+                skip_native_build=yes
+                ;;
+            strip)
+                skip_strip_target_libraries=yes
+                ;;
+            *)
+                echo "Unknown build steps: $ss" 1>&2
+                _toolchain_usage
+                exit 1
+                ;;
+        esac
+    done
 }
