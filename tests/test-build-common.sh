@@ -348,21 +348,21 @@ assert_eq "copy_dir_clean copies regular file" \
 assert_eq "copy_dir_clean copies nested file in regular subdir" \
     "keep me too" "$(cat "$_CDC_TMPDIR/dst/normal_subdir/child.txt")"
 assert_eq "copy_dir_clean excludes .git directory" \
-    "" "$(ls "$_CDC_TMPDIR/dst/.git" 2>/dev/null || true)"
+    "" "$([ -e "$_CDC_TMPDIR/dst/.git" ] && echo "exists" || true)"
 assert_eq "copy_dir_clean excludes CVS directory" \
-    "" "$(ls "$_CDC_TMPDIR/dst/CVS" 2>/dev/null || true)"
+    "" "$([ -e "$_CDC_TMPDIR/dst/CVS" ] && echo "exists" || true)"
 assert_eq "copy_dir_clean excludes .svn directory" \
-    "" "$(ls "$_CDC_TMPDIR/dst/.svn" 2>/dev/null || true)"
+    "" "$([ -e "$_CDC_TMPDIR/dst/.svn" ] && echo "exists" || true)"
 assert_eq "copy_dir_clean excludes .pc directory" \
-    "" "$(ls "$_CDC_TMPDIR/dst/.pc" 2>/dev/null || true)"
+    "" "$([ -e "$_CDC_TMPDIR/dst/.pc" ] && echo "exists" || true)"
 assert_eq "copy_dir_clean excludes *~ backup files" \
-    "" "$(ls "$_CDC_TMPDIR/dst/file.txt~" 2>/dev/null || true)"
+    "" "$([ -e "$_CDC_TMPDIR/dst/file.txt~" ] && echo "exists" || true)"
 assert_eq "copy_dir_clean excludes *.orig files" \
-    "" "$(ls "$_CDC_TMPDIR/dst/patch.orig" 2>/dev/null || true)"
+    "" "$([ -e "$_CDC_TMPDIR/dst/patch.orig" ] && echo "exists" || true)"
 assert_eq "copy_dir_clean excludes *.rej files" \
-    "" "$(ls "$_CDC_TMPDIR/dst/patch.rej" 2>/dev/null || true)"
+    "" "$([ -e "$_CDC_TMPDIR/dst/patch.rej" ] && echo "exists" || true)"
 assert_eq "copy_dir_clean excludes .#* emacs lock files" \
-    "" "$(ls "$_CDC_TMPDIR/dst/.#lockfile" 2>/dev/null || true)"
+    "" "$([ -e "$_CDC_TMPDIR/dst/.#lockfile" ] && echo "exists" || true)"
 
 rm -rf "$_CDC_TMPDIR"
 
