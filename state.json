@@ -1,0 +1,74 @@
+{
+  "last_updated": "2026-03-07T15:22:51Z",
+  "last_run_id": "22801646311",
+  "commands": {
+    "shell_unit_tests": "bash tests/test-build-common.sh && bash tests/test-build-toolchain-args.sh && bash tests/test-strip-binary.sh",
+    "commitlint": "npm ci && echo \"$PR_TITLE\" | npx --no-install commitlint --verbose",
+    "libiberty_tests": "mkdir -p build/libiberty && cd build/libiberty && ../../src/binutils/libiberty/configure && make -j$(nproc) && make check",
+    "binutils_regression": "make -C build/binutils check-gas check-ld check-binutils (CI only)",
+    "gcc_selftests": "build/gcc/gcc/xgcc ... -fself-test=src/gcc/gcc/testsuite/selftests (CI only)",
+    "gdb_selftests": "build/gdb/gdb/gdb --batch -ex 'maintenance selftest' (CI only)"
+  },
+  "test_counts": {
+    "test_build_common": 36,
+    "test_build_toolchain_args": 59,
+    "test_strip_binary": 12,
+    "total": 107
+  },
+  "open_prs": {
+    "183": {
+      "title": "test: add copy_dir and copy_dir_clean unit tests (groups 11-12)",
+      "status": "open",
+      "ci": "pending",
+      "note": "Manually created by maintainer to fix a conflict from previous run"
+    },
+    "202": {
+      "title": "ci: fix daily-test-improver create_pull_request base branch and memory branch guard",
+      "status": "open",
+      "note": "Copilot fix for workflow issue, not Test Improver"
+    }
+  },
+  "open_issues": {
+    "108": "[Test Improver] Monthly Activity 2026-03",
+    "114": "[plan] Add .shellcheckrc and targeted suppressions"
+  },
+  "backlog": [
+    {
+      "id": "shellcheck-ci",
+      "priority": 1,
+      "description": "shellcheck CI workflow - ~2400+ findings, needs maintainer input on approach",
+      "status": "blocked_on_maintainer"
+    },
+    {
+      "id": "pack_dir_clean-tests",
+      "priority": 2,
+      "description": "Unit tests for pack_dir_clean() - deferred until PR #183 merges",
+      "status": "deferred"
+    }
+  ],
+  "completed_work": [
+    "strip_binary unit tests (test-strip-binary.sh) - PR submitted this run (2026-03-07)",
+    "copy_dir / copy_dir_clean unit tests - PR #183 (still open)",
+    "saveenv/restoreenv/prependenvvar/prepend_path unit tests - merged",
+    "parse_toolchain_args unit tests (test-build-toolchain-args.sh) - merged",
+    "break_hardlink unit tests - merged",
+    "shell-unit-tests.yml CI workflow - merged"
+  ],
+  "task_round_robin": {
+    "last_run_tasks": ["task3_implement", "task7_monthly_activity"],
+    "task1_last_run": "2026-03-07",
+    "task2_last_run": "2026-03-07",
+    "task3_last_run": "2026-03-07",
+    "task4_last_run": "2026-03-07",
+    "task5_last_run": "2026-03-07",
+    "task6_last_run": "never",
+    "task7_last_run": "2026-03-07"
+  },
+  "notes": [
+    "PR creation via safe-outputs is asynchronous - PR number only known on next run",
+    "PR #183 was manually created by grahame-white to fix a git conflict from prior run",
+    "Shallow clone with only HEAD commit - must fetch base branch explicitly when creating new branches",
+    "strip_binary tests use STRIP_CALLED_FILE env var to communicate with mock strip script",
+    "pack_dir_clean deferred until #183 merges to avoid test conflicts in test-build-common.sh"
+  ]
+}
