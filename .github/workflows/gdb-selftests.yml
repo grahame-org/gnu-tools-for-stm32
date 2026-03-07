@@ -5,13 +5,14 @@ on:
     branches:
       - 13.3.rel1
   pull_request:
+  merge_group:
   workflow_dispatch:
 
 permissions: {}
 
 jobs:
   check-changes:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     permissions:
       contents: read
       pull-requests: read
@@ -83,7 +84,7 @@ jobs:
           path: gdb-selftest-results.txt
 
   gdb-selftests-status:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     needs: [check-changes, gdb-selftests]
     if: always()
     steps:

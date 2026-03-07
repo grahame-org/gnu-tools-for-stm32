@@ -24,11 +24,6 @@ permissions: read-all
 network:
   allowed:
   - defaults
-  - dotnet
-  - node
-  - python
-  - rust
-  - java
 
 safe-outputs:
   add-comment:
@@ -58,7 +53,8 @@ tools:
   bash: true
   github:
     toolsets: [all]
-  repo-memory: true
+  repo-memory:
+    max-file-size: 10240000  # 10 MiB
 
 source: githubnext/agentics/workflows/daily-test-improver.md@b466f28f0f65b68d6f2b10b15b44f51d787b93be
 engine: copilot
@@ -119,7 +115,7 @@ Always do Task 7 (Update Monthly Activity Summary Issue) every run. In all comme
    - **Coverage commands**: How to generate coverage reports
    - **Lint/format commands**: Code quality tools used
    - **Test frameworks**: What testing frameworks and assertion libraries are used
-3. Cross-reference against CI files, devcontainer configs, Makefiles, package.json scripts, etc.
+3. Cross-reference against CI workflow files in `.github/workflows/` and build scripts in the repository root.
 4. Validate commands by running them. Record which succeed and which fail.
 5. Update memory with validated commands and any notes about quirks or requirements.
 6. If critical commands fail, create an issue describing the problem and what was tried.
