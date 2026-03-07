@@ -1,6 +1,6 @@
 {
-  "last_updated": "2026-03-07T15:22:51Z",
-  "last_run_id": "22801646311",
+  "last_updated": "2026-03-07T15:46:06Z",
+  "last_run_id": "22802025036",
   "commands": {
     "shell_unit_tests": "bash tests/test-build-common.sh && bash tests/test-build-toolchain-args.sh && bash tests/test-strip-binary.sh",
     "commitlint": "npm ci && echo \"$PR_TITLE\" | npx --no-install commitlint --verbose",
@@ -12,8 +12,8 @@
   "test_counts": {
     "test_build_common": 36,
     "test_build_toolchain_args": 59,
-    "test_strip_binary": 12,
-    "total": 107
+    "test_strip_binary": 8,
+    "total": 103
   },
   "open_prs": {
     "183": {
@@ -26,6 +26,11 @@
       "title": "ci: fix daily-test-improver create_pull_request base branch and memory branch guard",
       "status": "open",
       "note": "Copilot fix for workflow issue, not Test Improver"
+    },
+    "strip_binary_pr": {
+      "title": "[Test Improver] test: add strip_binary unit tests (5 groups, 8 tests)",
+      "status": "open",
+      "note": "Created this run (2026-03-07 15:46), number TBD"
     }
   },
   "open_issues": {
@@ -47,7 +52,7 @@
     }
   ],
   "completed_work": [
-    "strip_binary unit tests (test-strip-binary.sh) - PR submitted this run (2026-03-07)",
+    "strip_binary unit tests (test-strip-binary.sh) - PR submitted 2026-03-07 15:46 (number TBD)",
     "copy_dir / copy_dir_clean unit tests - PR #183 (still open)",
     "saveenv/restoreenv/prependenvvar/prepend_path unit tests - merged",
     "parse_toolchain_args unit tests (test-build-toolchain-args.sh) - merged",
@@ -68,7 +73,8 @@
     "PR creation via safe-outputs is asynchronous - PR number only known on next run",
     "PR #183 was manually created by grahame-white to fix a git conflict from prior run",
     "Shallow clone with only HEAD commit - must fetch base branch explicitly when creating new branches",
-    "strip_binary tests use STRIP_CALLED_FILE env var to communicate with mock strip script",
-    "pack_dir_clean deferred until #183 merges to avoid test conflicts in test-build-common.sh"
+    "Mock strip in test-strip-binary.sh: embed _STRIP_CALLED_FILE path at heredoc time (unquoted delimiter) to avoid child-process variable visibility issues",
+    "pack_dir_clean deferred until #183 merges to avoid test conflicts in test-build-common.sh",
+    "strip_binary uses unquoted $bin and $strip — paths with spaces would break the function (known limitation)"
   ]
 }
