@@ -5,6 +5,7 @@ on:
     branches:
       - 13.3.rel1
   pull_request:
+  merge_group:
   workflow_dispatch:
 
 permissions: {}
