@@ -188,29 +188,6 @@ jobs:
             echo "final=${key_final}"
           } >> "$GITHUB_OUTPUT"
 
-      # --- Stage: binutils ---
-      - name: Restore cache – binutils
-        id: cache-binutils
-        uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
-        with:
-          path: install-native
-          key: ${{ runner.os }}-stage-v1-${{ steps.stage-hashes.outputs.binutils }}
-
-      - name: Build stage – binutils
-        if: steps.cache-binutils.outputs.cache-hit != 'true' && steps.cache-toolchain.outputs.cache-hit != 'true'
-        run: |
-          export JOBS=$(nproc)
-          ./build-toolchain.sh \
-            --skip_steps=mingw,mingw-gdb-with-python,gdb-with-python,manual,package_sources \
-            --skip_stages=gcc-first,newlib,newlib-nano,gcc-final,gcc-size-libstdcxx,gdb
-
-      - name: Save cache – binutils
-        if: steps.cache-binutils.outputs.cache-hit != 'true' && steps.cache-toolchain.outputs.cache-hit != 'true' && github.event_name != 'merge_group'
-        uses: actions/cache/save@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
-        with:
-          path: install-native
-          key: ${{ runner.os }}-stage-v1-${{ steps.stage-hashes.outputs.binutils }}
-
       - name: Restore cache – toolchain
         id: cache-toolchain
         uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
@@ -218,11 +195,37 @@ jobs:
           path: install-native
           key: ${{ runner.os }}-toolchain-${{ hashFiles('build-toolchain.sh', 'build-prerequisites.sh', 'build-common.sh') }}-${{ steps.src-hashes.outputs.toolchain-src }}
 
+      # --- Stage: binutils ---
+      - name: Restore cache – binutils
+        id: cache-binutils
+        if: steps.cache-toolchain.outputs.cache-hit != 'true'
+        uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        with:
+          path: install-native
+          key: ${{ runner.os }}-stage-v1-${{ steps.stage-hashes.outputs.binutils }}
+
+      - name: Build stage – binutils
+        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-binutils.outputs.cache-hit != 'true'
+        run: |
+          export JOBS=$(nproc)
+          ./build-toolchain.sh \
+            --skip_steps=mingw,mingw-gdb-with-python,gdb-with-python,manual,package_sources \
+            --skip_stages=gcc-first,newlib,newlib-nano,gcc-final,gcc-size-libstdcxx,gdb
+
+      - name: Save cache – binutils
+        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-binutils.outputs.cache-hit != 'true' && github.event_name != 'merge_group'
+        uses: actions/cache/save@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        with:
+          path: install-native
+          key: ${{ runner.os }}-stage-v1-${{ steps.stage-hashes.outputs.binutils }}
+
       - name: Build toolchain
         if: steps.cache-toolchain.outputs.cache-hit != 'true'
         run: |
           export JOBS=$(nproc)
-          ./build-toolchain.sh --skip_steps=mingw,mingw-gdb-with-python,gdb-with-python,manual,package_sources
+          ./build-toolchain.sh \
+            --skip_steps=mingw,mingw-gdb-with-python,gdb-with-python,manual,package_sources \
+            --skip_stages=binutils
 
       - name: Save cache – toolchain
         if: steps.cache-toolchain.outputs.cache-hit != 'true' && github.event_name != 'merge_group'
