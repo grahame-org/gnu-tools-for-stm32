@@ -1,18 +1,17 @@
-name: Shell Script Unit Tests
+name: ShellCheck
 
 on:
   push:
     branches:
       - 13.3.rel1
   pull_request:
-  merge_group:
   workflow_dispatch:
 
 permissions: {}
 
 jobs:
   check-changes:
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
     permissions:
       contents: read
       pull-requests: read
@@ -27,16 +26,15 @@ jobs:
           filters: |
             test:
               - 'build-common.sh'
-              - 'build-gcc-first.sh'
               - 'build-toolchain.sh'
-              - 'build-toolchain-args.sh'
-              - 'tests/**'
-              - '.github/workflows/shell-unit-tests.yml'
+              - 'build-prerequisites.sh'
+              - '.shellcheckrc'
+              - '.github/workflows/shellcheck.yml'
 
-  shell-unit-tests:
+  shellcheck:
     needs: check-changes
     if: needs.check-changes.outputs.should-test == 'true'
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
     permissions:
       contents: read
     steps:
@@ -45,22 +43,20 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Run shell unit tests
-        run: |
-          bash tests/test-build-common.sh
-          bash tests/test-build-toolchain-args.sh
+      - name: Run shellcheck on build scripts
+        run: shellcheck --severity=warning build-common.sh build-toolchain.sh build-prerequisites.sh
 
-  shell-unit-tests-status:
-    runs-on: ubuntu-slim
-    needs: [check-changes, shell-unit-tests]
+  shellcheck-status:
+    runs-on: ubuntu-latest
+    needs: [check-changes, shellcheck]
     if: always()
     steps:
-      - name: Report test status
+      - name: Report shellcheck status
         run: |
           if [[ "${{ needs.check-changes.result }}" == "failure" || "${{ needs.check-changes.result }}" == "cancelled" ]]; then
             echo "check-changes job failed or was cancelled" && exit 1
           fi
-          if [[ "${{ needs.shell-unit-tests.result }}" == "failure" || "${{ needs.shell-unit-tests.result }}" == "cancelled" ]]; then
-            echo "Tests failed or were cancelled" && exit 1
+          if [[ "${{ needs.shellcheck.result }}" == "failure" || "${{ needs.shellcheck.result }}" == "cancelled" ]]; then
+            echo "ShellCheck failed or was cancelled" && exit 1
           fi
-          echo "Tests skipped or succeeded"
+          echo "ShellCheck skipped or succeeded"
