@@ -59,6 +59,10 @@ cd "$script_path"
 . "$script_path/build-toolchain-args.sh"
 parse_toolchain_args "$@"
 
+if [ "x$is_ppa_release" != "xyes" ]; then
+  NEWLIB_CONFIG_OPTS=" --build=$BUILD --host=$HOST_NATIVE "
+fi
+
 if [ "x$skip_native_build" != "xyes" ] ; then
     mkdir -p $BUILDDIR_NATIVE
     mkdir -p $INSTALLDIR_NATIVE
