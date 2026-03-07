@@ -1,8 +1,8 @@
 {
-  "last_updated": "2026-03-07T15:46:06Z",
-  "last_run_id": "22802025036",
+  "last_updated": "2026-03-07T17:45:25Z",
+  "last_run_id": "22803951533",
   "commands": {
-    "shell_unit_tests": "bash tests/test-build-common.sh && bash tests/test-build-toolchain-args.sh && bash tests/test-strip-binary.sh",
+    "shell_unit_tests": "bash tests/test-build-common.sh && bash tests/test-build-toolchain-args.sh",
     "commitlint": "npm ci && echo \"$PR_TITLE\" | npx --no-install commitlint --verbose",
     "libiberty_tests": "mkdir -p build/libiberty && cd build/libiberty && ../../src/binutils/libiberty/configure && make -j$(nproc) && make check",
     "binutils_regression": "make -C build/binutils check-gas check-ld check-binutils (CI only)",
@@ -10,27 +10,21 @@
     "gdb_selftests": "build/gdb/gdb/gdb --batch -ex 'maintenance selftest' (CI only)"
   },
   "test_counts": {
-    "test_build_common": 36,
+    "test_build_common": 60,
     "test_build_toolchain_args": 59,
-    "test_strip_binary": 8,
-    "total": 103
+    "total": 119
   },
   "open_prs": {
-    "183": {
-      "title": "test: add copy_dir and copy_dir_clean unit tests (groups 11-12)",
+    "208": {
+      "title": "test: add strip_binary unit tests (test-strip-binary.sh)",
       "status": "open",
       "ci": "pending",
-      "note": "Manually created by maintainer to fix a conflict from previous run"
+      "note": "Created by Copilot from issue #204; 13 tests, 5 groups, mock-strip pattern"
     },
-    "202": {
-      "title": "ci: fix daily-test-improver create_pull_request base branch and memory branch guard",
+    "pack_dir_clean_pr": {
+      "title": "[Test Improver] test: add pack_dir_clean unit tests (group 13)",
       "status": "open",
-      "note": "Copilot fix for workflow issue, not Test Improver"
-    },
-    "strip_binary_pr": {
-      "title": "[Test Improver] test: add strip_binary unit tests (5 groups, 8 tests)",
-      "status": "open",
-      "note": "Created this run (2026-03-07 15:46), number TBD"
+      "note": "Created this run (2026-03-07 17:45), number TBD"
     }
   },
   "open_issues": {
@@ -43,17 +37,12 @@
       "priority": 1,
       "description": "shellcheck CI workflow - ~2400+ findings, needs maintainer input on approach",
       "status": "blocked_on_maintainer"
-    },
-    {
-      "id": "pack_dir_clean-tests",
-      "priority": 2,
-      "description": "Unit tests for pack_dir_clean() - deferred until PR #183 merges",
-      "status": "deferred"
     }
   ],
   "completed_work": [
-    "strip_binary unit tests (test-strip-binary.sh) - PR submitted 2026-03-07 15:46 (number TBD)",
-    "copy_dir / copy_dir_clean unit tests - PR #183 (still open)",
+    "pack_dir_clean unit tests (group 13, 11 tests) - PR submitted 2026-03-07 17:45 (number TBD)",
+    "strip_binary unit tests (test-strip-binary.sh) - PR #208 open",
+    "copy_dir / copy_dir_clean unit tests - PR #183 MERGED",
     "saveenv/restoreenv/prependenvvar/prepend_path unit tests - merged",
     "parse_toolchain_args unit tests (test-build-toolchain-args.sh) - merged",
     "break_hardlink unit tests - merged",
@@ -71,10 +60,12 @@
   },
   "notes": [
     "PR creation via safe-outputs is asynchronous - PR number only known on next run",
-    "PR #183 was manually created by grahame-white to fix a git conflict from prior run",
+    "PR #183 MERGED - copy_dir/copy_dir_clean tests are in main branch",
+    "PR #208 open - strip_binary tests (test-strip-binary.sh), created by Copilot from issue #204",
     "Shallow clone with only HEAD commit - must fetch base branch explicitly when creating new branches",
-    "Mock strip in test-strip-binary.sh: embed _STRIP_CALLED_FILE path at heredoc time (unquoted delimiter) to avoid child-process variable visibility issues",
-    "pack_dir_clean deferred until #183 merges to avoid test conflicts in test-build-common.sh",
-    "strip_binary uses unquoted $bin and $strip — paths with spaces would break the function (known limitation)"
+    "pack_dir_clean uses unquoted $1/$2/$3 (no arg validation) - function is simple tar wrapper with exclusions",
+    "All main testable functions in build-common.sh now have unit tests. copy_multi_libs requires real GCC binary (not unit-testable).",
+    "test-build-common.sh now has groups 1-13 covering: saveenv/restoreenv, prependenvvar, prepend_path, break_hardlink, copy_dir, copy_dir_clean, pack_dir_clean",
+    "strip_binary tests are in test-strip-binary.sh (separate file, PR #208)"
   ]
 }
