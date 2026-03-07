@@ -190,36 +190,7 @@ if [ "x$skip_native_build" != "xyes" ] ; then
     if stage_is_skipped "newlib-nano"; then
         echo "Skipping stage: newlib-nano (cache hit)"
     else
-    echo Task [III-3] /$HOST_NATIVE/newlib-nano/ | tee -a "$BUILDDIR_NATIVE/.stage"
-    saveenv
-    prepend_path PATH $INSTALLDIR_NATIVE/bin
-    saveenvvar CFLAGS_FOR_TARGET '-g -Os -ffunction-sections -fdata-sections -fno-unroll-loops -DPREFER_SIZE_OVER_SPEED -D__OPTIMIZE_SIZE__ -DSMALL_MEMORY'
-    rm -rf $BUILDDIR_NATIVE/newlib-nano && mkdir -p $BUILDDIR_NATIVE/newlib-nano
-    pushd $BUILDDIR_NATIVE/newlib-nano
-
-    $SRCDIR/$NEWLIB_NANO/configure  \
-        $NEWLIB_CONFIG_OPTS \
-        --target=$TARGET \
-        --prefix=$BUILDDIR_NATIVE/target-libs \
-        --disable-newlib-supplied-syscalls    \
-        --enable-newlib-reent-check-verify    \
-        --enable-newlib-reent-small           \
-        --enable-newlib-retargetable-locking  \
-        --disable-newlib-fvwrite-in-streamio  \
-        --disable-newlib-fseek-optimization   \
-        --disable-newlib-wide-orient          \
-        --enable-newlib-nano-malloc           \
-        --disable-newlib-unbuf-stream-opt     \
-        --enable-lite-exit                    \
-        --enable-newlib-global-atexit         \
-        --enable-newlib-nano-formatted-io     \
-        --disable-nls
-
-    make -j$JOBS
-    make install
-
-    popd
-    restoreenv
+        "$script_path/build-newlib-nano.sh" "$@"
     fi  # newlib-nano stage
 
     if stage_is_skipped "gcc-final"; then
