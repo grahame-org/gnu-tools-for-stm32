@@ -294,7 +294,7 @@ the squash commit message).
 - **`daily-test-improver.lock.yml` contains two intentional manual edits** that
   must be re-applied after every `gh aw compile`:
   1. **`push_repo_memory` job**: an "Ensure memory branch exists" step added
-     before the push step. Required because gh-aw v0.53.6 provides no frontmatter
+     before the push step. Required because gh-aw currently provides no frontmatter
      mechanism for this, and on this large repo (~217k files) the orphan-branch
      creation path in `push_repo_memory.cjs` fails with `spawnSync git ENOBUFS`.
   2. **`safe_outputs` job**: `"base_branch":"${{ github.ref_name }}"` added to the
