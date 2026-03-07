@@ -297,13 +297,15 @@ the squash commit message).
      before the push step. Required because gh-aw currently provides no frontmatter
      mechanism for this, and on this large repo (~217k files) the orphan-branch
      creation path in `push_repo_memory.cjs` fails with `spawnSync git ENOBUFS`.
-  2. **`safe_outputs` job**: `"base_branch":"${{ github.ref_name }}"` added to the
+  2. **`safe_outputs` job**: `"base_branch":"${{ github.event.pull_request.base.ref || github.base_ref || github.ref_name }}"` added to the
      `create_pull_request` and `push_to_pull_request_branch` handler configs inside
      `GH_AW_SAFE_OUTPUTS_HANDLER_CONFIG`. This cannot be expressed in the `.md`
-     frontmatter because `github.ref_name` is not in gh-aw's allowed expressions
-     list (only numeric/ID/SHA-type context expressions are allowed). The expression
-     is valid GitHub Actions YAML and is evaluated correctly at runtime in the
-     lock.yml. Must be re-applied manually after `gh aw compile`.
+     frontmatter because these expressions are not in gh-aw's allowed expressions
+     list (only numeric/ID/SHA-type context expressions are allowed). The full
+     fallback chain selects the PR base on `pull_request` events and falls back to
+     `github.ref_name` for scheduled/dispatch runs. The expression is valid GitHub
+     Actions YAML and is evaluated correctly at runtime in the lock.yml. Must be
+     re-applied manually after `gh aw compile`.
   3. **`safe_outputs` job**: `workflows: write` added to `permissions`. Required
      because the agent can propose patches that add or modify files under
      `.github/workflows/` (e.g. adding a new test workflow). Without this permission
