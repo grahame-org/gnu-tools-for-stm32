@@ -1703,6 +1703,7 @@ jobs:
       discussions: write
       issues: write
       pull-requests: write
+      workflows: write
     timeout-minutes: 15
     env:
       GH_AW_CALLER_WORKFLOW_ID: "${{ github.repository }}/daily-test-improver"

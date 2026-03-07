@@ -291,7 +291,7 @@ the squash commit message).
   infrastructure you should not manually edit without understanding the agent
   framework in `.github/aw/`.
 
-- **`daily-test-improver.lock.yml` contains two intentional manual edits** that
+- **`daily-test-improver.lock.yml` contains three intentional manual edits** that
   must be re-applied after every `gh aw compile`:
   1. **`push_repo_memory` job**: an "Ensure memory branch exists" step added
      before the push step. Required because gh-aw currently provides no frontmatter
@@ -304,6 +304,13 @@ the squash commit message).
      list (only numeric/ID/SHA-type context expressions are allowed). The expression
      is valid GitHub Actions YAML and is evaluated correctly at runtime in the
      lock.yml. Must be re-applied manually after `gh aw compile`.
+  3. **`safe_outputs` job**: `workflows: write` added to `permissions`. Required
+     because the agent can propose patches that add or modify files under
+     `.github/workflows/` (e.g. adding a new test workflow). Without this permission
+     GitHub rejects the push with "refusing to allow a GitHub App to create or update
+     workflow … without `workflows` permission". gh-aw does not expose a frontmatter
+     mechanism to add individual permission entries to the auto-generated
+     `safe_outputs` job. Must be re-applied manually after `gh aw compile`.
 
 ---
 
