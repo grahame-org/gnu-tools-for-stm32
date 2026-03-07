@@ -37,6 +37,7 @@ umask 022
 
 exec < /dev/null
 
+# shellcheck disable=SC2046
 script_path=$(cd $(dirname $0) && pwd -P)
 . $script_path/build-common.sh
 
@@ -531,14 +532,16 @@ if [ "x$skip_native_build" != "xyes" ] ; then
     if [ "x$BUILD" == "xx86_64-apple-darwin10" ]; then
         echo Task [III-14] /Validate tool dependencies/
         invalid=()
+        # shellcheck disable=SC2046,SC2038
         while read line; do
           if objdump -macho --dylibs-used "$line" | grep -q '/usr/local/'; then
+            # shellcheck disable=SC2206
             invalid+=($line)
           fi
         done <<< $(find $INSTALLDIR_NATIVE/ -type f |  xargs file | grep "Mach-O " | cut -d: -f1)
 
         if [ ${#invalid[@]} -ne 0 ]; then
-          echo -e "Illegal dependency detected!${invalid[@]/#/\\n}\nAborting..."
+          echo -e "Illegal dependency detected!${invalid[*]/#/\\n}\nAborting..."
           exit 1
         fi
     fi
@@ -787,7 +790,9 @@ if [ "x$skip_mingw32" != "xyes" ] ; then
     restoreenv
 
     echo Task [IV-8] /Package toolchain in zip format/
+    # shellcheck disable=SC2046
     pushd $(dirname $INSTALLDIR_MINGW)
+    # shellcheck disable=SC2046
     ln -s $(basename $INSTALLDIR_MINGW) $PACKAGE_NAME
     rm -f $PACKAGEDIR/$PACKAGE_NAME_MINGW.zip
     zip -r9 $PACKAGEDIR/$PACKAGE_NAME_MINGW.zip $PACKAGE_NAME
@@ -816,6 +821,7 @@ if [ "x$skip_package_sources" != "xyes" ]; then
 
     for prereq in $SRC_PREREQS; do
         eval prereq_pack="\$${prereq}_PACK"
+        # shellcheck disable=SC2154
         cp "$SRCDIR/$prereq_pack" "$PACKAGE_NAME/src/"
     done
 
