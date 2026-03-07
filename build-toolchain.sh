@@ -245,7 +245,7 @@ fi
 cd $SRCDIR
 
 if [ "$skip_native_build" != "yes" ] ; then
-    echo Task [III-0] /$HOST_NATIVE/binutils/ | tee -a "$BUILDDIR_NATIVE/.stage"
+    echo "Task [III-0] /$HOST_NATIVE/binutils/" | tee -a "$BUILDDIR_NATIVE/.stage"
     rm -rf $BUILDDIR_NATIVE/binutils && mkdir -p $BUILDDIR_NATIVE/binutils
     pushd $BUILDDIR_NATIVE/binutils
     saveenv
@@ -286,7 +286,7 @@ if [ "$skip_native_build" != "yes" ] ; then
     rm -rf ./lib
     popd
 
-    echo Task [III-1] /$HOST_NATIVE/gcc-first/ | tee -a "$BUILDDIR_NATIVE/.stage"
+    echo "Task [III-1] /$HOST_NATIVE/gcc-first/" | tee -a "$BUILDDIR_NATIVE/.stage"
     rm -rf $BUILDDIR_NATIVE/gcc-first && mkdir -p $BUILDDIR_NATIVE/gcc-first
     pushd $BUILDDIR_NATIVE/gcc-first
     $SRCDIR/$GCC/configure --target=$TARGET \
@@ -335,7 +335,7 @@ if [ "$skip_native_build" != "yes" ] ; then
     rm -rf  include
     popd
 
-    echo Task [III-2] /$HOST_NATIVE/newlib/ | tee -a "$BUILDDIR_NATIVE/.stage"
+    echo "Task [III-2] /$HOST_NATIVE/newlib/" | tee -a "$BUILDDIR_NATIVE/.stage"
     saveenv
     prepend_path PATH $INSTALLDIR_NATIVE/bin
     saveenvvar CFLAGS_FOR_TARGET '-g -Os -ffunction-sections -fdata-sections -fno-unroll-loops -DPREFER_SIZE_OVER_SPEED -D__OPTIMIZE_SIZE__ -DSMALL_MEMORY'
@@ -377,7 +377,7 @@ if [ "$skip_native_build" != "yes" ] ; then
     popd
     restoreenv
 
-    echo Task [III-3] /$HOST_NATIVE/newlib-nano/ | tee -a "$BUILDDIR_NATIVE/.stage"
+    echo "Task [III-3] /$HOST_NATIVE/newlib-nano/" | tee -a "$BUILDDIR_NATIVE/.stage"
     saveenv
     prepend_path PATH $INSTALLDIR_NATIVE/bin
     saveenvvar CFLAGS_FOR_TARGET '-g -Os -ffunction-sections -fdata-sections -fno-unroll-loops -DPREFER_SIZE_OVER_SPEED -D__OPTIMIZE_SIZE__ -DSMALL_MEMORY'
@@ -408,7 +408,7 @@ if [ "$skip_native_build" != "yes" ] ; then
     popd
     restoreenv
 
-    echo Task [III-4] /$HOST_NATIVE/gcc-final/ | tee -a "$BUILDDIR_NATIVE/.stage"
+    echo "Task [III-4] /$HOST_NATIVE/gcc-final/" | tee -a "$BUILDDIR_NATIVE/.stage"
     rm -f $INSTALLDIR_NATIVE/arm-none-eabi/usr
     ln -s . $INSTALLDIR_NATIVE/arm-none-eabi/usr
 
@@ -475,7 +475,7 @@ if [ "$skip_native_build" != "yes" ] ; then
     rm -f $INSTALLDIR_NATIVE/arm-none-eabi/usr
     popd
 
-    echo Task [III-5] /$HOST_NATIVE/gcc-size-libstdcxx/ | tee -a "$BUILDDIR_NATIVE/.stage"
+    echo "Task [III-5] /$HOST_NATIVE/gcc-size-libstdcxx/" | tee -a "$BUILDDIR_NATIVE/.stage"
     rm -f $BUILDDIR_NATIVE/target-libs/arm-none-eabi/usr
     ln -s . $BUILDDIR_NATIVE/target-libs/arm-none-eabi/usr
 
@@ -526,7 +526,7 @@ if [ "$skip_native_build" != "yes" ] ; then
 
     popd
 
-    echo Task [III-6] /$HOST_NATIVE/gdb/ | tee -a "$BUILDDIR_NATIVE/.stage"
+    echo "Task [III-6] /$HOST_NATIVE/gdb/" | tee -a "$BUILDDIR_NATIVE/.stage"
     build_gdb()
     {
         GDB_EXTRA_CONFIG_OPTS=$1
@@ -587,11 +587,11 @@ if [ "$skip_native_build" != "yes" ] ; then
         fi
     fi
 
-    echo Task [III-8] /$HOST_NATIVE/pretidy/ | tee -a "$BUILDDIR_NATIVE/.stage"
+    echo "Task [III-8] /$HOST_NATIVE/pretidy/" | tee -a "$BUILDDIR_NATIVE/.stage"
     rm -rf $INSTALLDIR_NATIVE/lib/libiberty.a
     find $INSTALLDIR_NATIVE -name '*.la' -exec rm '{}' ';'
 
-    echo Task [III-9] /$HOST_NATIVE/strip_host_objects/ | tee -a "$BUILDDIR_NATIVE/.stage"
+    echo "Task [III-9] /$HOST_NATIVE/strip_host_objects/" | tee -a "$BUILDDIR_NATIVE/.stage"
     if [ "$is_debug_build" == "no" ] ; then
         STRIP_BINARIES=$(find $INSTALLDIR_NATIVE/bin/ -name arm-none-eabi-\*)
         for bin in $STRIP_BINARIES ; do
@@ -613,7 +613,7 @@ if [ "$skip_native_build" != "yes" ] ; then
         done
     fi
 
-    echo Task [III-10] /$HOST_NATIVE/strip_target_objects/ | tee -a "$BUILDDIR_NATIVE/.stage"
+    echo "Task [III-10] /$HOST_NATIVE/strip_target_objects/" | tee -a "$BUILDDIR_NATIVE/.stage"
     saveenv
     prepend_path PATH $INSTALLDIR_NATIVE/bin
 
@@ -644,7 +644,7 @@ if [ "$skip_native_build" != "yes" ] ; then
     fi
     restoreenv
 
-    echo Task [III-11] /$HOST_NATIVE/specs/ | tee -a "$BUILDDIR_NATIVE/.stage"
+    echo "Task [III-11] /$HOST_NATIVE/specs/" | tee -a "$BUILDDIR_NATIVE/.stage"
     pushd $BUILDDIR_NATIVE
     $INSTALLDIR_NATIVE/bin/arm-none-eabi-gcc -print-multi-lib | cut -d';' -f 1 | while read dir; do
       cp -v $SRCDIR/specs/{nano_c_standard_cpp,standard_c_nano_cpp}.specs $INSTALLDIR_NATIVE/arm-none-eabi/lib/$dir/
@@ -656,7 +656,7 @@ if [ "$skip_native_build" != "yes" ] ; then
       exit 0
     fi
 
-    echo Task [III-12] /$HOST_NATIVE/package_tbz2/ | tee -a "$BUILDDIR_NATIVE/.stage"
+    echo "Task [III-12] /$HOST_NATIVE/package_tbz2/" | tee -a "$BUILDDIR_NATIVE/.stage"
 
     # Copy release.txt into share.
     cp $ROOT/$LICENSE_FILE $INSTALLDIR_NATIVE_DOC/
@@ -683,7 +683,7 @@ if [ "$skip_native_build" != "yes" ] ; then
     popd
 
     if [ "$skip_package_bins" != "yes" ]; then
-        echo Task [III-13] /Package toolchain in ST version/
+        echo "Task [III-13] /Package toolchain in ST version/"
         pushd $ROOT
         time ${TAR} czf $PACKAGEDIR/${PACKAGE_NAME_NATIVE}-build.tar.gz --owner=0 --group=0 build-native/
         time ${TAR} czf $PACKAGEDIR/${PACKAGE_NAME_NATIVE}-install.tar.gz --owner=0 --group=0 install-native/
@@ -692,7 +692,7 @@ if [ "$skip_native_build" != "yes" ] ; then
 
     # Validate binaries on macos
     if [ "$BUILD" == "x86_64-apple-darwin10" ]; then
-        echo Task [III-14] /Validate tool dependencies/
+        echo "Task [III-14] /Validate tool dependencies/"
         invalid=()
         # shellcheck disable=SC2046,SC2038
         while read line; do
