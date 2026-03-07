@@ -291,6 +291,16 @@ the squash commit message).
   infrastructure you should not manually edit without understanding the agent
   framework in `.github/aw/`.
 
+- **`audit-workflows.lock.yml` contains one intentional manual edit** in its
+  `push_repo_memory` job: an "Ensure memory branch exists" step added before
+  the push step. This is required because gh-aw v0.53.6 provides no frontmatter
+  mechanism to add steps to the auto-generated `push_repo_memory` job, and on
+  this large repo (~217k files) the orphan-branch creation path in
+  `push_repo_memory.cjs` fails with `spawnSync git ENOBUFS`. See the
+  "Large-Repository Compatibility" section in `audit-workflows.md` for details.
+  If `gh aw compile` is run and the `memory/audit-workflows` branch no longer
+  exists, this step must be re-applied manually to `audit-workflows.lock.yml`.
+
 ---
 
 ## Development Workflow Summary

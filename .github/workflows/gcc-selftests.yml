@@ -5,13 +5,14 @@ on:
     branches:
       - 13.3.rel1
   pull_request:
+  merge_group:
   workflow_dispatch:
 
 permissions: {}
 
 jobs:
   check-changes:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     permissions:
       contents: read
       pull-requests: read
@@ -63,9 +64,9 @@ jobs:
           gcc_src_hash=$(git rev-parse "HEAD:src/gcc" | sha256sum | cut -d' ' -f1)
           echo "gcc-src=${gcc_src_hash}" >> "${GITHUB_OUTPUT}"
 
-      - name: Cache GCC build
+      - name: Restore cache – GCC build
         id: cache-gcc
-        uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           path: build/gcc
           key: ${{ runner.os }}-gcc-selftest-${{ hashFiles('build-toolchain.sh', 'build-prerequisites.sh', 'build-common.sh') }}-${{ steps.src-hashes.outputs.gcc-src }}
@@ -85,6 +86,13 @@ jobs:
       - name: Build host GCC
         if: steps.cache-gcc.outputs.cache-hit != 'true'
         run: make -C build/gcc -j$(nproc) all-gcc
+
+      - name: Save cache – GCC build
+        if: steps.cache-gcc.outputs.cache-hit != 'true' && github.event_name != 'merge_group'
+        uses: actions/cache/save@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        with:
+          path: build/gcc
+          key: ${{ steps.cache-gcc.outputs.cache-primary-key }}
 
       - name: Run GCC selftests
         run: |
@@ -115,7 +123,7 @@ jobs:
           path: gcc-selftest-results.txt
 
   gcc-selftests-status:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     needs: [check-changes, gcc-selftests]
     if: always()
     steps:
