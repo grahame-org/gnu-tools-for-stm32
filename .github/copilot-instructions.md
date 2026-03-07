@@ -291,6 +291,18 @@ the squash commit message).
   infrastructure you should not manually edit without understanding the agent
   framework in `.github/aw/`.
 
+- **`daily-test-improver.lock.yml` contains two intentional manual edits** that
+  must be re-applied after every `gh aw compile`:
+  1. **`push_repo_memory` job**: an "Ensure memory branch exists" step added
+     before the push step. Required because gh-aw v0.53.6 provides no frontmatter
+     mechanism for this, and on this large repo (~217k files) the orphan-branch
+     creation path in `push_repo_memory.cjs` fails with `spawnSync git ENOBUFS`.
+  2. **`safe_outputs` job**: `"base_branch":"${{ github.ref_name }}"` added to the
+     `create_pull_request` and `push_to_pull_request_branch` handler configs inside
+     `GH_AW_SAFE_OUTPUTS_HANDLER_CONFIG`. This is already expressed via
+     `base-branch: "${{ github.ref_name }}"` in the `.md` frontmatter; if
+     `gh aw compile` is ever run, these are re-generated automatically.
+
 ---
 
 ## Development Workflow Summary

@@ -35,6 +35,7 @@ safe-outputs:
     title-prefix: "[Test Improver] "
     labels: [automation, testing]
     max: 4
+    base-branch: "${{ github.ref_name }}"
   push-to-pull-request-branch:
     target: "*"
     title-prefix: "[Test Improver] "
@@ -153,7 +154,7 @@ Always do Task 7 (Update Monthly Activity Summary Issue) every run. In all comme
 4. **Check for existing coverage pipeline**: Before generating coverage reports yourself, check if the repository has an existing coverage pipeline (CI jobs, coverage services like Codecov/Coveralls, or documented coverage commands). Use the existing pipeline when available - maintainers may rely on it for consistency.
 5. For the selected goal:
 
-   a. Create a fresh branch off `main`: `test-assist/<desc>`.
+   a. Create a fresh branch off `${{ github.ref_name }}`: `test-assist/<desc>`.
    
    b. **Analyze complexity before testing**: Before writing any tests, thoroughly read and understand the implementation. Evaluate function complexity - is this trivial code or complex logic? See "What NOT to Test" in Guidelines. Exception: only test trivial code if the repo has an explicit policy requiring very high coverage.
    

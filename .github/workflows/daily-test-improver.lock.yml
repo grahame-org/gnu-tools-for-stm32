@@ -1620,6 +1620,55 @@ jobs:
         with:
           name: repo-memory-default
           path: /tmp/gh-aw/repo-memory/default
+      # INTENTIONAL MANUAL EDIT — must be re-applied after every `gh aw compile`.
+      #
+      # Problem: push_repo_memory.cjs fails with "spawnSync git ENOBUFS" when the
+      # memory/daily-test-improver branch does not yet exist. The script creates an
+      # orphan branch via `git checkout --orphan` then runs `git rm -rf .`, whose
+      # output (~217k filenames) overflows the 1 MB Node.js spawnSync buffer on
+      # this repo.
+      #
+      # gh-aw v0.53.6 limitation: there is no frontmatter mechanism to add a step to
+      # the auto-generated push_repo_memory job. All alternatives were verified:
+      #   - `steps:` / `post-steps:` → inject into the agent job, which cannot have
+      #     `contents: write` (blocked by gh-aw's security enforcement even with
+      #     `strict: false`; error: "The agent job must not have write permissions").
+      #   - `safe-outputs: steps:` → injects into the safe_outputs job only, not
+      #     push_repo_memory.
+      #   - `jobs:` custom entries → cannot override auto-generated jobs (error:
+      #     "job 'push_repo_memory' already exists") and custom jobs are not
+      #     automatically added to push_repo_memory's `needs:`.
+      #
+      # Workaround: pre-create memory/daily-test-improver as an empty orphan branch
+      # via the GitHub REST API before push_repo_memory.cjs runs. This forces the
+      # script to take the existing-branch path (fetch → checkout → diff → push)
+      # instead of the orphan-creation path, avoiding the buffer overflow entirely.
+      #
+      # Note: once the branch exists after the first successful run, subsequent runs
+      # (including runs from a freshly compiled lock.yml) will work without this step.
+      # Re-apply this step only if the branch has been deleted and the compiled
+      # lock.yml is deployed before a new run creates it.
+      - name: Ensure memory branch exists
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          if ! gh api "repos/${REPO}/git/ref/heads/memory/daily-test-improver" --silent 2>/dev/null; then
+            echo "Branch memory/daily-test-improver does not exist, creating empty orphan branch..."
+            # GitHub API rejects {"tree":[]} with HTTP 422 "Invalid tree info".
+            # Create a tree with a single .gitkeep file instead.
+            TREE_SHA=$(echo '{"tree":[{"path":".gitkeep","mode":"100644","type":"blob","content":""}]}' | \
+              gh api "repos/${REPO}/git/trees" --method POST --input - --jq '.sha')
+            COMMIT_SHA=$(jq -n --arg tree "${TREE_SHA}" \
+              '{"message":"Initialize memory/daily-test-improver branch","tree":$tree,"parents":[]}' | \
+              gh api "repos/${REPO}/git/commits" --method POST --input - --jq '.sha')
+            jq -n --arg sha "${COMMIT_SHA}" \
+              '{"ref":"refs/heads/memory/daily-test-improver","sha":$sha}' | \
+              gh api "repos/${REPO}/git/refs" --method POST --input - >/dev/null
+            echo "Created empty orphan branch memory/daily-test-improver successfully"
+          else
+            echo "Branch memory/daily-test-improver already exists, skipping creation"
+          fi
       - name: Push repo-memory changes (default)
         id: push_repo_memory_default
         if: always()
@@ -1731,7 +1780,7 @@ jobs:
           GH_AW_ALLOWED_DOMAINS: "api.business.githubcopilot.com,api.enterprise.githubcopilot.com,api.github.com,api.githubcopilot.com,api.individual.githubcopilot.com,api.snapcraft.io,archive.ubuntu.com,azure.archive.ubuntu.com,crl.geotrust.com,crl.globalsign.com,crl.identrust.com,crl.sectigo.com,crl.thawte.com,crl.usertrust.com,crl.verisign.com,crl3.digicert.com,crl4.digicert.com,crls.ssl.com,github.com,host.docker.internal,json-schema.org,json.schemastore.org,keyserver.ubuntu.com,ocsp.digicert.com,ocsp.geotrust.com,ocsp.globalsign.com,ocsp.identrust.com,ocsp.sectigo.com,ocsp.ssl.com,ocsp.thawte.com,ocsp.usertrust.com,ocsp.verisign.com,packagecloud.io,packages.cloud.google.com,packages.microsoft.com,ppa.launchpad.net,raw.githubusercontent.com,registry.npmjs.org,s.symcb.com,s.symcd.com,security.ubuntu.com,telemetry.enterprise.githubcopilot.com,ts-crl.ws.symantec.com,ts-ocsp.ws.symantec.com"
           GITHUB_SERVER_URL: ${{ github.server_url }}
           GITHUB_API_URL: ${{ github.api_url }}
-          GH_AW_SAFE_OUTPUTS_HANDLER_CONFIG: "{\"add_comment\":{\"hide_older_comments\":true,\"max\":10,\"target\":\"*\"},\"create_issue\":{\"labels\":[\"automation\",\"testing\"],\"max\":4,\"title_prefix\":\"[Test Improver] \"},\"create_pull_request\":{\"draft\":true,\"labels\":[\"automation\",\"testing\"],\"max\":4,\"max_patch_size\":1024,\"title_prefix\":\"[Test Improver] \"},\"missing_data\":{},\"missing_tool\":{},\"push_to_pull_request_branch\":{\"if_no_changes\":\"warn\",\"max\":4,\"max_patch_size\":1024,\"target\":\"*\",\"title_prefix\":\"[Test Improver] \"},\"update_issue\":{\"allow_body\":true,\"max\":1,\"target\":\"*\",\"title_prefix\":\"[Test Improver] \"}}"
+          GH_AW_SAFE_OUTPUTS_HANDLER_CONFIG: "{\"add_comment\":{\"hide_older_comments\":true,\"max\":10,\"target\":\"*\"},\"create_issue\":{\"labels\":[\"automation\",\"testing\"],\"max\":4,\"title_prefix\":\"[Test Improver] \"},\"create_pull_request\":{\"base_branch\":\"${{ github.ref_name }}\",\"draft\":true,\"labels\":[\"automation\",\"testing\"],\"max\":4,\"max_patch_size\":1024,\"title_prefix\":\"[Test Improver] \"},\"missing_data\":{},\"missing_tool\":{},\"push_to_pull_request_branch\":{\"base_branch\":\"${{ github.ref_name }}\",\"if_no_changes\":\"warn\",\"max\":4,\"max_patch_size\":1024,\"target\":\"*\",\"title_prefix\":\"[Test Improver] \"},\"update_issue\":{\"allow_body\":true,\"max\":1,\"target\":\"*\",\"title_prefix\":\"[Test Improver] \"}}"
           GH_AW_CI_TRIGGER_TOKEN: ${{ secrets.GH_AW_CI_TRIGGER_TOKEN }}
         with:
           github-token: ${{ secrets.GH_AW_GITHUB_TOKEN || secrets.GITHUB_TOKEN }}
