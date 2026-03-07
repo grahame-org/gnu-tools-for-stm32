@@ -288,8 +288,6 @@ assert_eq "break_hardlink reduces link count to 1" \
 assert_eq "file content preserved after break_hardlink" \
     "shared content" "$(cat "$_BHL_TMPDIR/original")"
 
-rm -rf "$_BHL_TMPDIR"
-
 # ---------------------------------------------------------------------------
 # Summary
 # ---------------------------------------------------------------------------
