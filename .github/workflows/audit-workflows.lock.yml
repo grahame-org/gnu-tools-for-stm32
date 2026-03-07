@@ -760,6 +760,7 @@ jobs:
                 "args": ["--network", "host", "-w", "\${GITHUB_WORKSPACE}"],
                 "env": {
                   "DEBUG": "*",
+                  "GH_TOKEN": "\${GITHUB_TOKEN}",
                   "GITHUB_TOKEN": "\${GITHUB_TOKEN}",
                   "GITHUB_ACTOR": "\${GITHUB_ACTOR}",
                   "GITHUB_REPOSITORY": "\${GITHUB_REPOSITORY}"
@@ -1277,6 +1278,27 @@ jobs:
         with:
           name: repo-memory-default
           path: /tmp/gh-aw/repo-memory/default
+      - name: Ensure memory branch exists
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          if ! gh api "repos/${REPO}/git/ref/heads/memory/audit-workflows" --silent 2>/dev/null; then
+            echo "Branch memory/audit-workflows does not exist, creating empty orphan branch..."
+            # GitHub API rejects {"tree":[]} with HTTP 422 "Invalid tree info".
+            # Create a tree with a single .gitkeep file instead.
+            TREE_SHA=$(echo '{"tree":[{"path":".gitkeep","mode":"100644","type":"blob","content":""}]}' | \
+              gh api "repos/${REPO}/git/trees" --method POST --input - --jq '.sha')
+            COMMIT_SHA=$(jq -n --arg tree "${TREE_SHA}" \
+              '{"message":"Initialize memory/audit-workflows branch","tree":$tree,"parents":[]}' | \
+              gh api "repos/${REPO}/git/commits" --method POST --input - --jq '.sha')
+            jq -n --arg sha "${COMMIT_SHA}" \
+              '{"ref":"refs/heads/memory/audit-workflows","sha":$sha}' | \
+              gh api "repos/${REPO}/git/refs" --method POST --input - >/dev/null
+            echo "Created empty orphan branch memory/audit-workflows successfully"
+          else
+            echo "Branch memory/audit-workflows already exists, skipping creation"
+          fi
       - name: Push repo-memory changes (default)
         id: push_repo_memory_default
         if: always()

@@ -178,4 +178,18 @@ Always create discussion with findings and update repo memory.
 
 This repository contains a very large number of source files (~217,000 files across GCC, binutils, GDB, newlib, and other toolchain components). When the `memory/audit-workflows` branch does not yet exist, the `push_repo_memory` step disables sparse-checkout (expanding the entire working tree), creates an orphan branch, and then runs `git rm -rf .` to clear it. On this repository the output of that command exceeds the Node.js `spawnSync` buffer limit (1 MB), causing the job to fail with `spawnSync git ENOBUFS`.
 
-**Required**: Before running the memory push step, ensure the `memory/audit-workflows` branch exists in the remote repository. If it does not exist, create it as an empty orphan branch via the GitHub REST API (create an empty git tree, create a root commit with that tree and no parents, then create the `refs/heads/memory/audit-workflows` ref pointing to that commit). This pre-creation means `push_repo_memory` will always take the existing-branch code path (fetch → checkout → copy files → push) rather than the orphan-branch path, avoiding the buffer overflow entirely.
+**Workaround applied in `audit-workflows.lock.yml`**: An "Ensure memory branch exists" step has been manually added to the `push_repo_memory` job (immediately before the push step). It pre-creates the `memory/audit-workflows` branch as an empty orphan commit via the GitHub REST API when the branch does not exist. This forces `push_repo_memory` to always take the existing-branch code path (fetch → checkout → copy files → push), avoiding the buffer overflow.
+
+**If `gh aw compile` is run**, the lock file is regenerated and this manual step is lost. It must be re-applied: create an empty git tree, create a root commit with that tree and no parents, then create the `refs/heads/memory/audit-workflows` ref pointing to that commit. The "Ensure memory branch exists" step in the current `audit-workflows.lock.yml` shows the exact `gh api` commands to use.
+
+**Note**: once the `memory/audit-workflows` branch exists after any successful push, subsequent compiled runs will work without this step — the compiled lock.yml takes the existing-branch path automatically. The step only needs to be maintained for the case where the branch has been deleted before a compiled run executes.
+
+## Alpine Container Investigation
+
+The `agenticworkflows` MCP server runs in an `alpine:latest` container with the runner's `gh` binary mounted at `/usr/bin/gh:ro`. An earlier hypothesis suggested the `gh` binary might be a glibc-linked binary incompatible with Alpine's musl libc, causing MCP `logs` operations to fail with `exit status 1`.
+
+**Finding**: The `gh` binary on the GitHub Actions runner is **statically linked** (ELF 64-bit, `statically linked` per `file /usr/bin/gh`). The `gh-aw` entrypoint binary is also statically linked. Both run in Alpine/musl containers without any glibc dependency. The glibc vs musl hypothesis is **disproved**.
+
+**Real root cause of earlier MCP failures**: The `push_repo_memory` job was failing with `spawnSync git ENOBUFS` (see "Large-Repository Compatibility" above), preventing the audit agent from completing and saving results. This caused the `logs` MCP tool to encounter incomplete or missing data for those failed runs.
+
+**Secondary note**: The container environment only passes `GITHUB_TOKEN` (not `GH_TOKEN`). Modern `gh` CLI (v2.x+) supports both, so this is not a blocking issue, but `GH_TOKEN` has been added to the container env as belt-and-suspenders in the lock file.

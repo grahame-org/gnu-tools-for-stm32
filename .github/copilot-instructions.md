@@ -291,6 +291,25 @@ the squash commit message).
   infrastructure you should not manually edit without understanding the agent
   framework in `.github/aw/`.
 
+- **`audit-workflows.lock.yml` contains intentional manual edits** that must be
+  re-applied after any `gh aw compile` run:
+  1. **"Ensure memory branch exists" step** in the `push_repo_memory` job, inserted
+     before the "Push repo-memory changes (default)" step. This pre-creates the
+     `memory/audit-workflows` orphan branch via the GitHub REST API when it does
+     not exist, preventing `spawnSync git ENOBUFS` failures on this large (~217k
+     file) repository. gh-aw v0.53.6 has no frontmatter mechanism to add steps to
+     the auto-generated `push_repo_memory` job.
+  2. **`GH_TOKEN` in the `agenticworkflows` MCP container env** alongside
+     `GITHUB_TOKEN`, ensuring the `gh` CLI inside the alpine container can
+     authenticate regardless of which env var it prefers.
+  See `audit-workflows.md` "Large-Repository Compatibility" and "Alpine Container
+  Investigation" sections for details and the exact commands.
+
+- **The `agenticworkflows` MCP alpine container uses a statically-linked `gh`
+  binary.** The `gh` binary on GitHub Actions runners is statically linked (ELF,
+  `statically linked` per `file /usr/bin/gh`), so the glibc vs musl hypothesis
+  for MCP failures is **disproved**. The alpine:latest container image is correct.
+
 ---
 
 ## Development Workflow Summary
