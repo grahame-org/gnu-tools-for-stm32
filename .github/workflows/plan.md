@@ -19,8 +19,8 @@ safe-outputs:
   create-issue:
     expires: 2d
     title-prefix: "[plan] "
-    labels: [plan, ai-generated, cookie]
-    max: 50  # Maximum 5 sub-issues per group
+    labels: [plan, ai-generated]
+    max: 50  # Maximum 50 sub-issues per group
     group: true
   close-discussion:
     required-category: "Ideas"
@@ -123,7 +123,7 @@ All created issues will be automatically grouped under a parent tracking issue.
 
 ## Instructions
 
-Review instructions in `.github/instructions/*.instructions.md` if you need guidance.
+Review `.github/copilot-instructions.md` for project-specific conventions and context before generating sub-issues.
 
 ## Begin Planning
 

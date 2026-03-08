@@ -5,13 +5,14 @@ on:
     branches:
       - 13.3.rel1
   pull_request:
+  merge_group:
   workflow_dispatch:
 
 permissions: {}
 
 jobs:
   check-changes:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     permissions:
       contents: read
       pull-requests: read
@@ -25,14 +26,18 @@ jobs:
         with:
           filters: |
             test:
+              - 'build-binutils.sh'
               - 'build-common.sh'
+              - 'build-gcc-first.sh'
+              - 'build-toolchain.sh'
+              - 'build-toolchain-args.sh'
               - 'tests/**'
               - '.github/workflows/shell-unit-tests.yml'
 
   shell-unit-tests:
     needs: check-changes
     if: needs.check-changes.outputs.should-test == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     permissions:
       contents: read
     steps:
@@ -42,10 +47,13 @@ jobs:
           persist-credentials: false
 
       - name: Run shell unit tests
-        run: bash tests/test-build-common.sh
+        run: |
+          bash tests/test-build-common.sh
+          bash tests/test-build-toolchain-args.sh
+          bash tests/test-strip-binary.sh
 
   shell-unit-tests-status:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     needs: [check-changes, shell-unit-tests]
     if: always()
     steps:
