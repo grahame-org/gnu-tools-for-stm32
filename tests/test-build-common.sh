@@ -37,12 +37,12 @@ assert_eq() {
 
 assert_unset() {
     local desc="$1" varname="$2"
-    if eval "[ \"\${${varname}+set}\" != \"set\" ]"; then
+    if [[ ! -v "$varname" ]]; then
         _PASS=$((_PASS + 1))
         echo "  PASS: $desc"
     else
         _FAIL=$((_FAIL + 1))
-        echo "  FAIL: $desc (expected unset, got [$(eval echo \"\$$varname\")])"
+        echo "  FAIL: $desc (expected unset, got [${!varname}])"
     fi
 }
 
