@@ -26,6 +26,7 @@ jobs:
         with:
           filters: |
             test:
+              - 'build-binutils.sh'
               - 'build-common.sh'
               - 'build-gcc-first.sh'
               - 'build-toolchain.sh'

@@ -134,46 +134,7 @@ if [ "x$skip_native_build" != "xyes" ] ; then
     if stage_is_skipped "binutils"; then
         echo "Skipping stage: binutils (cache hit)"
     else
-    echo Task [III-0] /$HOST_NATIVE/binutils/ | tee -a "$BUILDDIR_NATIVE/.stage"
-    rm -rf $BUILDDIR_NATIVE/binutils && mkdir -p $BUILDDIR_NATIVE/binutils
-    pushd $BUILDDIR_NATIVE/binutils
-    saveenv
-    saveenvvar CFLAGS "$ENV_CFLAGS"
-    saveenvvar CPPFLAGS "$ENV_CPPFLAGS"
-    saveenvvar LDFLAGS "$ENV_LDFLAGS"
-    $SRCDIR/$BINUTILS/configure  \
-        ${BINUTILS_CONFIG_OPTS} \
-        --target=$TARGET \
-        --prefix=$INSTALLDIR_NATIVE \
-        --infodir=$INSTALLDIR_NATIVE_DOC/info \
-        --mandir=$INSTALLDIR_NATIVE_DOC/man \
-        --htmldir=$INSTALLDIR_NATIVE_DOC/html \
-        --pdfdir=$INSTALLDIR_NATIVE_DOC/pdf \
-        --disable-nls \
-        --disable-werror \
-        --disable-sim \
-        --disable-gdb \
-        --enable-interwork \
-        --enable-plugins \
-        --with-sysroot=$INSTALLDIR_NATIVE/arm-none-eabi \
-        --with-zstd=no \
-        "--with-pkgversion=$PKGVERSION"
-
-    make -j$JOBS
-
-    make install
-
-    if [ "x$skip_manual" != "xyes" ]; then
-        make install-html install-pdf
-    fi
-
-    copy_dir $INSTALLDIR_NATIVE $BUILDDIR_NATIVE/target-libs
-    restoreenv
-    popd
-
-    pushd $INSTALLDIR_NATIVE
-    rm -rf ./lib
-    popd
+        "$script_path/build-binutils.sh" "$@"
     fi  # binutils stage
 
     if stage_is_skipped "gcc-first"; then
