@@ -106,7 +106,7 @@ clean_env () {
 saveenv () {
     set +u
     # Force expr return 0 to avoid script fail
-    stack_level=`expr $stack_level \+ 1 || true`
+    stack_level=$(expr $stack_level \+ 1 || true)
     eval stack_list_$stack_level=
     set -u
 }
@@ -171,7 +171,7 @@ restoreenv () {
         # eval echo $varname restore to \\\"\"\${$varname}\"\\\"
     done
     # Force expr return 0 to avoid script fail
-    stack_level=`expr $stack_level \- 1 || true`
+    stack_level=$(expr $stack_level \- 1 || true)
     set -u
 }
 
@@ -273,7 +273,7 @@ copy_multi_libs() {
 # Clean up unnecessary global shell variables
 clean_env
 
-ROOT=`pwd`
+ROOT=$(pwd)
 SRCDIR=$ROOT/src
 
 BUILDDIR_NATIVE=$ROOT/build-native
@@ -329,13 +329,13 @@ PYTHON_WIN_URL=https://www.python.org/ftp/python/$PYTHON_WIN_VER/$PYTHON_WIN_PAC
 TAR=tar
 # Set variables according to real environment to make this script can run
 # on Ubuntu and Mac OS X.
-uname_string=`uname | sed 'y/LINUXDARWIN/linuxdarwin/'`
-host_arch=`uname -m | sed 'y/XI/xi/'`
+uname_string=$(uname | sed 'y/LINUXDARWIN/linuxdarwin/')
+host_arch=$(uname -m | sed 'y/XI/xi/')
 if [ "x$uname_string" == "xlinux" ] ; then
     BUILD="$host_arch"-linux-gnu
     HOST_NATIVE="$host_arch"-linux-gnu
     READLINK=readlink
-    JOBS=`grep ^processor /proc/cpuinfo|wc -l`
+    JOBS=$(grep ^processor /proc/cpuinfo|wc -l)
     GCC_CONFIG_OPTS_LCPP="--with-host-libstdcxx=-static-libgcc -Wl,-Bstatic,-lstdc++,-Bdynamic -lm"
     MD5="md5sum -b"
     PACKAGE_NAME_SUFFIX="${host_arch}-linux"
@@ -379,9 +379,9 @@ if [[ "${SCRIPT%%-*}" = "build" || "${SCRIPT#*_*}" = "build" ]]; then
     stack_level=0
 
     LICENSE_FILE=license.txt
-    GCC_VER=`cat $SRCDIR/$GCC/gcc/BASE-VER`
-    GCC_VER_DISPLAY=`cut -d'.' -f1,2 $SRCDIR/$GCC/gcc/BASE-VER`
-    STM32_TOOLS_VER=`git describe --tags 2>/dev/null || echo "$GCC_VER_DISPLAY-$RELEASEVER~$(git rev-parse --verify HEAD)"`
+    GCC_VER=$(cat $SRCDIR/$GCC/gcc/BASE-VER)
+    GCC_VER_DISPLAY=$(cut -d'.' -f1,2 $SRCDIR/$GCC/gcc/BASE-VER)
+    STM32_TOOLS_VER=$(git describe --tags 2>/dev/null || echo "$GCC_VER_DISPLAY-$RELEASEVER~$(git rev-parse --verify HEAD)")
 
     # sed -r doesn't exist in Darwin
     if [[ $(uname -s) == "Darwin" ]]
