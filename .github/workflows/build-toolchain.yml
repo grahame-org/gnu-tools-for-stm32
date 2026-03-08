@@ -286,14 +286,15 @@ jobs:
           key: ${{ runner.os }}-stage-v1-${{ steps.stage-hashes.outputs['newlib-nano'] }}
 
       - name: Build stage – newlib-nano
-        if: steps.cache-newlib-nano.outputs.cache-hit != 'true' && steps.cache-toolchain.outputs.cache-hit != 'true'
+        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-newlib-nano.outputs.cache-hit != 'true'
         run: |
-          export JOBS=$(nproc)
+          JOBS=$(nproc)
+          export JOBS
           ./build-newlib-nano.sh \
             --skip_steps=mingw,mingw-gdb-with-python,gdb-with-python,manual,package_sources
 
       - name: Save cache – newlib-nano
-        if: steps.cache-newlib-nano.outputs.cache-hit != 'true' && steps.cache-toolchain.outputs.cache-hit != 'true' && github.event_name != 'merge_group'
+        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-newlib-nano.outputs.cache-hit != 'true' && github.event_name != 'merge_group'
         uses: actions/cache/save@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           path: |
