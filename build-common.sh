@@ -111,7 +111,7 @@ saveenv () {
     set +u
     # Force expr return 0 to avoid script fail
     stack_level=$(expr $stack_level \+ 1 || true)
-    eval stack_list_$stack_level=
+    printf -v "stack_list_${stack_level}" '%s' ""
     set -u
 }
 
@@ -134,15 +134,16 @@ saveenvvar () {
         # The variable wasn't saved in the level before. Save it
         local _list_name="stack_list_${stack_level}"
         local temp="${!_list_name}"
-        eval stack_list_$stack_level=\"$varname $temp\"
-        eval save_level_${stack_level}_$varname=\"$oldval\"
-        eval level_saved_${stack_level}_$varname="yes"
+        printf -v "stack_list_${stack_level}" '%s' "$varname $temp"
+        printf -v "save_level_${stack_level}_${varname}" '%s' "$oldval"
+        printf -v "level_saved_${stack_level}_${varname}" '%s' "yes"
         local _is_set=""
         [[ -v "$varname" ]] && _is_set="set"
         printf -v "level_preset_${stack_level}_${varname}" '%s' "$_is_set"
         #echo Save $varname: \"$oldval\"
     fi
-    eval export $varname=\"$newval\"
+    printf -v "$varname" '%s' "$newval"
+    export "$varname"
     #echo $varname set to \"$newval\"
     set -u
 }
@@ -166,8 +167,7 @@ restoreenv () {
         else
             unset $varname
         fi
-        eval level_saved_${stack_level}_$varname=
-        # eval echo $varname restore to \\\"\"\${$varname}\"\\\"
+        printf -v "level_saved_${stack_level}_${varname}" '%s' ""
     done
     # Force expr return 0 to avoid script fail
     stack_level=$(expr $stack_level \- 1 || true)
@@ -176,15 +176,14 @@ restoreenv () {
 
 prependenvvar() {
     set +u
-    eval local oldval=\"\$$1\"
+    local oldval="${!1}"
     saveenvvar "$1" "$2$oldval"
     set -u
 }
 
 prepend_path() {
     set +u
-    eval local old_path="\"\$$1\""
-    # shellcheck disable=SC2154
+    local old_path="${!1}"
     if [ "$old_path" == "" ]; then
         prependenvvar "$1" "$2"
     else
