@@ -80,17 +80,17 @@ echo ""
 echo "=== Group 1: Wrong argument counts ==="
 
 reset_strip_log
-STRIP_LOG="$_STRIP_LOG" strip_binary; _ret=$?
+STRIP_LOG="$_STRIP_LOG" strip_binary 2>/dev/null; _ret=$?
 assert_eq "0 args: returns 0" "0" "$_ret"
 assert_eq "0 args: strip not called" "" "$([ -f "$_STRIP_LOG" ] && echo called || true)"
 
 reset_strip_log
-STRIP_LOG="$_STRIP_LOG" strip_binary "$_MOCK_STRIP"; _ret=$?
+STRIP_LOG="$_STRIP_LOG" strip_binary "$_MOCK_STRIP" 2>/dev/null; _ret=$?
 assert_eq "1 arg: returns 0" "0" "$_ret"
 assert_eq "1 arg: strip not called" "" "$([ -f "$_STRIP_LOG" ] && echo called || true)"
 
 reset_strip_log
-STRIP_LOG="$_STRIP_LOG" strip_binary "$_MOCK_STRIP" /some/file extra_arg; _ret=$?
+STRIP_LOG="$_STRIP_LOG" strip_binary "$_MOCK_STRIP" /some/file extra_arg 2>/dev/null; _ret=$?
 assert_eq "3 args: returns 0" "0" "$_ret"
 assert_eq "3 args: strip not called" "" "$([ -f "$_STRIP_LOG" ] && echo called || true)"
 
@@ -142,7 +142,7 @@ echo "=== Group 4: Non-existent file ==="
 _NOEXIST="$_SB_TMPDIR/no_such_file"
 
 reset_strip_log
-STRIP_LOG="$_STRIP_LOG" strip_binary "$_MOCK_STRIP" "$_NOEXIST"
+STRIP_LOG="$_STRIP_LOG" strip_binary "$_MOCK_STRIP" "$_NOEXIST" 2>/dev/null
 assert_eq "non-existent file: strip not called" "" "$([ -f "$_STRIP_LOG" ] && echo called || true)"
 
 # ---------------------------------------------------------------------------
