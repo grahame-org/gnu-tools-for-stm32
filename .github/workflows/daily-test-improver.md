@@ -58,7 +58,8 @@ tools:
   bash: true
   github:
     toolsets: [all]
-  repo-memory: true
+  repo-memory:
+    max-file-size: 10240000  # 10 MiB
 
 ---
 
