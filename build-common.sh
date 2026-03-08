@@ -29,7 +29,6 @@ error () {
     set +u
     echo "$0: error: $*" >&2
     exit 1
-    set -u
 }
 
 warning () {
