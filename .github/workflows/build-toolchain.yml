@@ -1622,109 +1622,48 @@ jobs:
           echo "All artifacts match reference binaries."
 
   # ---------------------------------------------------------------------------
-  # Status jobs – keep required checks green when jobs are skipped.
+  # Status job – keeps the required "build-status" check green when the
+  # build is legitimately skipped (no relevant file changes).  Lists every
+  # build job in `needs` so that a failure at *any* stage is surfaced here
+  # rather than silently masked by a downstream "skipped" result.
   # ---------------------------------------------------------------------------
-  build-gcc-first-status:
-    runs-on: ubuntu-slim
-    needs: [check-changes, build-gcc-first]
-    if: always()
-    steps:
-      - name: Report build-gcc-first status
-        run: |
-          if [[ "${{ needs.check-changes.result }}" == "failure" || "${{ needs.check-changes.result }}" == "cancelled" ]]; then
-            echo "check-changes job failed or was cancelled" && exit 1
-          fi
-          if [[ "${{ needs.build-gcc-first.result }}" == "failure" || "${{ needs.build-gcc-first.result }}" == "cancelled" ]]; then
-            echo "build-gcc-first failed or was cancelled" && exit 1
-          fi
-          echo "build-gcc-first skipped or succeeded"
-
-  build-newlib-status:
-    runs-on: ubuntu-slim
-    needs: [check-changes, build-newlib]
-    if: always()
-    steps:
-      - name: Report build-newlib status
-        run: |
-          if [[ "${{ needs.check-changes.result }}" == "failure" || "${{ needs.check-changes.result }}" == "cancelled" ]]; then
-            echo "check-changes job failed or was cancelled" && exit 1
-          fi
-          if [[ "${{ needs.build-newlib.result }}" == "failure" || "${{ needs.build-newlib.result }}" == "cancelled" ]]; then
-            echo "build-newlib failed or was cancelled" && exit 1
-          fi
-          echo "build-newlib skipped or succeeded"
-
-  build-newlib-nano-status:
-    runs-on: ubuntu-slim
-    needs: [check-changes, build-newlib-nano]
-    if: always()
-    steps:
-      - name: Report build-newlib-nano status
-        run: |
-          if [[ "${{ needs.check-changes.result }}" == "failure" || "${{ needs.check-changes.result }}" == "cancelled" ]]; then
-            echo "check-changes job failed or was cancelled" && exit 1
-          fi
-          if [[ "${{ needs.build-newlib-nano.result }}" == "failure" || "${{ needs.build-newlib-nano.result }}" == "cancelled" ]]; then
-            echo "build-newlib-nano failed or was cancelled" && exit 1
-          fi
-          echo "build-newlib-nano skipped or succeeded"
-
-  build-gcc-final-status:
-    runs-on: ubuntu-slim
-    needs: [check-changes, build-gcc-final]
-    if: always()
-    steps:
-      - name: Report build-gcc-final status
-        run: |
-          if [[ "${{ needs.check-changes.result }}" == "failure" || "${{ needs.check-changes.result }}" == "cancelled" ]]; then
-            echo "check-changes job failed or was cancelled" && exit 1
-          fi
-          if [[ "${{ needs.build-gcc-final.result }}" == "failure" || "${{ needs.build-gcc-final.result }}" == "cancelled" ]]; then
-            echo "build-gcc-final failed or was cancelled" && exit 1
-          fi
-          echo "build-gcc-final skipped or succeeded"
-
-  build-gcc-size-libstdcxx-status:
-    runs-on: ubuntu-slim
-    needs: [check-changes, build-gcc-size-libstdcxx]
-    if: always()
-    steps:
-      - name: Report build-gcc-size-libstdcxx status
-        run: |
-          if [[ "${{ needs.check-changes.result }}" == "failure" || "${{ needs.check-changes.result }}" == "cancelled" ]]; then
-            echo "check-changes job failed or was cancelled" && exit 1
-          fi
-          if [[ "${{ needs.build-gcc-size-libstdcxx.result }}" == "failure" || "${{ needs.build-gcc-size-libstdcxx.result }}" == "cancelled" ]]; then
-            echo "build-gcc-size-libstdcxx failed or was cancelled" && exit 1
-          fi
-          echo "build-gcc-size-libstdcxx skipped or succeeded"
-
-  build-gdb-status:
-    runs-on: ubuntu-slim
-    needs: [check-changes, build-gdb]
-    if: always()
-    steps:
-      - name: Report build-gdb status
-        run: |
-          if [[ "${{ needs.check-changes.result }}" == "failure" || "${{ needs.check-changes.result }}" == "cancelled" ]]; then
-            echo "check-changes job failed or was cancelled" && exit 1
-          fi
-          if [[ "${{ needs.build-gdb.result }}" == "failure" || "${{ needs.build-gdb.result }}" == "cancelled" ]]; then
-            echo "build-gdb failed or was cancelled" && exit 1
-          fi
-          echo "build-gdb skipped or succeeded"
-
   build-status:
     runs-on: ubuntu-slim
-    needs: [check-changes, build-final]
+    needs:
+      - check-changes
+      - build-binutils
+      - build-gdb
+      - build-gcc-first
+      - build-newlib
+      - build-newlib-nano
+      - build-gcc-final
+      - build-gcc-size-libstdcxx
+      - build-final
     if: always()
     steps:
       - name: Report build status
+        env:
+          RESULTS: >-
+            check-changes=${{ needs.check-changes.result }}
+            build-binutils=${{ needs.build-binutils.result }}
+            build-gdb=${{ needs.build-gdb.result }}
+            build-gcc-first=${{ needs.build-gcc-first.result }}
+            build-newlib=${{ needs.build-newlib.result }}
+            build-newlib-nano=${{ needs.build-newlib-nano.result }}
+            build-gcc-final=${{ needs.build-gcc-final.result }}
+            build-gcc-size-libstdcxx=${{ needs.build-gcc-size-libstdcxx.result }}
+            build-final=${{ needs.build-final.result }}
         run: |
-          if [[ "${{ needs.check-changes.result }}" == "failure" || "${{ needs.check-changes.result }}" == "cancelled" ]]; then
-            echo "check-changes job failed or was cancelled" && exit 1
-          fi
-          if [[ "${{ needs.build-final.result }}" == "failure" || "${{ needs.build-final.result }}" == "cancelled" ]]; then
-            echo "Build failed or was cancelled" && exit 1
+          ok=true
+          for pair in ${RESULTS}; do
+            job="${pair%%=*}"
+            result="${pair#*=}"
+            if [[ "${result}" == "failure" || "${result}" == "cancelled" ]]; then
+              echo "${job} failed or was cancelled"
+              ok=false
+            fi
+          done
+          if [[ "${ok}" != "true" ]]; then
+            exit 1
           fi
           echo "Build skipped or succeeded"
