@@ -142,8 +142,7 @@ saveenvvar () {
         printf -v "level_preset_${stack_level}_${varname}" '%s' "$_is_set"
         #echo Save $varname: \"$oldval\"
     fi
-    printf -v "$varname" '%s' "$newval"
-    export "$varname"
+    declare -gx "$varname=$newval"
     #echo $varname set to \"$newval\"
     set -u
 }
