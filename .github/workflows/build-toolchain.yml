@@ -28,15 +28,15 @@ jobs:
             build:
               - 'src/**'
               - 'build-binutils.sh'
+              - 'build-common.sh'
               - 'build-gcc-first.sh'
+              - 'build-gcc-final.sh'
+              - 'build-gcc-size-libstdcxx.sh'
               - 'build-gdb.sh'
               - 'build-newlib.sh'
               - 'build-newlib-nano.sh'
-              - 'build-gcc-final.sh'
-              - 'build-gcc-size-libstdcxx.sh'
-              - 'build-toolchain.sh'
               - 'build-prerequisites.sh'
-              - 'build-common.sh'
+              - 'build-toolchain.sh'
               - '.github/workflows/build-toolchain.yml'
               - 'test_project/**'
 
@@ -222,7 +222,8 @@ jobs:
       - name: Build stage – binutils
         if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-binutils.outputs.cache-hit != 'true'
         run: |
-          export JOBS=$(nproc)
+          JOBS=$(nproc)
+          export JOBS
           ./build-binutils.sh \
             --skip_steps=mingw,mingw-gdb-with-python,gdb-with-python,manual,package_sources
 
@@ -245,7 +246,8 @@ jobs:
       - name: Build stage – gcc-first
         if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-gcc-first.outputs.cache-hit != 'true'
         run: |
-          export JOBS=$(nproc)
+          JOBS=$(nproc)
+          export JOBS
           ./build-gcc-first.sh \
             --skip_steps=mingw,mingw-gdb-with-python,gdb-with-python,manual,package_sources
 
@@ -311,7 +313,8 @@ jobs:
       - name: Build toolchain
         if: steps.cache-toolchain.outputs.cache-hit != 'true'
         run: |
-          export JOBS=$(nproc)
+          JOBS=$(nproc)
+          export JOBS
           ./build-toolchain.sh \
             --skip_steps=mingw,mingw-gdb-with-python,gdb-with-python,manual,package_sources \
             --skip_stages=binutils,gcc-first,newlib,newlib-nano
