@@ -239,6 +239,59 @@ assert_nonzero_exit "restoreenv on empty stack exits non-zero" \
     bash -c '. "$1/build-common.sh"; stack_level=0; restoreenv' _ "$REPO_ROOT"
 
 # ---------------------------------------------------------------------------
+# Test group 10: Values containing shell metacharacters are preserved verbatim
+#
+# The old eval-based implementation interpolated $newval and $oldval directly
+# into eval strings without quoting, meaning:
+#   - double quotes in a value were consumed as shell string delimiters
+#   - backslashes were consumed as escape characters
+#   - unquoted expansion caused word-splitting on spaces and newlines
+# The ${!var} / printf -v '%s' idioms treat values as opaque data so none of
+# those characters are interpreted.
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "=== Group 10: Metacharacter value preservation ==="
+
+reset_stack
+
+TEST_A='plain'
+saveenv
+saveenvvar TEST_A 'value with spaces'
+assert_eq "saveenvvar preserves embedded spaces" "value with spaces" "$TEST_A"
+restoreenv
+assert_eq "restoreenv restores after space-containing value" "plain" "$TEST_A"
+
+reset_stack
+
+TEST_A='plain'
+saveenv
+saveenvvar TEST_A 'value with "double quotes"'
+assert_eq "saveenvvar preserves double quotes" 'value with "double quotes"' "$TEST_A"
+restoreenv
+assert_eq "restoreenv restores after double-quote value" "plain" "$TEST_A"
+
+reset_stack
+
+TEST_A='plain'
+saveenv
+saveenvvar TEST_A 'back\slash and $dollar and `backtick`'
+assert_eq "saveenvvar preserves backslash, dollar, backtick" \
+    'back\slash and $dollar and `backtick`' "$TEST_A"
+restoreenv
+assert_eq "restoreenv restores after backslash/dollar/backtick value" "plain" "$TEST_A"
+
+reset_stack
+
+TEST_A='plain'
+saveenv
+saveenvvar TEST_A 'semi;colon and |pipe and &amp'
+assert_eq "saveenvvar preserves shell command separators" \
+    'semi;colon and |pipe and &amp' "$TEST_A"
+restoreenv
+assert_eq "restoreenv restores after command-separator value" "plain" "$TEST_A"
+
+# ---------------------------------------------------------------------------
 # Summary
 # ---------------------------------------------------------------------------
 
