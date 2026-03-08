@@ -324,45 +324,6 @@ LIBICONV_URL=https://ftp.gnu.org/pub/gnu/libiconv/$LIBICONV_PACK
 ZLIB_URL=http://www.zlib.net/fossils/$ZLIB_PACK
 PYTHON_WIN_URL=https://www.python.org/ftp/python/$PYTHON_WIN_VER/$PYTHON_WIN_PACK
 
-TAR=tar
-# Set variables according to real environment to make this script can run
-# on Ubuntu and Mac OS X.
-uname_string=$(uname | sed 'y/LINUXDARWIN/linuxdarwin/')
-host_arch=$(uname -m | sed 'y/XI/xi/')
-if [ "$uname_string" == "linux" ] ; then
-    BUILD="$host_arch"-linux-gnu
-    HOST_NATIVE="$host_arch"-linux-gnu
-    READLINK=readlink
-    JOBS=$(grep ^processor /proc/cpuinfo|wc -l)
-    GCC_CONFIG_OPTS_LCPP="--with-host-libstdcxx=-static-libgcc -Wl,-Bstatic,-lstdc++,-Bdynamic -lm"
-    MD5="md5sum -b"
-    PACKAGE_NAME_SUFFIX="${host_arch}-linux"
-    WGET="wget -q"
-elif [ "$uname_string" == "darwin" ] ; then
-    BUILD=x86_64-apple-darwin10
-    HOST_NATIVE=x86_64-apple-darwin10
-    READLINK=greadlink
-    # Disable parallel build for mac as we will randomly run into "Permission denied" issue.
-    #JOBS=`sysctl -n hw.ncpu`
-    JOBS=1
-    GCC_CONFIG_OPTS_LCPP="--with-host-libstdcxx=-static-libgcc -Wl,-lstdc++ -lm"
-    MD5="md5 -r"
-    PACKAGE_NAME_SUFFIX=mac-$(sw_vers -productVersion)
-    #Redefine wget command to curl as MacOS does not have wget by default
-    WGET="curl -OLs"
-    TAR=gtar
-else
-    error "Unsupported build system : $uname_string"
-fi
-
-SRC_PREREQS="GMP MPFR MPC ISL EXPAT LIBICONV ZLIB"
-WIN_PREREQS="PYTHON_WIN"
-
-PREREQS="$SRC_PREREQS"
-if [ "$BUILD" != "x86_64-apple-darwin10" ]; then
-    PREREQS="$SRC_PREREQS $WIN_PREREQS"
-fi
-
 SCRIPT=$(basename $0)
 
 RELEASEDATE=20230728
@@ -375,6 +336,45 @@ RELEASEVER=Rel1
 if [[ "${SCRIPT%%-*}" = "build" || "${SCRIPT#*_*}" = "build" ]]; then
 
     stack_level=0
+
+    TAR=tar
+    # Set variables according to real environment to make this script can run
+    # on Ubuntu and Mac OS X.
+    uname_string=$(uname | sed 'y/LINUXDARWIN/linuxdarwin/')
+    host_arch=$(uname -m | sed 'y/XI/xi/')
+    if [ "$uname_string" == "linux" ] ; then
+        BUILD="$host_arch"-linux-gnu
+        HOST_NATIVE="$host_arch"-linux-gnu
+        READLINK=readlink
+        JOBS=$(grep ^processor /proc/cpuinfo|wc -l)
+        GCC_CONFIG_OPTS_LCPP="--with-host-libstdcxx=-static-libgcc -Wl,-Bstatic,-lstdc++,-Bdynamic -lm"
+        MD5="md5sum -b"
+        PACKAGE_NAME_SUFFIX="${host_arch}-linux"
+        WGET="wget -q"
+    elif [ "$uname_string" == "darwin" ] ; then
+        BUILD=x86_64-apple-darwin10
+        HOST_NATIVE=x86_64-apple-darwin10
+        READLINK=greadlink
+        # Disable parallel build for mac as we will randomly run into "Permission denied" issue.
+        #JOBS=`sysctl -n hw.ncpu`
+        JOBS=1
+        GCC_CONFIG_OPTS_LCPP="--with-host-libstdcxx=-static-libgcc -Wl,-lstdc++ -lm"
+        MD5="md5 -r"
+        PACKAGE_NAME_SUFFIX=mac-$(sw_vers -productVersion)
+        #Redefine wget command to curl as MacOS does not have wget by default
+        WGET="curl -OLs"
+        TAR=gtar
+    else
+        error "Unsupported build system : $uname_string"
+    fi
+
+    SRC_PREREQS="GMP MPFR MPC ISL EXPAT LIBICONV ZLIB"
+    WIN_PREREQS="PYTHON_WIN"
+
+    PREREQS="$SRC_PREREQS"
+    if [ "$BUILD" != "x86_64-apple-darwin10" ]; then
+        PREREQS="$SRC_PREREQS $WIN_PREREQS"
+    fi
 
     LICENSE_FILE=license.txt
     GCC_VER=$(cat $SRCDIR/$GCC/gcc/BASE-VER)
