@@ -146,47 +146,7 @@ if [ "$skip_native_build" != "yes" ] ; then
     if stage_is_skipped "newlib"; then
         echo "Skipping stage: newlib (cache hit)"
     else
-    echo Task [III-2] /$HOST_NATIVE/newlib/ | tee -a "$BUILDDIR_NATIVE/.stage"
-    saveenv
-    prepend_path PATH $INSTALLDIR_NATIVE/bin
-    saveenvvar CFLAGS_FOR_TARGET '-g -Os -ffunction-sections -fdata-sections -fno-unroll-loops -DPREFER_SIZE_OVER_SPEED -D__OPTIMIZE_SIZE__ -DSMALL_MEMORY'
-    rm -rf $BUILDDIR_NATIVE/newlib && mkdir -p $BUILDDIR_NATIVE/newlib
-    pushd $BUILDDIR_NATIVE/newlib
-
-    $SRCDIR/$NEWLIB/configure  \
-        $NEWLIB_CONFIG_OPTS \
-        --target=$TARGET \
-        --prefix=$INSTALLDIR_NATIVE \
-        --infodir=$INSTALLDIR_NATIVE_DOC/info \
-        --mandir=$INSTALLDIR_NATIVE_DOC/man \
-        --htmldir=$INSTALLDIR_NATIVE_DOC/html \
-        --pdfdir=$INSTALLDIR_NATIVE_DOC/pdf \
-        --enable-newlib-io-long-long \
-        --enable-newlib-io-c99-formats \
-        --enable-newlib-reent-check-verify \
-        --enable-newlib-register-fini \
-        --enable-newlib-retargetable-locking \
-        --disable-newlib-supplied-syscalls \
-        --disable-nls
-
-    make -j$JOBS
-
-    make install
-
-    if [ "$skip_manual" != "yes" ]; then
-        make pdf
-        mkdir -p $INSTALLDIR_NATIVE_DOC/pdf
-        cp $BUILDDIR_NATIVE/newlib/arm-none-eabi/newlib/libc/libc.pdf $INSTALLDIR_NATIVE_DOC/pdf/libc.pdf
-        cp $BUILDDIR_NATIVE/newlib/arm-none-eabi/newlib/libm/libm.pdf $INSTALLDIR_NATIVE_DOC/pdf/libm.pdf
-
-        make html
-        mkdir -p $INSTALLDIR_NATIVE_DOC/html
-        copy_dir $BUILDDIR_NATIVE/newlib/arm-none-eabi/newlib/libc/libc.html $INSTALLDIR_NATIVE_DOC/html/libc
-        copy_dir $BUILDDIR_NATIVE/newlib/arm-none-eabi/newlib/libm/libm.html $INSTALLDIR_NATIVE_DOC/html/libm
-    fi
-
-    popd
-    restoreenv
+        "$script_path/build-newlib.sh" "$@"
     fi  # newlib stage
 
     if stage_is_skipped "newlib-nano"; then
