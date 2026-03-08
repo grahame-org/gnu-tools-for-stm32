@@ -7,8 +7,6 @@ on:
     paths:
       - .github/workflows/copilot-setup-steps.yml
 
-permissions: {}
-
 jobs:
   # The job MUST be called 'copilot-setup-steps' to be recognized by GitHub Copilot Agent
   copilot-setup-steps:
