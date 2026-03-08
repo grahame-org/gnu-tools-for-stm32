@@ -29,6 +29,7 @@ jobs:
               - 'src/**'
               - 'build-binutils.sh'
               - 'build-gcc-first.sh'
+              - 'build-gdb.sh'
               - 'build-newlib.sh'
               - 'build-newlib-nano.sh'
               - 'build-toolchain.sh'
@@ -169,6 +170,7 @@ jobs:
           gcc_first_scripts_hash=$(echo "$(hash_dir build-gcc-first.sh)$(hash_dir build-toolchain-args.sh)$(hash_dir build-common.sh)" | sha256sum | cut -d' ' -f1)
           newlib_scripts_hash=$(echo "$(hash_dir build-newlib.sh)$(hash_dir build-toolchain-args.sh)$(hash_dir build-common.sh)" | sha256sum | cut -d' ' -f1)
           newlib_nano_scripts_hash=$(echo "$(hash_dir build-newlib-nano.sh)$(hash_dir build-toolchain-args.sh)$(hash_dir build-common.sh)" | sha256sum | cut -d' ' -f1)
+          gdb_scripts_hash=$(echo "$(hash_dir build-gdb.sh)$(hash_dir build-toolchain-args.sh)$(hash_dir build-common.sh)" | sha256sum | cut -d' ' -f1)
           prereqs_key="${{ steps.cache-prerequisites.outputs.cache-primary-key }}"
 
           binutils_src=$(hash_dir src/binutils)
@@ -183,7 +185,7 @@ jobs:
           key_newlib_nano=$(printf '%s' "${{ runner.os }}-stage-newlib-nano-${newlib_nano_scripts_hash}-${key_newlib}-${newlib_src}" | sha256sum | cut -d' ' -f1)
           key_gcc_final=$(printf '%s' "${{ runner.os }}-stage-gcc-final-${scripts_hash}-${key_newlib_nano}-${gcc_src}" | sha256sum | cut -d' ' -f1)
           key_gcc_size=$(printf '%s' "${{ runner.os }}-stage-gcc-size-libstdcxx-${scripts_hash}-${key_gcc_final}-${gcc_src}" | sha256sum | cut -d' ' -f1)
-          key_gdb=$(printf '%s' "${{ runner.os }}-stage-gdb-${scripts_hash}-${key_gcc_size}-${gdb_src}" | sha256sum | cut -d' ' -f1)
+          key_gdb=$(printf '%s' "${{ runner.os }}-stage-gdb-${gdb_scripts_hash}-${key_binutils}-${gdb_src}" | sha256sum | cut -d' ' -f1)
           key_final=$(printf '%s' "${{ runner.os }}-stage-final-${scripts_hash}-${key_gdb}-${specs_src}" | sha256sum | cut -d' ' -f1)
 
           {
