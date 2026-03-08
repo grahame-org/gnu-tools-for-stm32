@@ -12,7 +12,7 @@ permissions: {}
 
 jobs:
   check-changes:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     permissions:
       contents: read
       pull-requests: read
@@ -35,7 +35,7 @@ jobs:
   libiberty-tests:
     needs: check-changes
     if: needs.check-changes.outputs.should-test == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     timeout-minutes: 30
     permissions:
       contents: read
@@ -57,7 +57,7 @@ jobs:
           ../../src/binutils/libiberty/configure
 
       - name: Build libiberty
-        run: make -C build/libiberty -j$(nproc)
+        run: make -C build/libiberty -j"$(nproc)"
 
       - name: Smoke-test failure detection
         run: |
@@ -97,7 +97,7 @@ jobs:
           path: build/libiberty/testsuite/*.log
 
   libiberty-tests-status:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     needs: [check-changes, libiberty-tests]
     if: always()
     steps:
