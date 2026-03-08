@@ -164,56 +164,7 @@ if [ "x$skip_native_build" != "xyes" ] ; then
     if stage_is_skipped "gcc-size-libstdcxx"; then
         echo "Skipping stage: gcc-size-libstdcxx (cache hit)"
     else
-    echo Task [III-5] /$HOST_NATIVE/gcc-size-libstdcxx/ | tee -a "$BUILDDIR_NATIVE/.stage"
-    rm -f $BUILDDIR_NATIVE/target-libs/arm-none-eabi/usr
-    ln -s . $BUILDDIR_NATIVE/target-libs/arm-none-eabi/usr
-
-    rm -rf $BUILDDIR_NATIVE/gcc-size-libstdcxx && mkdir -p $BUILDDIR_NATIVE/gcc-size-libstdcxx
-    pushd $BUILDDIR_NATIVE/gcc-size-libstdcxx
-
-    $SRCDIR/$GCC/configure --target=$TARGET \
-        --prefix=$BUILDDIR_NATIVE/target-libs \
-        --enable-languages=c,c++ \
-        --disable-decimal-float \
-        --disable-libffi \
-        --disable-libgomp \
-        --disable-libmudflap \
-        --disable-libquadmath \
-        --disable-libssp \
-        --disable-libstdcxx-pch \
-        --disable-libstdcxx-verbose \
-        --disable-nls \
-        --disable-shared \
-        --disable-threads \
-        --disable-tls \
-        --with-gnu-as \
-        --with-gnu-ld \
-        --with-newlib \
-        --with-headers=yes \
-        --with-python-dir=share/gcc-arm-none-eabi \
-        --with-sysroot=$BUILDDIR_NATIVE/target-libs/arm-none-eabi \
-        --with-zstd=no \
-        $GCC_CONFIG_OPTS \
-        "${GCC_CONFIG_OPTS_LCPP}"                              \
-        "--with-pkgversion=$PKGVERSION" \
-        ${MULTILIB_LIST}
-
-    make -j$JOBS CCXXFLAGS="$BUILD_OPTIONS" \
-            LDFLAGS_FOR_TARGET="--specs=nosys.specs" \
-            CXXFLAGS_FOR_TARGET="-g -Os -ffunction-sections -fdata-sections -fno-exceptions"
-    make install
-
-    copy_multi_libs src_prefix="$BUILDDIR_NATIVE/target-libs/arm-none-eabi/lib" \
-                    dst_prefix="$INSTALLDIR_NATIVE/arm-none-eabi/lib"           \
-                    target_gcc="$BUILDDIR_NATIVE/target-libs/bin/arm-none-eabi-gcc"
-
-    # Copy the nano configured newlib.h file into the location that nano.specs
-    # expects it to be.
-    mkdir -p $INSTALLDIR_NATIVE/arm-none-eabi/include/newlib-nano
-    cp -f $BUILDDIR_NATIVE/target-libs/arm-none-eabi/include/newlib.h \
-          $INSTALLDIR_NATIVE/arm-none-eabi/include/newlib-nano/newlib.h
-
-    popd
+        "$script_path/build-gcc-size-libstdcxx.sh" "$@"
     fi  # gcc-size-libstdcxx stage
 
     if stage_is_skipped "gdb"; then
