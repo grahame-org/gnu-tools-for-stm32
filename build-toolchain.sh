@@ -235,9 +235,7 @@ if [ "x$skip_native_build" != "xyes" ] ; then
     restoreenv
 
     echo Task [III-11] /$HOST_NATIVE/specs/ | tee -a "$BUILDDIR_NATIVE/.stage"
-    if stage_is_skipped "gcc-final"; then
-        echo "Skipping stage: specs (depends on gcc-final)"
-    elif [ -x "$INSTALLDIR_NATIVE/bin/arm-none-eabi-gcc" ]; then
+    if [ -x "$INSTALLDIR_NATIVE/bin/arm-none-eabi-gcc" ]; then
         pushd $BUILDDIR_NATIVE
         $INSTALLDIR_NATIVE/bin/arm-none-eabi-gcc -print-multi-lib | cut -d';' -f 1 | while read dir; do
           cp -v $SRCDIR/specs/{nano_c_standard_cpp,standard_c_nano_cpp}.specs $INSTALLDIR_NATIVE/arm-none-eabi/lib/$dir/

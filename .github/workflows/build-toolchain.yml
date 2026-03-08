@@ -40,7 +40,12 @@ jobs:
               - '.github/workflows/build-toolchain.yml'
               - 'test_project/**'
 
-  build:
+  # ---------------------------------------------------------------------------
+  # Job: build-binutils
+  # Setup + prerequisites + binutils (stage III-0).  All subsequent build jobs
+  # depend on this job so that the binutils stage cache is available.
+  # ---------------------------------------------------------------------------
+  build-binutils:
     needs: check-changes
     if: needs.check-changes.outputs.should-build == 'true'
     runs-on: ubuntu-latest
@@ -120,11 +125,6 @@ jobs:
         id: src-hashes
         run: |
           set -euo pipefail
-          # Use git tree-object SHAs to derive a stable hash of each source
-          # directory.  git rev-parse HEAD:<path> resolves to the tree SHA for
-          # that directory and changes only when files inside it change.
-          # This avoids hashFiles() scanning the ~217 k-file src/ tree, which
-          # would exceed the 120-second hashFiles timeout.
           toolchain_src_hash=$(
             printf '%s\n' \
               src/binutils \
@@ -233,6 +233,357 @@ jobs:
           path: install-native
           key: ${{ runner.os }}-stage-v1-${{ steps.stage-hashes.outputs.binutils }}
 
+  # ---------------------------------------------------------------------------
+  # Job: build-gdb
+  # GDB build (stage III-6).  Runs in PARALLEL with build-gcc-chain since GDB
+  # only depends on binutils, not on the gcc/newlib chain.  This takes the
+  # GDB build (1–2+ hours) off the critical path.
+  # ---------------------------------------------------------------------------
+  build-gdb:
+    needs: [check-changes, build-binutils]
+    if: needs.check-changes.outputs.should-build == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Free disk space
+        run: |
+          sudo apt-get remove -y \
+            '^dotnet-.*' \
+            '^llvm-.*' \
+            'php.*' \
+            azure-cli \
+            google-chrome-stable \
+            firefox \
+            powershell \
+            mono-devel \
+            || true
+          sudo apt-get autoremove -y
+          sudo apt-get clean
+          sudo rm -rf \
+            /usr/share/dotnet \
+            /usr/local/lib/android \
+            /opt/ghc \
+            /opt/hostedtoolcache/CodeQL
+          df -h
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            yacc \
+            flex \
+            gcc-arm-none-eabi \
+            gdb-multiarch \
+            cmake \
+            git \
+            openocd \
+            python3 \
+            python3-pip \
+            python3-venv \
+            texi2html \
+            texinfo \
+            automake
+          for version in 1.15 1.14; do
+            for tool in aclocal automake; do
+              target="/usr/bin/${tool}-1.16"
+              link="/usr/bin/${tool}-${version}"
+              if [ -e "$link" ] || [ -L "$link" ]; then
+                if [ "$(readlink -f "$link" 2>/dev/null || echo "")" != "$target" ]; then
+                  echo "ERROR: $link already exists and does not point to $target" >&2
+                  exit 1
+                fi
+              else
+                sudo ln -s "$target" "$link"
+              fi
+            done
+          done
+
+      - name: Set up Python virtual environment
+        run: |
+          STM32_VENV_PATH=/opt/stm32-venv
+          sudo mkdir -p "${STM32_VENV_PATH}"
+          sudo chown "$USER" "${STM32_VENV_PATH}"
+          python3 -m venv "${STM32_VENV_PATH}"
+          "${STM32_VENV_PATH}/bin/python3" -m pip install python-magic==0.4.27
+          echo "${STM32_VENV_PATH}/bin" >> "${GITHUB_PATH}"
+          echo "STM32_VENV_PATH=${STM32_VENV_PATH}" >> "${GITHUB_ENV}"
+
+      - name: Compute source tree hashes
+        id: src-hashes
+        run: |
+          set -euo pipefail
+          toolchain_src_hash=$(
+            printf '%s\n' \
+              src/binutils \
+              src/gcc \
+              src/gdb \
+              src/newlib \
+              src/libiconv \
+              src/liblongpath-win32 \
+              src/specs \
+            | while read -r dir; do
+                git rev-parse "HEAD:${dir}"
+              done \
+            | sha256sum \
+            | cut -d' ' -f1
+          )
+          echo "toolchain-src=${toolchain_src_hash}" >> "${GITHUB_OUTPUT}"
+
+      - name: Restore cache – prerequisites
+        id: cache-prerequisites
+        uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        with:
+          path: build-native/host-libs
+          key: ${{ runner.os }}-prerequisites-${{ hashFiles('build-prerequisites.sh', 'build-common.sh', 'src/gmp/**', 'src/mpfr/**', 'src/mpc/**', 'src/isl/**', 'src/expat/**', 'src/zlib*/**') }}
+
+      - name: Compute stage source hashes
+        id: stage-hashes
+        run: |
+          hash_dir() { git rev-parse HEAD:"$1" 2>/dev/null || echo "missing-$1"; }
+          scripts_hash=$(echo "$(hash_dir build-toolchain.sh)$(hash_dir build-binutils.sh)$(hash_dir build-toolchain-args.sh)$(hash_dir build-common.sh)" | sha256sum | cut -d' ' -f1)
+          binutils_scripts_hash=$(echo "$(hash_dir build-binutils.sh)$(hash_dir build-toolchain-args.sh)$(hash_dir build-common.sh)" | sha256sum | cut -d' ' -f1)
+          gcc_first_scripts_hash=$(echo "$(hash_dir build-gcc-first.sh)$(hash_dir build-toolchain-args.sh)$(hash_dir build-common.sh)" | sha256sum | cut -d' ' -f1)
+          newlib_scripts_hash=$(echo "$(hash_dir build-newlib.sh)$(hash_dir build-toolchain-args.sh)$(hash_dir build-common.sh)" | sha256sum | cut -d' ' -f1)
+          newlib_nano_scripts_hash=$(echo "$(hash_dir build-newlib-nano.sh)$(hash_dir build-toolchain-args.sh)$(hash_dir build-common.sh)" | sha256sum | cut -d' ' -f1)
+          gcc_final_scripts_hash=$(echo "$(hash_dir build-gcc-final.sh)$(hash_dir build-toolchain-args.sh)$(hash_dir build-common.sh)" | sha256sum | cut -d' ' -f1)
+          gcc_size_libstdcxx_scripts_hash=$(echo "$(hash_dir build-gcc-size-libstdcxx.sh)$(hash_dir build-toolchain-args.sh)$(hash_dir build-common.sh)" | sha256sum | cut -d' ' -f1)
+          gdb_scripts_hash=$(echo "$(hash_dir build-gdb.sh)$(hash_dir build-toolchain-args.sh)$(hash_dir build-common.sh)" | sha256sum | cut -d' ' -f1)
+          prereqs_key="${{ steps.cache-prerequisites.outputs.cache-primary-key }}"
+
+          binutils_src=$(hash_dir src/binutils)
+          gcc_src=$(hash_dir src/gcc)
+          newlib_src=$(hash_dir src/newlib)
+          gdb_src=$(hash_dir src/gdb)
+          specs_src=$(hash_dir src/specs)
+
+          key_binutils=$(printf '%s' "${{ runner.os }}-stage-binutils-${binutils_scripts_hash}-${prereqs_key}-${binutils_src}" | sha256sum | cut -d' ' -f1)
+          key_gcc_first=$(printf '%s' "${{ runner.os }}-stage-gcc-first-${gcc_first_scripts_hash}-${key_binutils}-${gcc_src}" | sha256sum | cut -d' ' -f1)
+          key_newlib=$(printf '%s' "${{ runner.os }}-stage-newlib-${newlib_scripts_hash}-${key_gcc_first}-${newlib_src}" | sha256sum | cut -d' ' -f1)
+          key_newlib_nano=$(printf '%s' "${{ runner.os }}-stage-newlib-nano-${newlib_nano_scripts_hash}-${key_newlib}-${newlib_src}" | sha256sum | cut -d' ' -f1)
+          key_gcc_final=$(printf '%s' "${{ runner.os }}-stage-gcc-final-${gcc_final_scripts_hash}-${key_newlib_nano}-${gcc_src}" | sha256sum | cut -d' ' -f1)
+          key_gcc_size=$(printf '%s' "${{ runner.os }}-stage-gcc-size-libstdcxx-${gcc_size_libstdcxx_scripts_hash}-${key_gcc_final}-${gcc_src}" | sha256sum | cut -d' ' -f1)
+          key_gdb=$(printf '%s' "${{ runner.os }}-stage-gdb-${gdb_scripts_hash}-${key_binutils}-${gdb_src}" | sha256sum | cut -d' ' -f1)
+          key_final=$(printf '%s' "${{ runner.os }}-stage-final-${scripts_hash}-${key_gdb}-${specs_src}" | sha256sum | cut -d' ' -f1)
+
+          {
+            echo "binutils=${key_binutils}"
+            echo "gcc-first=${key_gcc_first}"
+            echo "newlib=${key_newlib}"
+            echo "newlib-nano=${key_newlib_nano}"
+            echo "gcc-final=${key_gcc_final}"
+            echo "gcc-size-libstdcxx=${key_gcc_size}"
+            echo "gdb=${key_gdb}"
+            echo "final=${key_final}"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Restore cache – toolchain
+        id: cache-toolchain
+        uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        with:
+          path: install-native
+          key: ${{ runner.os }}-toolchain-${{ hashFiles('build-toolchain.sh', 'build-prerequisites.sh', 'build-common.sh') }}-${{ steps.src-hashes.outputs.toolchain-src }}
+
+      # --- Stage: gdb ---
+      - name: Restore cache – gdb
+        id: cache-gdb
+        if: steps.cache-toolchain.outputs.cache-hit != 'true'
+        uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        with:
+          path: install-native
+          key: ${{ runner.os }}-stage-v1-${{ steps.stage-hashes.outputs.gdb }}
+
+      - name: Restore cache – binutils (baseline for gdb build)
+        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-gdb.outputs.cache-hit != 'true'
+        uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        with:
+          path: install-native
+          key: ${{ runner.os }}-stage-v1-${{ steps.stage-hashes.outputs.binutils }}
+
+      - name: Build stage – gdb
+        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-gdb.outputs.cache-hit != 'true'
+        run: |
+          export JOBS=$(nproc)
+          ./build-gdb.sh \
+            --skip_steps=mingw,mingw-gdb-with-python,gdb-with-python,manual,package_sources
+
+      - name: Save cache – gdb
+        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-gdb.outputs.cache-hit != 'true' && github.event_name != 'merge_group'
+        uses: actions/cache/save@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        with:
+          path: install-native
+          key: ${{ runner.os }}-stage-v1-${{ steps.stage-hashes.outputs.gdb }}
+
+  # ---------------------------------------------------------------------------
+  # Job: build-gcc-chain
+  # Stages III-1 through III-5 (gcc-first → newlib → newlib-nano → gcc-final →
+  # gcc-size-libstdcxx).  Runs in PARALLEL with build-gdb.
+  # ---------------------------------------------------------------------------
+  build-gcc-chain:
+    needs: [check-changes, build-binutils]
+    if: needs.check-changes.outputs.should-build == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Free disk space
+        run: |
+          sudo apt-get remove -y \
+            '^dotnet-.*' \
+            '^llvm-.*' \
+            'php.*' \
+            azure-cli \
+            google-chrome-stable \
+            firefox \
+            powershell \
+            mono-devel \
+            || true
+          sudo apt-get autoremove -y
+          sudo apt-get clean
+          sudo rm -rf \
+            /usr/share/dotnet \
+            /usr/local/lib/android \
+            /opt/ghc \
+            /opt/hostedtoolcache/CodeQL
+          df -h
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            yacc \
+            flex \
+            gcc-arm-none-eabi \
+            gdb-multiarch \
+            cmake \
+            git \
+            openocd \
+            python3 \
+            python3-pip \
+            python3-venv \
+            texi2html \
+            texinfo \
+            automake
+          for version in 1.15 1.14; do
+            for tool in aclocal automake; do
+              target="/usr/bin/${tool}-1.16"
+              link="/usr/bin/${tool}-${version}"
+              if [ -e "$link" ] || [ -L "$link" ]; then
+                if [ "$(readlink -f "$link" 2>/dev/null || echo "")" != "$target" ]; then
+                  echo "ERROR: $link already exists and does not point to $target" >&2
+                  exit 1
+                fi
+              else
+                sudo ln -s "$target" "$link"
+              fi
+            done
+          done
+
+      - name: Set up Python virtual environment
+        run: |
+          STM32_VENV_PATH=/opt/stm32-venv
+          sudo mkdir -p "${STM32_VENV_PATH}"
+          sudo chown "$USER" "${STM32_VENV_PATH}"
+          python3 -m venv "${STM32_VENV_PATH}"
+          "${STM32_VENV_PATH}/bin/python3" -m pip install python-magic==0.4.27
+          echo "${STM32_VENV_PATH}/bin" >> "${GITHUB_PATH}"
+          echo "STM32_VENV_PATH=${STM32_VENV_PATH}" >> "${GITHUB_ENV}"
+
+      - name: Compute source tree hashes
+        id: src-hashes
+        run: |
+          set -euo pipefail
+          toolchain_src_hash=$(
+            printf '%s\n' \
+              src/binutils \
+              src/gcc \
+              src/gdb \
+              src/newlib \
+              src/libiconv \
+              src/liblongpath-win32 \
+              src/specs \
+            | while read -r dir; do
+                git rev-parse "HEAD:${dir}"
+              done \
+            | sha256sum \
+            | cut -d' ' -f1
+          )
+          echo "toolchain-src=${toolchain_src_hash}" >> "${GITHUB_OUTPUT}"
+
+      - name: Restore cache – prerequisites
+        id: cache-prerequisites
+        uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        with:
+          path: build-native/host-libs
+          key: ${{ runner.os }}-prerequisites-${{ hashFiles('build-prerequisites.sh', 'build-common.sh', 'src/gmp/**', 'src/mpfr/**', 'src/mpc/**', 'src/isl/**', 'src/expat/**', 'src/zlib*/**') }}
+
+      - name: Compute stage source hashes
+        id: stage-hashes
+        run: |
+          hash_dir() { git rev-parse HEAD:"$1" 2>/dev/null || echo "missing-$1"; }
+          scripts_hash=$(echo "$(hash_dir build-toolchain.sh)$(hash_dir build-binutils.sh)$(hash_dir build-toolchain-args.sh)$(hash_dir build-common.sh)" | sha256sum | cut -d' ' -f1)
+          binutils_scripts_hash=$(echo "$(hash_dir build-binutils.sh)$(hash_dir build-toolchain-args.sh)$(hash_dir build-common.sh)" | sha256sum | cut -d' ' -f1)
+          gcc_first_scripts_hash=$(echo "$(hash_dir build-gcc-first.sh)$(hash_dir build-toolchain-args.sh)$(hash_dir build-common.sh)" | sha256sum | cut -d' ' -f1)
+          newlib_scripts_hash=$(echo "$(hash_dir build-newlib.sh)$(hash_dir build-toolchain-args.sh)$(hash_dir build-common.sh)" | sha256sum | cut -d' ' -f1)
+          newlib_nano_scripts_hash=$(echo "$(hash_dir build-newlib-nano.sh)$(hash_dir build-toolchain-args.sh)$(hash_dir build-common.sh)" | sha256sum | cut -d' ' -f1)
+          gcc_final_scripts_hash=$(echo "$(hash_dir build-gcc-final.sh)$(hash_dir build-toolchain-args.sh)$(hash_dir build-common.sh)" | sha256sum | cut -d' ' -f1)
+          gcc_size_libstdcxx_scripts_hash=$(echo "$(hash_dir build-gcc-size-libstdcxx.sh)$(hash_dir build-toolchain-args.sh)$(hash_dir build-common.sh)" | sha256sum | cut -d' ' -f1)
+          gdb_scripts_hash=$(echo "$(hash_dir build-gdb.sh)$(hash_dir build-toolchain-args.sh)$(hash_dir build-common.sh)" | sha256sum | cut -d' ' -f1)
+          prereqs_key="${{ steps.cache-prerequisites.outputs.cache-primary-key }}"
+
+          binutils_src=$(hash_dir src/binutils)
+          gcc_src=$(hash_dir src/gcc)
+          newlib_src=$(hash_dir src/newlib)
+          gdb_src=$(hash_dir src/gdb)
+          specs_src=$(hash_dir src/specs)
+
+          key_binutils=$(printf '%s' "${{ runner.os }}-stage-binutils-${binutils_scripts_hash}-${prereqs_key}-${binutils_src}" | sha256sum | cut -d' ' -f1)
+          key_gcc_first=$(printf '%s' "${{ runner.os }}-stage-gcc-first-${gcc_first_scripts_hash}-${key_binutils}-${gcc_src}" | sha256sum | cut -d' ' -f1)
+          key_newlib=$(printf '%s' "${{ runner.os }}-stage-newlib-${newlib_scripts_hash}-${key_gcc_first}-${newlib_src}" | sha256sum | cut -d' ' -f1)
+          key_newlib_nano=$(printf '%s' "${{ runner.os }}-stage-newlib-nano-${newlib_nano_scripts_hash}-${key_newlib}-${newlib_src}" | sha256sum | cut -d' ' -f1)
+          key_gcc_final=$(printf '%s' "${{ runner.os }}-stage-gcc-final-${gcc_final_scripts_hash}-${key_newlib_nano}-${gcc_src}" | sha256sum | cut -d' ' -f1)
+          key_gcc_size=$(printf '%s' "${{ runner.os }}-stage-gcc-size-libstdcxx-${gcc_size_libstdcxx_scripts_hash}-${key_gcc_final}-${gcc_src}" | sha256sum | cut -d' ' -f1)
+          key_gdb=$(printf '%s' "${{ runner.os }}-stage-gdb-${gdb_scripts_hash}-${key_binutils}-${gdb_src}" | sha256sum | cut -d' ' -f1)
+          key_final=$(printf '%s' "${{ runner.os }}-stage-final-${scripts_hash}-${key_gdb}-${specs_src}" | sha256sum | cut -d' ' -f1)
+
+          {
+            echo "binutils=${key_binutils}"
+            echo "gcc-first=${key_gcc_first}"
+            echo "newlib=${key_newlib}"
+            echo "newlib-nano=${key_newlib_nano}"
+            echo "gcc-final=${key_gcc_final}"
+            echo "gcc-size-libstdcxx=${key_gcc_size}"
+            echo "gdb=${key_gdb}"
+            echo "final=${key_final}"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Restore cache – toolchain
+        id: cache-toolchain
+        uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        with:
+          path: install-native
+          key: ${{ runner.os }}-toolchain-${{ hashFiles('build-toolchain.sh', 'build-prerequisites.sh', 'build-common.sh') }}-${{ steps.src-hashes.outputs.toolchain-src }}
+
+      # Restore binutils as baseline for the gcc chain
+      - name: Restore cache – binutils (baseline)
+        if: steps.cache-toolchain.outputs.cache-hit != 'true'
+        uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        with:
+          path: install-native
+          key: ${{ runner.os }}-stage-v1-${{ steps.stage-hashes.outputs.binutils }}
+
       # --- Stage: gcc-first ---
       - name: Restore cache – gcc-first
         id: cache-gcc-first
@@ -308,13 +659,245 @@ jobs:
             build-native/target-libs
           key: ${{ runner.os }}-stage-v1-${{ steps.stage-hashes.outputs['newlib-nano'] }}
 
-      - name: Build toolchain
+      # --- Stage: gcc-final ---
+      - name: Restore cache – gcc-final
+        id: cache-gcc-final
+        if: steps.cache-toolchain.outputs.cache-hit != 'true'
+        uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        with:
+          path: |
+            install-native
+            build-native/target-libs
+          key: ${{ runner.os }}-stage-v1-${{ steps.stage-hashes.outputs['gcc-final'] }}
+
+      - name: Build stage – gcc-final
+        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-gcc-final.outputs.cache-hit != 'true'
+        run: |
+          export JOBS=$(nproc)
+          ./build-gcc-final.sh \
+            --skip_steps=mingw,mingw-gdb-with-python,gdb-with-python,manual,package_sources
+
+      - name: Save cache – gcc-final
+        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-gcc-final.outputs.cache-hit != 'true' && github.event_name != 'merge_group'
+        uses: actions/cache/save@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        with:
+          path: |
+            install-native
+            build-native/target-libs
+          key: ${{ runner.os }}-stage-v1-${{ steps.stage-hashes.outputs['gcc-final'] }}
+
+      # --- Stage: gcc-size-libstdcxx ---
+      - name: Restore cache – gcc-size-libstdcxx
+        id: cache-gcc-size-libstdcxx
+        if: steps.cache-toolchain.outputs.cache-hit != 'true'
+        uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        with:
+          path: |
+            install-native
+            build-native/target-libs
+          key: ${{ runner.os }}-stage-v1-${{ steps.stage-hashes.outputs['gcc-size-libstdcxx'] }}
+
+      - name: Build stage – gcc-size-libstdcxx
+        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-gcc-size-libstdcxx.outputs.cache-hit != 'true'
+        run: |
+          export JOBS=$(nproc)
+          ./build-gcc-size-libstdcxx.sh \
+            --skip_steps=mingw,mingw-gdb-with-python,gdb-with-python,manual,package_sources
+
+      - name: Save cache – gcc-size-libstdcxx
+        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-gcc-size-libstdcxx.outputs.cache-hit != 'true' && github.event_name != 'merge_group'
+        uses: actions/cache/save@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        with:
+          path: |
+            install-native
+            build-native/target-libs
+          key: ${{ runner.os }}-stage-v1-${{ steps.stage-hashes.outputs['gcc-size-libstdcxx'] }}
+
+  # ---------------------------------------------------------------------------
+  # Job: build-final
+  # Converges the parallel gcc-chain and gdb builds.  Restores the
+  # gcc-size-libstdcxx snapshot, layers the gdb snapshot on top, then runs
+  # the remaining post-build stages (pretidy / strip / specs) and the
+  # test_project validation.
+  # ---------------------------------------------------------------------------
+  build-final:
+    needs: [check-changes, build-gdb, build-gcc-chain]
+    if: needs.check-changes.outputs.should-build == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Free disk space
+        run: |
+          sudo apt-get remove -y \
+            '^dotnet-.*' \
+            '^llvm-.*' \
+            'php.*' \
+            azure-cli \
+            google-chrome-stable \
+            firefox \
+            powershell \
+            mono-devel \
+            || true
+          sudo apt-get autoremove -y
+          sudo apt-get clean
+          sudo rm -rf \
+            /usr/share/dotnet \
+            /usr/local/lib/android \
+            /opt/ghc \
+            /opt/hostedtoolcache/CodeQL
+          df -h
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            yacc \
+            flex \
+            gcc-arm-none-eabi \
+            gdb-multiarch \
+            cmake \
+            git \
+            openocd \
+            python3 \
+            python3-pip \
+            python3-venv \
+            texi2html \
+            texinfo \
+            automake
+          for version in 1.15 1.14; do
+            for tool in aclocal automake; do
+              target="/usr/bin/${tool}-1.16"
+              link="/usr/bin/${tool}-${version}"
+              if [ -e "$link" ] || [ -L "$link" ]; then
+                if [ "$(readlink -f "$link" 2>/dev/null || echo "")" != "$target" ]; then
+                  echo "ERROR: $link already exists and does not point to $target" >&2
+                  exit 1
+                fi
+              else
+                sudo ln -s "$target" "$link"
+              fi
+            done
+          done
+
+      - name: Set up Python virtual environment
+        run: |
+          STM32_VENV_PATH=/opt/stm32-venv
+          sudo mkdir -p "${STM32_VENV_PATH}"
+          sudo chown "$USER" "${STM32_VENV_PATH}"
+          python3 -m venv "${STM32_VENV_PATH}"
+          "${STM32_VENV_PATH}/bin/python3" -m pip install python-magic==0.4.27
+          echo "${STM32_VENV_PATH}/bin" >> "${GITHUB_PATH}"
+          echo "STM32_VENV_PATH=${STM32_VENV_PATH}" >> "${GITHUB_ENV}"
+
+      - name: Compute source tree hashes
+        id: src-hashes
+        run: |
+          set -euo pipefail
+          toolchain_src_hash=$(
+            printf '%s\n' \
+              src/binutils \
+              src/gcc \
+              src/gdb \
+              src/newlib \
+              src/libiconv \
+              src/liblongpath-win32 \
+              src/specs \
+            | while read -r dir; do
+                git rev-parse "HEAD:${dir}"
+              done \
+            | sha256sum \
+            | cut -d' ' -f1
+          )
+          echo "toolchain-src=${toolchain_src_hash}" >> "${GITHUB_OUTPUT}"
+
+      - name: Restore cache – prerequisites
+        id: cache-prerequisites
+        uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        with:
+          path: build-native/host-libs
+          key: ${{ runner.os }}-prerequisites-${{ hashFiles('build-prerequisites.sh', 'build-common.sh', 'src/gmp/**', 'src/mpfr/**', 'src/mpc/**', 'src/isl/**', 'src/expat/**', 'src/zlib*/**') }}
+
+      - name: Compute stage source hashes
+        id: stage-hashes
+        run: |
+          hash_dir() { git rev-parse HEAD:"$1" 2>/dev/null || echo "missing-$1"; }
+          scripts_hash=$(echo "$(hash_dir build-toolchain.sh)$(hash_dir build-binutils.sh)$(hash_dir build-toolchain-args.sh)$(hash_dir build-common.sh)" | sha256sum | cut -d' ' -f1)
+          binutils_scripts_hash=$(echo "$(hash_dir build-binutils.sh)$(hash_dir build-toolchain-args.sh)$(hash_dir build-common.sh)" | sha256sum | cut -d' ' -f1)
+          gcc_first_scripts_hash=$(echo "$(hash_dir build-gcc-first.sh)$(hash_dir build-toolchain-args.sh)$(hash_dir build-common.sh)" | sha256sum | cut -d' ' -f1)
+          newlib_scripts_hash=$(echo "$(hash_dir build-newlib.sh)$(hash_dir build-toolchain-args.sh)$(hash_dir build-common.sh)" | sha256sum | cut -d' ' -f1)
+          newlib_nano_scripts_hash=$(echo "$(hash_dir build-newlib-nano.sh)$(hash_dir build-toolchain-args.sh)$(hash_dir build-common.sh)" | sha256sum | cut -d' ' -f1)
+          gcc_final_scripts_hash=$(echo "$(hash_dir build-gcc-final.sh)$(hash_dir build-toolchain-args.sh)$(hash_dir build-common.sh)" | sha256sum | cut -d' ' -f1)
+          gcc_size_libstdcxx_scripts_hash=$(echo "$(hash_dir build-gcc-size-libstdcxx.sh)$(hash_dir build-toolchain-args.sh)$(hash_dir build-common.sh)" | sha256sum | cut -d' ' -f1)
+          gdb_scripts_hash=$(echo "$(hash_dir build-gdb.sh)$(hash_dir build-toolchain-args.sh)$(hash_dir build-common.sh)" | sha256sum | cut -d' ' -f1)
+          prereqs_key="${{ steps.cache-prerequisites.outputs.cache-primary-key }}"
+
+          binutils_src=$(hash_dir src/binutils)
+          gcc_src=$(hash_dir src/gcc)
+          newlib_src=$(hash_dir src/newlib)
+          gdb_src=$(hash_dir src/gdb)
+          specs_src=$(hash_dir src/specs)
+
+          key_binutils=$(printf '%s' "${{ runner.os }}-stage-binutils-${binutils_scripts_hash}-${prereqs_key}-${binutils_src}" | sha256sum | cut -d' ' -f1)
+          key_gcc_first=$(printf '%s' "${{ runner.os }}-stage-gcc-first-${gcc_first_scripts_hash}-${key_binutils}-${gcc_src}" | sha256sum | cut -d' ' -f1)
+          key_newlib=$(printf '%s' "${{ runner.os }}-stage-newlib-${newlib_scripts_hash}-${key_gcc_first}-${newlib_src}" | sha256sum | cut -d' ' -f1)
+          key_newlib_nano=$(printf '%s' "${{ runner.os }}-stage-newlib-nano-${newlib_nano_scripts_hash}-${key_newlib}-${newlib_src}" | sha256sum | cut -d' ' -f1)
+          key_gcc_final=$(printf '%s' "${{ runner.os }}-stage-gcc-final-${gcc_final_scripts_hash}-${key_newlib_nano}-${gcc_src}" | sha256sum | cut -d' ' -f1)
+          key_gcc_size=$(printf '%s' "${{ runner.os }}-stage-gcc-size-libstdcxx-${gcc_size_libstdcxx_scripts_hash}-${key_gcc_final}-${gcc_src}" | sha256sum | cut -d' ' -f1)
+          key_gdb=$(printf '%s' "${{ runner.os }}-stage-gdb-${gdb_scripts_hash}-${key_binutils}-${gdb_src}" | sha256sum | cut -d' ' -f1)
+          key_final=$(printf '%s' "${{ runner.os }}-stage-final-${scripts_hash}-${key_gdb}-${specs_src}" | sha256sum | cut -d' ' -f1)
+
+          {
+            echo "binutils=${key_binutils}"
+            echo "gcc-first=${key_gcc_first}"
+            echo "newlib=${key_newlib}"
+            echo "newlib-nano=${key_newlib_nano}"
+            echo "gcc-final=${key_gcc_final}"
+            echo "gcc-size-libstdcxx=${key_gcc_size}"
+            echo "gdb=${key_gdb}"
+            echo "final=${key_final}"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Restore cache – toolchain
+        id: cache-toolchain
+        uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        with:
+          path: install-native
+          key: ${{ runner.os }}-toolchain-${{ hashFiles('build-toolchain.sh', 'build-prerequisites.sh', 'build-common.sh') }}-${{ steps.src-hashes.outputs.toolchain-src }}
+
+      # Restore gcc-size-libstdcxx snapshot (full gcc chain output)
+      - name: Restore cache – gcc-size-libstdcxx
+        if: steps.cache-toolchain.outputs.cache-hit != 'true'
+        uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        with:
+          path: |
+            install-native
+            build-native/target-libs
+          key: ${{ runner.os }}-stage-v1-${{ steps.stage-hashes.outputs['gcc-size-libstdcxx'] }}
+
+      # Layer gdb snapshot on top — tar extraction adds gdb binaries without
+      # removing gcc/newlib files already present in install-native.
+      - name: Restore cache – gdb
+        if: steps.cache-toolchain.outputs.cache-hit != 'true'
+        uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        with:
+          path: install-native
+          key: ${{ runner.os }}-stage-v1-${{ steps.stage-hashes.outputs.gdb }}
+
+      # Run pretidy / strip / specs (all stage builds are skipped)
+      - name: Build toolchain – final assembly
         if: steps.cache-toolchain.outputs.cache-hit != 'true'
         run: |
           export JOBS=$(nproc)
           ./build-toolchain.sh \
             --skip_steps=mingw,mingw-gdb-with-python,gdb-with-python,manual,package_sources \
-            --skip_stages=binutils,gcc-first,newlib,newlib-nano
+            --skip_stages=binutils,gcc-first,newlib,newlib-nano,gcc-final,gcc-size-libstdcxx,gdb
 
       - name: Save cache – toolchain
         if: steps.cache-toolchain.outputs.cache-hit != 'true' && github.event_name != 'merge_group'
@@ -388,9 +971,27 @@ jobs:
           fi
           echo "All artifacts match reference binaries."
 
+  # ---------------------------------------------------------------------------
+  # Status jobs – keep required checks green when jobs are skipped.
+  # ---------------------------------------------------------------------------
+  build-gdb-status:
+    runs-on: ubuntu-slim
+    needs: [check-changes, build-gdb]
+    if: always()
+    steps:
+      - name: Report build-gdb status
+        run: |
+          if [[ "${{ needs.check-changes.result }}" == "failure" || "${{ needs.check-changes.result }}" == "cancelled" ]]; then
+            echo "check-changes job failed or was cancelled" && exit 1
+          fi
+          if [[ "${{ needs.build-gdb.result }}" == "failure" || "${{ needs.build-gdb.result }}" == "cancelled" ]]; then
+            echo "build-gdb failed or was cancelled" && exit 1
+          fi
+          echo "build-gdb skipped or succeeded"
+
   build-status:
     runs-on: ubuntu-slim
-    needs: [check-changes, build]
+    needs: [check-changes, build-final]
     if: always()
     steps:
       - name: Report build status
@@ -398,7 +999,7 @@ jobs:
           if [[ "${{ needs.check-changes.result }}" == "failure" || "${{ needs.check-changes.result }}" == "cancelled" ]]; then
             echo "check-changes job failed or was cancelled" && exit 1
           fi
-          if [[ "${{ needs.build.result }}" == "failure" || "${{ needs.build.result }}" == "cancelled" ]]; then
+          if [[ "${{ needs.build-final.result }}" == "failure" || "${{ needs.build-final.result }}" == "cancelled" ]]; then
             echo "Build failed or was cancelled" && exit 1
           fi
           echo "Build skipped or succeeded"
