@@ -1,6 +1,6 @@
 # ShellCheck configuration for gnu-tools-for-stm32 build scripts.
 
-# Bulk suppresions have been implemented to support adding shellsheck
+# Bulk suppressions have been implemented to support adding shellcheck
 # to the CI without generating a lot of noise. They shall be incrementally
 # fixed in future PRs
 #
@@ -14,13 +14,9 @@ shell=bash
 #            section intentionally sets exported env-var constants consumed by
 #            the sourcing scripts (build-toolchain.sh, build-prerequisites.sh).
 #
-#   SC2268 – avoid x-prefix comparisons ([ "x$v" = "x" ]): this is a historic
-#            POSIX portability idiom used throughout; changing it would be a
-#            large cosmetic-only churn with no correctness benefit.
-#
 #   SC2016 – single-quoted $ expansion: eval statements intentionally use
 #            literal $ to defer variable expansion until eval executes, not at
 #            the point the string is constructed.
 #   SC2154 - referenced but not assigned.
 #            temporary suppression to allow shellcheck to be made a required check.
-disable=SC2034,SC2268,SC2016,SC2154
+disable=SC2034,SC2016,SC2154
