@@ -212,8 +212,7 @@ fi
 if [ "$is_ppa_release" != "yes" ]; then
   ENV_CFLAGS=" -I$BUILDDIR_NATIVE/host-libs/zlib/include $BUILD_OPTIONS "
   ENV_CPPFLAGS=" -I$BUILDDIR_NATIVE/host-libs/zlib/include "
-  ENV_LDFLAGS=" -L$BUILDDIR_NATIVE/host-libs/zlib/lib
-                -L$BUILDDIR_NATIVE/host-libs/usr/lib "
+  ENV_LDFLAGS=" -L$BUILDDIR_NATIVE/host-libs/zlib/lib -L$BUILDDIR_NATIVE/host-libs/usr/lib "
 
   GCC_CONFIG_OPTS=" --build=$BUILD --host=$HOST_NATIVE
                     --with-gmp=$BUILDDIR_NATIVE/host-libs/usr
