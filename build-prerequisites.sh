@@ -88,7 +88,7 @@ for ac_arg; do
     esac
 done
 
-if [ "x$skip_steps" != "x" ]; then
+if [ "$skip_steps" != "" ]; then
     for ss in $skip_steps; do
         case $ss in
             mingw|mingw32)
@@ -108,18 +108,18 @@ if [ "x$skip_steps" != "x" ]; then
     done
 fi
 
-if [ "x$BUILD" == "xx86_64-apple-darwin10" ]; then
+if [ "$BUILD" == "x86_64-apple-darwin10" ]; then
   skip_mingw32=yes
 fi
 
-if [ "x$skip_native_build" != "xyes" ] ; then
+if [ "$skip_native_build" != "yes" ] ; then
     rm -rf "$BUILDDIR_NATIVE"
     mkdir -p "$BUILDDIR_NATIVE"
     rm -rf "$INSTALLDIR_NATIVE"
     mkdir -p "$INSTALLDIR_NATIVE"
 fi
 
-if [ "x$skip_mingw32" != "xyes" ] ; then
+if [ "$skip_mingw32" != "yes" ] ; then
     rm -rf "$BUILDDIR_MINGW"
     mkdir -p "$BUILDDIR_MINGW"
     rm -rf "$INSTALLDIR_MINGW"
@@ -128,7 +128,7 @@ fi
 
 cd "$SRCDIR"
 
-if [ "x$skip_native_build" != "xyes" ] ; then
+if [ "$skip_native_build" != "yes" ] ; then
     echo Task [I-0] /$HOST_NATIVE/zlib/ | tee -a "$BUILDDIR_NATIVE/.stage"
     rm -rf $BUILDDIR_NATIVE/zlib
     copy_dir_clean $SRCDIR/$ZLIB $BUILDDIR_NATIVE/zlib
@@ -219,10 +219,10 @@ if [ "x$skip_native_build" != "xyes" ] ; then
     make -j$JOBS
     make install
     popd
-fi  # if [ "x$skip_native_build" != "xyes" ] ; then
+fi  # if [ "$skip_native_build" != "yes" ] ; then
 
 # skip building mingw32 toolchain if "--skip_mingw32" specified
-if [ "x$skip_mingw32" == "xyes" ] ; then
+if [ "$skip_mingw32" == "yes" ] ; then
     exit 0
 fi
 
