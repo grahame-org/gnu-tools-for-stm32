@@ -58,7 +58,7 @@ stage_is_skipped()
     return 1
 }
 
-if [ "x$skip_stages" != "x" ]; then
+if [ "$skip_stages" != "" ]; then
     for ss in $skip_stages; do
         case $ss in
             binutils|gcc-first|newlib|newlib-nano|gcc-final|gcc-size-libstdcxx|gdb)
@@ -77,7 +77,7 @@ if dpkg-query -W lbzip2 > /dev/null 2>&1; then
     TAR_FLAGS="--use-compress-program=lbzip2"
 fi
 
-if [ "x$BUILD" == "xx86_64-apple-darwin10" ] || [ "x$is_ppa_release" == "xyes" ]; then
+if [ "$BUILD" == "x86_64-apple-darwin10" ] || [ "$is_ppa_release" == "yes" ]; then
     skip_mingw32=yes
     skip_mingw32_gdb_with_python=yes
     BUILD_OPTIONS="$BUILD_OPTIONS -fbracket-depth=512"
@@ -91,7 +91,7 @@ if [ ! -d $SRCDIR/$PYTHON_WIN ] \
     skip_mingw32_gdb_with_python=yes
 fi
 
-if [ "x$is_ppa_release" != "xyes" ]; then
+if [ "$is_ppa_release" != "yes" ]; then
   ENV_CFLAGS=" -I$BUILDDIR_NATIVE/host-libs/zlib/include $BUILD_OPTIONS "
   ENV_CPPFLAGS=" -I$BUILDDIR_NATIVE/host-libs/zlib/include "
   ENV_LDFLAGS=" -L$BUILDDIR_NATIVE/host-libs/zlib/lib
@@ -113,7 +113,7 @@ if [ "x$is_ppa_release" != "xyes" ]; then
                     --with-libexpat-prefix=$BUILDDIR_NATIVE/host-libs/usr "
 fi
 
-if [ "x$skip_native_build" != "xyes" ] ; then
+if [ "$skip_native_build" != "yes" ] ; then
     mkdir -p $BUILDDIR_NATIVE
     if [ -z "$skip_stages" ]; then
         rm -rf $INSTALLDIR_NATIVE && mkdir -p $INSTALLDIR_NATIVE
@@ -123,14 +123,14 @@ if [ "x$skip_native_build" != "xyes" ] ; then
     rm -rf $PACKAGEDIR && mkdir -p $PACKAGEDIR
 fi
 
-if [ "x$skip_mingw32" != "xyes" ] ; then
+if [ "$skip_mingw32" != "yes" ] ; then
     mkdir -p $BUILDDIR_MINGW
     rm -rf $INSTALLDIR_MINGW && mkdir -p $INSTALLDIR_MINGW
 fi
 
 cd $SRCDIR
 
-if [ "x$skip_native_build" != "xyes" ] ; then
+if [ "$skip_native_build" != "yes" ] ; then
     if stage_is_skipped "binutils"; then
         echo "Skipping stage: binutils (cache hit)"
     else
@@ -208,7 +208,7 @@ if [ "x$skip_native_build" != "xyes" ] ; then
 
     make install
 
-    if [ "x$skip_manual" != "xyes" ]; then
+    if [ "$skip_manual" != "yes" ]; then
         make install-html install-pdf
     fi
 
@@ -292,7 +292,7 @@ if [ "x$skip_native_build" != "xyes" ] ; then
     find $INSTALLDIR_NATIVE -name '*.la' -exec rm '{}' ';'
 
     echo Task [III-9] /$HOST_NATIVE/strip_host_objects/ | tee -a "$BUILDDIR_NATIVE/.stage"
-    if [ "x$is_debug_build" == "xno" ] ; then
+    if [ "$is_debug_build" == "no" ] ; then
         STRIP_BINARIES=$(find $INSTALLDIR_NATIVE/bin/ -name arm-none-eabi-\*)
         for bin in $STRIP_BINARIES ; do
             strip_binary strip $bin
@@ -304,7 +304,7 @@ if [ "x$skip_native_build" != "xyes" ] ; then
         done
 
         if [ -d "$INSTALLDIR_NATIVE/lib/gcc/arm-none-eabi/$GCC_VER" ]; then
-            if [ "x$BUILD" == "xx86_64-apple-darwin10" ]; then
+            if [ "$BUILD" == "x86_64-apple-darwin10" ]; then
                 STRIP_BINARIES=$(find $INSTALLDIR_NATIVE/lib/gcc/arm-none-eabi/$GCC_VER/ -maxdepth 1 -name \* -perm +111 -and ! -type d)
             else
                 STRIP_BINARIES=$(find $INSTALLDIR_NATIVE/lib/gcc/arm-none-eabi/$GCC_VER/ -maxdepth 1 -name \* -perm /111 -and ! -type d)
@@ -319,7 +319,7 @@ if [ "x$skip_native_build" != "xyes" ] ; then
     saveenv
     prepend_path PATH $INSTALLDIR_NATIVE/bin
 
-    if [ "x$skip_strip_target_libraries" == "xno" ] ; then
+    if [ "$skip_strip_target_libraries" == "no" ] ; then
         TARGET_LIBRARIES=$(find $INSTALLDIR_NATIVE/arm-none-eabi/lib -name libg.a -or -name libg_nano.a)
         for target_lib in $TARGET_LIBRARIES ; do
             break_hardlink "$target_lib"
@@ -360,7 +360,7 @@ if [ "x$skip_native_build" != "xyes" ] ; then
     fi
 
     # PPA release needn't following steps, so we exit here.
-    if [ "x$is_ppa_release" == "xyes" ] ; then
+    if [ "$is_ppa_release" == "yes" ] ; then
       exit 0
     fi
 
@@ -394,7 +394,7 @@ if [ "x$skip_native_build" != "xyes" ] ; then
     rm -f $INSTALL_PACKAGE_NAME
     popd
 
-    if [ "x$skip_package_bins" != "xyes" ]; then
+    if [ "$skip_package_bins" != "yes" ]; then
         echo Task [III-13] /Package toolchain in ST version/
         pushd $ROOT
         time ${TAR} czf $PACKAGEDIR/${PACKAGE_NAME_NATIVE}-build.tar.gz --owner=0 --group=0 build-native/
@@ -403,7 +403,7 @@ if [ "x$skip_native_build" != "xyes" ] ; then
     fi
 
     # Validate binaries on macos
-    if [ "x$BUILD" == "xx86_64-apple-darwin10" ]; then
+    if [ "$BUILD" == "x86_64-apple-darwin10" ]; then
         echo Task [III-14] /Validate tool dependencies/
         invalid=()
         # shellcheck disable=SC2046,SC2038
@@ -419,11 +419,11 @@ if [ "x$skip_native_build" != "xyes" ] ; then
           exit 1
         fi
     fi
-fi  #if [ "x$skip_native_build" != "xyes" ] ; then
+fi  #if [ "$skip_native_build" != "yes" ] ; then
 
 # skip building mingw32 toolchain if "--skip_mingw32" specified
 # this huge if statement controls all $BUILDDIR_MINGW tasks till "task [IV-8]"
-if [ "x$skip_mingw32" != "xyes" ] ; then
+if [ "$skip_mingw32" != "yes" ] ; then
     saveenv
     saveenvvar CC_FOR_BUILD gcc
     saveenvvar CC $HOST_MINGW_TOOL-gcc
@@ -470,7 +470,7 @@ if [ "x$skip_mingw32" != "xyes" ] ; then
 
     make install
 
-    if [ "x$skip_manual" != "xyes" ]; then
+    if [ "$skip_manual" != "yes" ]; then
         make install-html install-pdf
     fi
 
@@ -482,7 +482,7 @@ if [ "x$skip_mingw32" != "xyes" ] ; then
     popd
 
     echo Task [IV-2] /$HOST_MINGW/copy_libs/ | tee -a "$BUILDDIR_MINGW/.stage"
-    if [ "x$skip_manual" != "xyes" ]; then
+    if [ "$skip_manual" != "yes" ]; then
         copy_dir $BUILDDIR_MINGW/tools-$OBJ_SUFFIX_NATIVE/share/doc/gcc-arm-none-eabi/html $INSTALLDIR_MINGW_DOC/html
         copy_dir $BUILDDIR_MINGW/tools-$OBJ_SUFFIX_NATIVE/share/doc/gcc-arm-none-eabi/pdf $INSTALLDIR_MINGW_DOC/pdf
     fi
@@ -549,7 +549,7 @@ if [ "x$skip_mingw32" != "xyes" ] ; then
 
     make install-gcc
 
-    if [ "x$skip_manual" != "xyes" ]; then
+    if [ "$skip_manual" != "yes" ]; then
         make install-html-gcc install-pdf-gcc
     fi
     popd
@@ -607,7 +607,7 @@ if [ "x$skip_mingw32" != "xyes" ] ; then
         make -j$JOBS
 
         make install
-        if [ "x$skip_manual" != "xyes" ]; then
+        if [ "$skip_manual" != "yes" ]; then
             make install-html install-pdf
             rm -v $INSTALLDIR_MINGW_DOC/html/gdb/qMemTags.html
         fi
@@ -619,7 +619,7 @@ if [ "x$skip_mingw32" != "xyes" ] ; then
     build_mingw_gdb_conf_opts="--disable-source-highlight --with-static-standard-libraries"
     build_mingw_gdb "--with-python=no $build_mingw_gdb_conf_opts"
 
-    if [ "x$skip_mingw32_gdb_with_python" == "xno" ]; then
+    if [ "$skip_mingw32_gdb_with_python" == "no" ]; then
         export GNURM_PYTHON_WIN_DIR=$SRCDIR/$PYTHON_WIN
         build_mingw_gdb "--with-python=$script_path/python-config.sh --program-suffix=-py --program-prefix=$TARGET- $build_mingw_gdb_conf_opts"
     fi
@@ -637,7 +637,7 @@ if [ "x$skip_mingw32" != "xyes" ] ; then
 
     echo Task [IV-6] /$HOST_MINGW/strip_host_objects/ | tee -a "$BUILDDIR_MINGW/.stage"
     STRIP_BINARIES=$(find $INSTALLDIR_MINGW/bin/ -name arm-none-eabi-\*.exe)
-    if [ "x$is_debug_build" == "xno" ] ; then
+    if [ "$is_debug_build" == "no" ] ; then
         for bin in $STRIP_BINARIES ; do
             strip_binary $HOST_MINGW_TOOL-strip $bin
         done
@@ -673,16 +673,16 @@ if [ "x$skip_mingw32" != "xyes" ] ; then
     rm $PACKAGE_NAME
     popd
 
-    if [ "x$skip_package_bins" != "xyes" ]; then
+    if [ "$skip_package_bins" != "yes" ]; then
         echo Task [IV-10] /Package toolchain in ST version/
         pushd $ROOT
         time ${TAR} czf $PACKAGEDIR/${PACKAGE_NAME_MINGW}-build.tar.gz --owner=0 --group=0 build-mingw/
         time ${TAR} czf $PACKAGEDIR/${PACKAGE_NAME_MINGW}-install.tar.gz --owner=0 --group=0 install-mingw/
         popd
     fi
-fi #end of if [ "x$skip_mingw32" != "xyes" ] ;
+fi #end of if [ "$skip_mingw32" != "yes" ] ;
 
-if [ "x$skip_package_sources" != "xyes" ]; then
+if [ "$skip_package_sources" != "yes" ]; then
     echo Task [V-0] /package_sources/
     pushd "$PACKAGEDIR"
     rm -rf "$PACKAGE_NAME" && mkdir -p "$PACKAGE_NAME/src"
@@ -722,14 +722,14 @@ if [ "x$skip_package_sources" != "xyes" ]; then
     popd
 fi
 
-if [ "x$skip_md5_checksum" != "xyes" ]; then
+if [ "$skip_md5_checksum" != "yes" ]; then
     echo Task [V-1] /md5_checksum/
     pushd "$PACKAGEDIR"
     MD5_CHECKSUM_FILE="md5-$(uname -m)-$(uname | tr '[:upper:]' '[:lower:]').txt"
     rm -rf "$MD5_CHECKSUM_FILE"
     $MD5 "$PACKAGE_NAME_NATIVE.tar.bz2" > "$MD5_CHECKSUM_FILE"
 
-    if [ "x$skip_package_sources" != "xyes" ]; then
+    if [ "$skip_package_sources" != "yes" ]; then
         $MD5 "$PACKAGE_NAME-src.tar.bz2" >> "$MD5_CHECKSUM_FILE"
     fi
     popd
