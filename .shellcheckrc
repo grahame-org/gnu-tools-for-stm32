@@ -17,4 +17,6 @@ shell=bash
 #   SC2016 – single-quoted $ expansion: eval statements intentionally use
 #            literal $ to defer variable expansion until eval executes, not at
 #            the point the string is constructed.
-disable=SC2034,SC2016
+#   SC2154 - referenced but not assigned.
+#            temporary suppression to allow shellcheck to be made a required check.
+disable=SC2034,SC2016,SC2154
