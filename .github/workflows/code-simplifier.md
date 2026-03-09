@@ -29,7 +29,7 @@ tools:
 
 timeout-minutes: 30
 strict: true
-source: github/gh-aw/.github/workflows/code-simplifier.md@852cb06ad52958b402ed982b69957ffc57ca0619
+source: github/gh-aw/.github/workflows/code-simplifier.md@0ce8adde9abb3d0841cfb16ede313b9f99301642
 engine: copilot
 ---
 
@@ -173,8 +173,9 @@ Use the **edit** tool to modify files:
 ```bash
 # For each file with improvements:
 # 1. Read the current content
-# 2. Apply targeted edits to simplify code
-# 3. Ensure all functionality is preserved
+# 2. Create unit tests, where necessary, to characterise existing black-box behaviour
+# 3. Apply targeted edits to simplify code
+# 4. Ensure all functionality is preserved
 ```
 
 **Guidelines for edits:**
@@ -183,6 +184,7 @@ Use the **edit** tool to modify files:
 - Preserve all original behavior
 - Keep changes focused on recently modified code
 - Don't refactor unrelated code unless it improves understanding of the changes
+- Add unit tests around point of change
 
 ## Phase 3: Validate Changes
 
@@ -353,3 +355,9 @@ Your output MUST either:
 3. **If simplifications made**: Create a PR with the changes using safe-outputs
 
 Begin your code simplification analysis now. Find recently modified code, assess simplification opportunities, apply improvements while preserving functionality, validate changes, and create a PR if beneficial.
+
+**Important**: If no action is needed after completing your analysis, you **MUST** call the `noop` safe-output tool with a brief explanation. Failing to call any safe-output tool is the most common cause of safe-output workflow failures.
+
+```json
+{"noop": {"message": "No action needed: [brief explanation of what was analyzed and why]"}}
+```
