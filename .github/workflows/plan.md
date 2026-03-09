@@ -19,15 +19,15 @@ safe-outputs:
   create-issue:
     expires: 2d
     title-prefix: "[plan] "
-    labels: [plan, ai-generated, cookie]
-    max: 50  # Maximum 5 sub-issues per group
+    labels: [plan, ai-generated]
+    max: 50  # Maximum 50 sub-issues per group
     group: true
   close-discussion:
     required-category: "Ideas"
 timeout-minutes: 10
 imports:
   - shared/mood.md
-source: github/gh-aw/.github/workflows/plan.md@852cb06ad52958b402ed982b69957ffc57ca0619
+source: github/gh-aw/.github/workflows/plan.md@0ce8adde9abb3d0841cfb16ede313b9f99301642
 ---
 
 # Planning Assistant
@@ -123,17 +123,23 @@ All created issues will be automatically grouped under a parent tracking issue.
 
 ## Instructions
 
-Review instructions in `.github/instructions/*.instructions.md` if you need guidance.
+Review `.github/copilot-instructions.md` for project-specific conventions and context before generating sub-issues.
 
 ## Begin Planning
 
 {{#if github.event.issue.number}}
 1. First, analyze the current issue (#${{ github.event.issue.number }}) and the user's comment for context and any additional guidance
-2. Create sub-issues (at most 50) - they will be automatically grouped
+2. Create sub-issues (at most 5) - they will be automatically grouped
 {{/if}}
 
 {{#if github.event.discussion.number}}
 1. First, analyze the discussion (#${{ github.event.discussion.number }}) and the user's comment for context and any additional guidance
-2. Create sub-issues (at most 50) - they will be automatically grouped
+2. Create sub-issues (at most 5) - they will be automatically grouped
 3. After creating all issues successfully, if this was triggered from a discussion in the "Ideas" category, close the discussion with a comment summarizing the plan and resolution reason "RESOLVED"
 {{/if}}
+
+**Important**: If no action is needed after completing your analysis, you **MUST** call the `noop` safe-output tool with a brief explanation. Failing to call any safe-output tool is the most common cause of safe-output workflow failures.
+
+```json
+{"noop": {"message": "No action needed: [brief explanation of what was analyzed and why]"}}
+```

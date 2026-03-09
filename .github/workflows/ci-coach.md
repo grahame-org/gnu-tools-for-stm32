@@ -21,11 +21,11 @@ safe-outputs:
     title-prefix: "[ci-coach] "
 timeout-minutes: 30
 imports:
-  - shared/mood.md
   - shared/ci-data-analysis.md
   - shared/ci-optimization-strategies.md
   - shared/reporting.md
-source: github/gh-aw/.github/workflows/ci-coach.md@852cb06ad52958b402ed982b69957ffc57ca0619
+features:
+  copilot-requests: true
 ---
 
 # CI Optimization Coach
@@ -40,11 +40,16 @@ Analyze the CI workflow daily to identify concrete optimization opportunities th
 
 - **Repository**: ${{ github.repository }}
 - **Run Number**: #${{ github.run_number }}
-- **Target Workflow**: `.github/workflows/ci.yml`
+- **Target Workflows**:
+  - `.github/workflows/build-toolchain.yml` — Main toolchain build (primary workflow to analyse)
+  - `.github/workflows/binutils-tests.yml` — Binutils DejaGnu regression tests
+  - `.github/workflows/gcc-selftests.yml` — GCC internal selftests
+  - `.github/workflows/gdb-selftests.yml` — GDB selftests
+  - `.github/workflows/libiberty-tests.yml` — libiberty unit tests
+  - `.github/workflows/shell-unit-tests.yml` — Shell unit tests
+  - `.github/workflows/actionlint.yml` - Action linter
+  - `.github/workflows/shellcheck.yml` - Shell script linter
 
-## Data Available
-
-The `ci-data-analysis` shared module has pre-downloaded CI run data and built the project. Available data:
 ## Data Available
 
 The `ci-data-analysis` shared module has pre-downloaded CI run data and built the project. Available data:
@@ -58,6 +63,10 @@ The `ci-data-analysis` shared module has pre-downloaded CI run data and built th
 
 The project has been **built, linted, and tested** so you can validate changes immediately.
 
+> [!Note]: This is a **shell-based bare-metal C toolchain project** (not a Go or Node.js project).
+> There is no `go.mod`, no `Makefile`, and no `actions/setup/js/` directory.
+> Build scripts are `build-toolchain.sh` and `build-prerequisites.sh`.
+
 ## Analysis Framework
 
 Follow the optimization strategies defined in the `ci-optimization-strategies` shared module:
@@ -68,38 +77,38 @@ Follow the optimization strategies defined in the `ci-optimization-strategies` s
 
 ### Phase 2: Analyze Test Coverage (10 minutes)
 **CRITICAL**: Ensure all tests are executed by the CI matrix
+
 - Check for orphaned tests not covered by any CI job
 - Verify catch-all matrix groups exist for packages with specific patterns
 - Identify coverage gaps and propose fixes if needed
-- **Use canary job outputs** to detect missing tests:
-  - Review `test-coverage-analysis` artifact from the `canary_go` job
-  - The canary job compares `all-tests.txt` (all tests in codebase) vs `executed-tests.txt` (tests that actually ran)
-  - If canary job fails, investigate which tests are missing from the CI matrix
-  - Ensure all tests defined in `*_test.go` files are covered by at least one test job pattern
 - **Verify test suite integrity**:
   - Check that the test suite FAILS when individual tests fail (not just reporting failures)
   - Review test job exit codes - ensure failed tests cause the job to exit with non-zero status
   - Validate that test result artifacts show actual test failures, not swallowed errors
-- **Analyze fuzz test performance**: Review fuzz test results in `/tmp/ci-artifacts/*/fuzz-results/`
-  - Check for new crash inputs or interesting corpus growth
-  - Evaluate fuzz test duration (currently 10s per test)
-  - Consider if fuzz time should be increased for security-critical tests
+
+This is a **project to build a C / C++ toolchain**. Tests are:
+- Build scripts use `bash`
+- Individual tools use a mixture of:
+  - C
+  - C++
+- Shell unit tests run by `shell-unit-tests.yml`
+- Binutils DejaGnu regression tests — run by `binutils-tests.yml`
+- GCC internal selftests — run by `gcc-selftests.yml`
+- GDB selftests — run by `gdb-selftests.yml`
+- libiberty unit tests — run by `libiberty-tests.yml`
+- Full toolchain build + test_project validation — run by `build-toolchain.yml`
+
 
 ### Phase 3: Identify Optimization Opportunities (10 minutes)
 Apply the optimization strategies from the shared module:
 1. **Job Parallelization** - Reduce critical path
 2. **Cache Optimization** - Improve cache hit rates
 3. **Test Suite Restructuring** - Balance test execution
-4. **Resource Right-Sizing** - Optimize timeouts and runners
+4. **Resource Right-Sizing** - Optimize timeouts, runners and runner types (e.g. ubuntu-latest vs ubuntu-slim)
 5. **Artifact Management** - Reduce unnecessary uploads
 6. **Matrix Strategy** - Balance breadth vs. speed
 7. **Conditional Execution** - Skip unnecessary jobs
 8. **Dependency Installation** - Reduce redundant work
-9. **Fuzz Test Optimization** - Evaluate fuzz test strategy
-   - Consider increasing fuzz time for security-critical parsers (sanitization, expression parsing)
-   - Evaluate if fuzz tests should run on PRs (currently main-only)
-   - Check if corpus data is growing efficiently
-   - Consider parallel fuzz test execution
 
 ### Phase 4: Cost-Benefit Analysis (3 minutes)
 For each potential optimization:
@@ -114,20 +123,15 @@ Prioritize optimizations with high impact, low risk, and low to medium effort.
 
 If you identify improvements worth implementing:
 
-### Phase 5: Implement and Validate Changes (8 minutes)
-
-If you identify improvements worth implementing:
-
-1. **Make focused changes** to `.github/workflows/ci.yml`:
+1. **Make focused changes** to the relevant `.github/workflows/*.yml` file:
    - Use the `edit` tool to make precise modifications
    - Keep changes minimal and well-documented
    - Add comments explaining why changes improve efficiency
 
 2. **Validate changes immediately**:
-   ```bash
-   make lint && make build && make test-unit && make recompile
-   ```
-   
+   - run unit tests
+   - carry out linting
+
    **IMPORTANT**: Only proceed to creating a PR if all validations pass.
 
 3. **Document changes** in the PR description (see template below)
@@ -143,7 +147,6 @@ If you identify improvements worth implementing:
    }
    EOF
    ```
-
 5. **Create pull request** using the `create_pull_request` tool (title auto-prefixed with "[ci-coach]")
 
 ### Phase 6: No Changes Path
@@ -153,73 +156,12 @@ If no improvements are found or changes are too risky:
 2. Exit gracefully - no pull request needed
 3. Log findings for future reference
 
-## Report Formatting Guidelines
-
-When creating CI optimization reports and pull request descriptions, follow these formatting standards to ensure readability and professionalism:
-
-### 1. Header Levels
-**Use h3 (###) or lower for all headers in your report to maintain proper document hierarchy.**
-
-The PR or discussion title serves as h1, so all content headers should start at h3:
-- Use `###` for main sections (e.g., "### CI Optimization Opportunities", "### Expected Impact")
-- Use `####` for subsections (e.g., "#### Performance Analysis", "#### Cache Optimization")
-- Never use `##` (h2) or `#` (h1) in the report body
-
-Example:
-```markdown
-### CI Optimization Opportunities
-#### Performance Analysis
-```
-
-### 2. Progressive Disclosure
-**Wrap detailed sections like full job logs, timing breakdowns, and verbose analysis in `<details><summary><b>Section Name</b></summary>` tags to improve readability and reduce scrolling.**
-
-Use collapsible sections for:
-- Detailed timing analysis and per-job breakdowns
-- Full workflow configuration comparisons
-- Verbose metrics and historical data
-- Extended technical analysis
-
-Always keep critical information visible:
-- Executive summary with key optimizations
-- Top optimization opportunities
-- Expected impact and savings
-- Validation results
-- Actionable recommendations
-
-Example:
-```markdown
-<details>
-<summary><b>Detailed Timing Analysis</b></summary>
-
-[Per-job timing breakdown, critical path analysis, detailed metrics...]
-
-</details>
-```
-
-### 3. Recommended Report Structure
-
-Your CI optimization reports should follow this structure for optimal readability:
-
-1. **Executive Summary** (always visible): Brief overview of total optimizations found, expected time/cost savings
-2. **Top Optimization Opportunities** (always visible): Top 3-5 highest-impact changes with brief descriptions
-3. **Detailed Analysis per Workflow** (in `<details>` tags): Complete breakdown of each optimization with before/after comparisons
-4. **Expected Impact** (always visible): Total time savings, cost reduction, risk assessment
-5. **Validation Results** (always visible): Confirmation that all validations passed
-6. **Recommendations** (always visible): Actionable next steps and testing plan
-
-### Design Principles (Airbnb-Inspired)
-
-Your optimization reports should:
-1. **Build trust through clarity**: Most important optimization opportunities and expected benefits immediately visible
-2. **Exceed expectations**: Add helpful context like estimated time savings, cost impact, historical trends
-3. **Create delight**: Use progressive disclosure to present deep analysis without overwhelming reviewers
-4. **Maintain consistency**: Follow the same patterns as other reporting workflows like `daily-copilot-token-report`, `daily-code-metrics`, and `auto-triage-issues`
-
 ## Pull Request Structure (if created)
 
+**Report Formatting**: Use h3 (###) or lower for all headers in your PR description to maintain proper document hierarchy. The PR title serves as h1, so start section headers at h3.
+
 ```markdown
-## CI Optimization Proposal
+### CI Optimization Proposal
 
 ### Summary
 [Brief overview of proposed changes and expected benefits]
@@ -362,7 +304,8 @@ The CI Coach workflow must NEVER alter test code (`*_test.go` files) in ways tha
 - **Reversible**: Changes should be easy to roll back if needed
 
 ### Safety Checks
-- **Validate changes before PR**: Run `make lint`, `make build`, and `make test-unit` after making changes
+
+- **Validate changes before PR**: Run linting tools and test suites after making changes
 - **Validate YAML syntax** - ensure workflow files are valid
 - **Preserve job dependencies** that ensure correctness
 - **Maintain test coverage** - never sacrifice quality for speed
@@ -370,7 +313,7 @@ The CI Coach workflow must NEVER alter test code (`*_test.go` files) in ways tha
 - **Document trade-offs** clearly
 - **Only create PR if validations pass** - don't propose broken changes
 - **NEVER change test code to hide errors**:
-  - NEVER modify test files (`*_test.go`) to swallow errors or ignore failures
+  - NEVER modify test files to swallow errors or ignore failures
   - NEVER add `|| true` or similar patterns to make failing tests appear to pass
   - NEVER wrap test commands with error suppression (e.g., `set +e`, `|| echo "ignoring"`)
   - If tests are failing, fix the root cause or update the CI matrix, not the test code
@@ -380,6 +323,7 @@ The CI Coach workflow must NEVER alter test code (`*_test.go` files) in ways tha
 - **Use pre-downloaded data** - all data is already available
 - **Focus on concrete improvements** - avoid vague recommendations
 - **Calculate real impact** - estimate time/cost savings
+- **Fact driven** - always use real data where it is available
 - **Consider maintenance burden** - don't over-optimize
 - **Learn from history** - check cache memory for previous attempts
 
@@ -396,9 +340,14 @@ The CI Coach workflow must NEVER alter test code (`*_test.go` files) in ways tha
 ✅ Examined available artifacts and metrics
 ✅ Checked historical context from cache memory
 ✅ Identified concrete optimization opportunities OR confirmed CI is well-optimized
-✅ If changes proposed: Validated them with `make lint`, `make build`, and `make test-unit`
 ✅ Created PR with specific, low-risk, validated improvements OR saved analysis noting no changes needed
 ✅ Documented expected impact with metrics
 ✅ Completed analysis in under 30 minutes
 
 Begin your analysis now. Study the CI configuration, analyze the run data, and identify concrete opportunities to make the test suite more efficient while minimizing costs. If you propose changes to the CI workflow, validate them by running the build, lint, and test commands before creating a pull request. Only create a PR if all validations pass.
+
+**Important**: If no action is needed after completing your analysis, you **MUST** call the `noop` safe-output tool with a brief explanation. Failing to call any safe-output tool is the most common cause of safe-output workflow failures.
+
+```json
+{"noop": {"message": "No action needed: [brief explanation of what was analyzed and why]"}}
+```
