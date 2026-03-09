@@ -26,9 +26,12 @@ jobs:
         with:
           filters: |
             test:
+              - 'build-binutils.sh'
               - 'build-common.sh'
-              - 'build-toolchain.sh'
+              - 'build-gcc-first.sh'
               - 'build-prerequisites.sh'
+              - 'build-toolchain-args.sh'
+              - 'build-toolchain.sh'
               - '.shellcheckrc'
               - '.github/workflows/shellcheck.yml'
 
@@ -45,7 +48,14 @@ jobs:
           persist-credentials: false
 
       - name: Run shellcheck on build scripts
-        run: shellcheck --severity=warning build-common.sh build-toolchain.sh build-prerequisites.sh
+        run: |
+          shellcheck --severity=warning \
+          build-binutils.sh \
+          build-common.sh \
+          build-gcc-first.sh \
+          build-prerequisites.sh \
+          build-toolchain-args.sh \
+          build-toolchain.sh
 
   shellcheck-status:
     runs-on: ubuntu-latest

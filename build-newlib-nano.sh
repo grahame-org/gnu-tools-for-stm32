@@ -26,19 +26,19 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-# build-gcc-first.sh: Builds the gcc-first component (stage III-1) of the
+# build-newlib-nano.sh: Builds the newlib-nano component (stage III-3) of the
 # GNU Tools for STM32 toolchain.  This script is extracted from
 # build-toolchain.sh so that changes to other parts of the toolchain build
-# do not invalidate the gcc-first stage cache.
+# do not invalidate the newlib-nano stage cache.
 #
 # Usage:
-#   ./build-gcc-first.sh [--build_type=...] [--skip_steps=...]
+#   ./build-newlib-nano.sh [--build_type=...] [--skip_steps=...]
 #
 # The script accepts the same --build_type and --skip_steps flags as
 # build-toolchain.sh.  The --skip_stages flag is accepted but ignored (this
-# script always builds the gcc-first stage).
+# script always builds the newlib-nano stage).
 #
-# The binutils stage (III-0) output must already be present in install-native/
+# The newlib stage (III-2) output must already be present in install-native/
 # before calling this script.
 
 set -e
@@ -52,7 +52,6 @@ umask 022
 
 exec < /dev/null
 
-# shellcheck disable=SC2046
 script_path=$(cd $(dirname $0) && pwd -P)
 cd "$script_path"
 . $script_path/build-common.sh
@@ -60,16 +59,8 @@ cd "$script_path"
 . "$script_path/build-toolchain-args.sh"
 parse_toolchain_args "$@"
 
-if [ "x$BUILD" == "xx86_64-apple-darwin10" ] || [ "x$is_ppa_release" == "xyes" ]; then
-    BUILD_OPTIONS="$BUILD_OPTIONS -fbracket-depth=512"
-fi
-
 if [ "x$is_ppa_release" != "xyes" ]; then
-  GCC_CONFIG_OPTS=" --build=$BUILD --host=$HOST_NATIVE
-                    --with-gmp=$BUILDDIR_NATIVE/host-libs/usr
-                    --with-mpfr=$BUILDDIR_NATIVE/host-libs/usr
-                    --with-mpc=$BUILDDIR_NATIVE/host-libs/usr
-                    --with-isl=$BUILDDIR_NATIVE/host-libs/usr "
+  NEWLIB_CONFIG_OPTS=" --build=$BUILD --host=$HOST_NATIVE "
 fi
 
 if [ "x$skip_native_build" != "xyes" ] ; then
@@ -81,52 +72,34 @@ fi
 cd $SRCDIR
 
 if [ "x$skip_native_build" != "xyes" ] ; then
-    echo Task [III-1] /$HOST_NATIVE/gcc-first/ | tee -a "$BUILDDIR_NATIVE/.stage"
-    rm -rf $BUILDDIR_NATIVE/gcc-first && mkdir -p $BUILDDIR_NATIVE/gcc-first
-    pushd $BUILDDIR_NATIVE/gcc-first
-    $SRCDIR/$GCC/configure --target=$TARGET \
-        --prefix=$INSTALLDIR_NATIVE \
-        --libexecdir=$INSTALLDIR_NATIVE/lib \
-        --infodir=$INSTALLDIR_NATIVE_DOC/info \
-        --mandir=$INSTALLDIR_NATIVE_DOC/man \
-        --htmldir=$INSTALLDIR_NATIVE_DOC/html \
-        --pdfdir=$INSTALLDIR_NATIVE_DOC/pdf \
-        --enable-checking=release \
-        --enable-languages=c \
-        --disable-decimal-float \
-        --disable-libffi \
-        --disable-libgomp \
-        --disable-libmudflap \
-        --disable-libquadmath \
-        --disable-libssp \
-        --disable-libstdcxx-pch \
-        --disable-nls \
-        --disable-shared \
-        --disable-threads \
-        --disable-tls \
-        --disable-libatomic \
-        --disable-libsanitizer \
-        --with-newlib \
-        --without-headers \
-        --with-gnu-as \
-        --with-gnu-ld \
-        --with-python-dir=share/gcc-arm-none-eabi \
-        --with-sysroot=$INSTALLDIR_NATIVE/arm-none-eabi \
-        --with-zstd=no \
-        ${GCC_CONFIG_OPTS}                              \
-        "${GCC_CONFIG_OPTS_LCPP}"                              \
-        "--with-pkgversion=$PKGVERSION" \
-        ${MULTILIB_LIST}
+    echo Task [III-3] /$HOST_NATIVE/newlib-nano/ | tee -a "$BUILDDIR_NATIVE/.stage"
+    saveenv
+    prepend_path PATH $INSTALLDIR_NATIVE/bin
+    saveenvvar CFLAGS_FOR_TARGET '-g -Os -ffunction-sections -fdata-sections -fno-unroll-loops -DPREFER_SIZE_OVER_SPEED -D__OPTIMIZE_SIZE__ -DSMALL_MEMORY'
+    rm -rf $BUILDDIR_NATIVE/newlib-nano && mkdir -p $BUILDDIR_NATIVE/newlib-nano
+    pushd $BUILDDIR_NATIVE/newlib-nano
 
-    make -j$JOBS CXXFLAGS="$BUILD_OPTIONS" all-gcc
+    $SRCDIR/$NEWLIB_NANO/configure  \
+        $NEWLIB_CONFIG_OPTS \
+        --target=$TARGET \
+        --prefix=$BUILDDIR_NATIVE/target-libs \
+        --disable-newlib-supplied-syscalls    \
+        --enable-newlib-reent-check-verify    \
+        --enable-newlib-reent-small           \
+        --enable-newlib-retargetable-locking  \
+        --disable-newlib-fvwrite-in-streamio  \
+        --disable-newlib-fseek-optimization   \
+        --disable-newlib-wide-orient          \
+        --enable-newlib-nano-malloc           \
+        --disable-newlib-unbuf-stream-opt     \
+        --enable-lite-exit                    \
+        --enable-newlib-global-atexit         \
+        --enable-newlib-nano-formatted-io     \
+        --disable-nls
 
-    make install-gcc
+    make -j$JOBS
+    make install
 
     popd
-
-    pushd $INSTALLDIR_NATIVE
-    rm -rf bin/arm-none-eabi-gccbug
-    rm -rf ./lib/libiberty.a
-    rm -rf  include
-    popd
+    restoreenv
 fi
