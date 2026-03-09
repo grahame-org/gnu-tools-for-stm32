@@ -29,6 +29,10 @@ jobs:
               - 'build-binutils.sh'
               - 'build-common.sh'
               - 'build-gcc-first.sh'
+              - 'build-gdb.sh'
+              - 'build-newlib.sh'
+              - 'build-newlib-nano.sh'
+              - 'build-prerequisites.sh'
               - 'build-toolchain.sh'
               - 'build-toolchain-args.sh'
               - 'tests/**'
@@ -50,6 +54,7 @@ jobs:
         run: |
           bash tests/test-build-common.sh
           bash tests/test-build-toolchain-args.sh
+          bash tests/test-strip-binary.sh
 
   shell-unit-tests-status:
     runs-on: ubuntu-slim
