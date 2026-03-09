@@ -4,7 +4,9 @@
 # to the CI without generating a lot of noise. They shall be incrementally
 # fixed in future PRs
 #
-# shell=bash avoids SC2148 (no shebang) on sourced scripts like build-common.sh.
+# shell=bash sets the default shell for all scripts in this repository.
+# build-common.sh (which is sourced rather than executed directly) also carries
+# an explicit "# shellcheck shell=bash" directive for clarity.
 shell=bash
 
 # Globally suppress findings that are intentional legacy patterns across all
@@ -17,6 +19,4 @@ shell=bash
 #   SC2016 – single-quoted $ expansion: eval statements intentionally use
 #            literal $ to defer variable expansion until eval executes, not at
 #            the point the string is constructed.
-#   SC2154 - referenced but not assigned.
-#            temporary suppression to allow shellcheck to be made a required check.
 disable=SC2034,SC2016,SC2154
