@@ -28,11 +28,12 @@ jobs:
             build:
               - 'src/**'
               - 'build-binutils.sh'
+              - 'build-common.sh'
               - 'build-gcc-first.sh'
               - 'build-newlib.sh'
-              - 'build-toolchain.sh'
+              - 'build-newlib-nano.sh'
               - 'build-prerequisites.sh'
-              - 'build-common.sh'
+              - 'build-toolchain.sh'
               - '.github/workflows/build-toolchain.yml'
               - 'test_project/**'
 
@@ -167,6 +168,7 @@ jobs:
           binutils_scripts_hash=$(echo "$(hash_dir build-binutils.sh)$(hash_dir build-toolchain-args.sh)$(hash_dir build-common.sh)" | sha256sum | cut -d' ' -f1)
           gcc_first_scripts_hash=$(echo "$(hash_dir build-gcc-first.sh)$(hash_dir build-toolchain-args.sh)$(hash_dir build-common.sh)" | sha256sum | cut -d' ' -f1)
           newlib_scripts_hash=$(echo "$(hash_dir build-newlib.sh)$(hash_dir build-toolchain-args.sh)$(hash_dir build-common.sh)" | sha256sum | cut -d' ' -f1)
+          newlib_nano_scripts_hash=$(echo "$(hash_dir build-newlib-nano.sh)$(hash_dir build-toolchain-args.sh)$(hash_dir build-common.sh)" | sha256sum | cut -d' ' -f1)
           prereqs_key="${{ steps.cache-prerequisites.outputs.cache-primary-key }}"
 
           binutils_src=$(hash_dir src/binutils)
@@ -178,7 +180,7 @@ jobs:
           key_binutils=$(printf '%s' "${{ runner.os }}-stage-binutils-${binutils_scripts_hash}-${prereqs_key}-${binutils_src}" | sha256sum | cut -d' ' -f1)
           key_gcc_first=$(printf '%s' "${{ runner.os }}-stage-gcc-first-${gcc_first_scripts_hash}-${key_binutils}-${gcc_src}" | sha256sum | cut -d' ' -f1)
           key_newlib=$(printf '%s' "${{ runner.os }}-stage-newlib-${newlib_scripts_hash}-${key_gcc_first}-${newlib_src}" | sha256sum | cut -d' ' -f1)
-          key_newlib_nano=$(printf '%s' "${{ runner.os }}-stage-newlib-nano-${scripts_hash}-${key_newlib}-${newlib_src}" | sha256sum | cut -d' ' -f1)
+          key_newlib_nano=$(printf '%s' "${{ runner.os }}-stage-newlib-nano-${newlib_nano_scripts_hash}-${key_newlib}-${newlib_src}" | sha256sum | cut -d' ' -f1)
           key_gcc_final=$(printf '%s' "${{ runner.os }}-stage-gcc-final-${scripts_hash}-${key_newlib_nano}-${gcc_src}" | sha256sum | cut -d' ' -f1)
           key_gcc_size=$(printf '%s' "${{ runner.os }}-stage-gcc-size-libstdcxx-${scripts_hash}-${key_gcc_final}-${gcc_src}" | sha256sum | cut -d' ' -f1)
           key_gdb=$(printf '%s' "${{ runner.os }}-stage-gdb-${scripts_hash}-${key_gcc_size}-${gdb_src}" | sha256sum | cut -d' ' -f1)
@@ -274,6 +276,34 @@ jobs:
           path: install-native
           key: ${{ runner.os }}-stage-v1-${{ steps.stage-hashes.outputs.newlib }}
 
+      # --- Stage: newlib-nano ---
+      - name: Restore cache – newlib-nano
+        id: cache-newlib-nano
+        uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        if: steps.cache-newlib.outputs.cache-hit != 'true'
+        with:
+          path: |
+            install-native
+            build-native/target-libs
+          key: ${{ runner.os }}-stage-v1-${{ steps.stage-hashes.outputs['newlib-nano'] }}
+
+      - name: Build stage – newlib-nano
+        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-newlib-nano.outputs.cache-hit != 'true'
+        run: |
+          JOBS=$(nproc)
+          export JOBS
+          ./build-newlib-nano.sh \
+            --skip_steps=mingw,mingw-gdb-with-python,gdb-with-python,manual,package_sources
+
+      - name: Save cache – newlib-nano
+        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-newlib-nano.outputs.cache-hit != 'true' && github.event_name != 'merge_group'
+        uses: actions/cache/save@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        with:
+          path: |
+            install-native
+            build-native/target-libs
+          key: ${{ runner.os }}-stage-v1-${{ steps.stage-hashes.outputs['newlib-nano'] }}
+
       - name: Build toolchain
         if: steps.cache-toolchain.outputs.cache-hit != 'true'
         run: |
@@ -281,7 +311,7 @@ jobs:
           export JOBS
           ./build-toolchain.sh \
             --skip_steps=mingw,mingw-gdb-with-python,gdb-with-python,manual,package_sources \
-            --skip_stages=binutils,gcc-first,newlib
+            --skip_stages=binutils,gcc-first,newlib,newlib-nano
 
       - name: Save cache – toolchain
         if: steps.cache-toolchain.outputs.cache-hit != 'true' && github.event_name != 'merge_group'
