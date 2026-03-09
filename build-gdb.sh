@@ -26,17 +26,17 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-# build-gcc-first.sh: Builds the gcc-first component (stage III-1) of the
+# build-gdb.sh: Builds the gdb component (stage III-6) of the
 # GNU Tools for STM32 toolchain.  This script is extracted from
 # build-toolchain.sh so that changes to other parts of the toolchain build
-# do not invalidate the gcc-first stage cache.
+# do not invalidate the gdb stage cache.
 #
 # Usage:
-#   ./build-gcc-first.sh [--build_type=...] [--skip_steps=...]
+#   ./build-gdb.sh [--build_type=...] [--skip_steps=...]
 #
 # The script accepts the same --build_type and --skip_steps flags as
 # build-toolchain.sh.  The --skip_stages flag is accepted but ignored (this
-# script always builds the gcc-first stage).
+# script always builds the gdb stage).
 #
 # The binutils stage (III-0) output must already be present in install-native/
 # before calling this script.
@@ -52,7 +52,6 @@ umask 022
 
 exec < /dev/null
 
-# shellcheck disable=SC2046
 script_path=$(cd $(dirname $0) && pwd -P)
 cd "$script_path"
 . $script_path/build-common.sh
@@ -65,11 +64,15 @@ if [ "x$BUILD" == "xx86_64-apple-darwin10" ] || [ "x$is_ppa_release" == "xyes" ]
 fi
 
 if [ "x$is_ppa_release" != "xyes" ]; then
-  GCC_CONFIG_OPTS=" --build=$BUILD --host=$HOST_NATIVE
+  ENV_CFLAGS=" -I$BUILDDIR_NATIVE/host-libs/zlib/include $BUILD_OPTIONS "
+  ENV_CPPFLAGS=" -I$BUILDDIR_NATIVE/host-libs/zlib/include "
+  ENV_LDFLAGS=" -L$BUILDDIR_NATIVE/host-libs/zlib/lib
+                -L$BUILDDIR_NATIVE/host-libs/usr/lib "
+
+  GDB_CONFIG_OPTS=" --build=$BUILD --host=$HOST_NATIVE
                     --with-gmp=$BUILDDIR_NATIVE/host-libs/usr
                     --with-mpfr=$BUILDDIR_NATIVE/host-libs/usr
-                    --with-mpc=$BUILDDIR_NATIVE/host-libs/usr
-                    --with-isl=$BUILDDIR_NATIVE/host-libs/usr "
+                    --with-libexpat-prefix=$BUILDDIR_NATIVE/host-libs/usr "
 fi
 
 if [ "x$skip_native_build" != "xyes" ] ; then
@@ -81,52 +84,64 @@ fi
 cd $SRCDIR
 
 if [ "x$skip_native_build" != "xyes" ] ; then
-    echo Task [III-1] /$HOST_NATIVE/gcc-first/ | tee -a "$BUILDDIR_NATIVE/.stage"
-    rm -rf $BUILDDIR_NATIVE/gcc-first && mkdir -p $BUILDDIR_NATIVE/gcc-first
-    pushd $BUILDDIR_NATIVE/gcc-first
-    $SRCDIR/$GCC/configure --target=$TARGET \
-        --prefix=$INSTALLDIR_NATIVE \
-        --libexecdir=$INSTALLDIR_NATIVE/lib \
-        --infodir=$INSTALLDIR_NATIVE_DOC/info \
-        --mandir=$INSTALLDIR_NATIVE_DOC/man \
-        --htmldir=$INSTALLDIR_NATIVE_DOC/html \
-        --pdfdir=$INSTALLDIR_NATIVE_DOC/pdf \
-        --enable-checking=release \
-        --enable-languages=c \
-        --disable-decimal-float \
-        --disable-libffi \
-        --disable-libgomp \
-        --disable-libmudflap \
-        --disable-libquadmath \
-        --disable-libssp \
-        --disable-libstdcxx-pch \
-        --disable-nls \
-        --disable-shared \
-        --disable-threads \
-        --disable-tls \
-        --disable-libatomic \
-        --disable-libsanitizer \
-        --with-newlib \
-        --without-headers \
-        --with-gnu-as \
-        --with-gnu-ld \
-        --with-python-dir=share/gcc-arm-none-eabi \
-        --with-sysroot=$INSTALLDIR_NATIVE/arm-none-eabi \
-        --with-zstd=no \
-        ${GCC_CONFIG_OPTS}                              \
-        "${GCC_CONFIG_OPTS_LCPP}"                              \
-        "--with-pkgversion=$PKGVERSION" \
-        ${MULTILIB_LIST}
+    echo Task [III-6] /$HOST_NATIVE/gdb/ | tee -a "$BUILDDIR_NATIVE/.stage"
+    build_gdb()
+    {
+        GDB_EXTRA_CONFIG_OPTS=$1
 
-    make -j$JOBS CXXFLAGS="$BUILD_OPTIONS" all-gcc
+        rm -rf $BUILDDIR_NATIVE/gdb && mkdir -p $BUILDDIR_NATIVE/gdb
+        pushd $BUILDDIR_NATIVE/gdb
+        saveenv
+        saveenvvar CFLAGS "$ENV_CFLAGS"
+        saveenvvar CPPFLAGS "$ENV_CPPFLAGS"
+        saveenvvar LDFLAGS "$ENV_LDFLAGS"
 
-    make install-gcc
+        $SRCDIR/$GDB/configure  \
+            --target=$TARGET \
+            --prefix=$INSTALLDIR_NATIVE \
+            --infodir=$INSTALLDIR_NATIVE_DOC/info \
+            --mandir=$INSTALLDIR_NATIVE_DOC/man \
+            --htmldir=$INSTALLDIR_NATIVE_DOC/html \
+            --pdfdir=$INSTALLDIR_NATIVE_DOC/pdf \
+            --disable-nls \
+            --disable-sim \
+            --disable-gas \
+            --disable-binutils \
+            --disable-ld \
+            --disable-gprof \
+            --with-libexpat \
+            --with-lzma=no \
+            --with-system-gdbinit=$INSTALLDIR_NATIVE/$HOST_NATIVE/arm-none-eabi/lib/gdbinit \
+            --with-zstd=no \
+            $GDB_CONFIG_OPTS \
+            $GDB_EXTRA_CONFIG_OPTS \
+            '--with-gdb-datadir='\''${prefix}'\''/arm-none-eabi/share/gdb' \
+            "--with-pkgversion=$PKGVERSION"
 
-    popd
+        make -j$JOBS
 
-    pushd $INSTALLDIR_NATIVE
-    rm -rf bin/arm-none-eabi-gccbug
-    rm -rf ./lib/libiberty.a
-    rm -rf  include
-    popd
+        make install
+
+        if [ "x$skip_manual" != "xyes" ]; then
+            make install-html install-pdf
+            rm -v $INSTALLDIR_NATIVE_DOC/html/gdb/qMemTags.html
+        fi
+
+        restoreenv
+        popd
+    }
+
+
+    #Always enable python support in GDB for PPA build.
+    if [ "x$is_ppa_release" == "xyes" ]; then
+        build_gdb "--with-python=python3"
+    else
+        #First we build GDB without python support.
+        build_gdb "--with-python=no"
+
+        #Then build gdb with python support.
+        if [ "x$skip_gdb_with_python" == "xno" ]; then
+            build_gdb "--with-python=python3 --program-prefix=$TARGET-  --program-suffix=-py"
+        fi
+    fi
 fi
