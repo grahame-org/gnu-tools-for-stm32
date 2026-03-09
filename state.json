@@ -1,6 +1,6 @@
 {
-  "last_updated": "2026-03-09T06:42:25Z",
-  "last_run_id": "22841548053",
+  "last_updated": "2026-03-09T23:27Z",
+  "last_run_id": "22879478243",
   "commands": {
     "shell_unit_tests": "bash tests/test-build-common.sh && bash tests/test-build-toolchain-args.sh && bash tests/test-strip-binary.sh",
     "commitlint": "npm ci && echo \"$PR_TITLE\" | npx --no-install commitlint --verbose",
@@ -10,22 +10,22 @@
     "gdb_selftests": "build/gdb/gdb/gdb --batch -ex 'maintenance selftest' (CI only)"
   },
   "test_counts": {
-    "test_build_common": 60,
+    "test_build_common": 61,
     "test_build_toolchain_args": 59,
     "test_strip_binary": 13,
-    "total": 132
+    "total": 133
   },
   "open_prs": {
     "pack_dir_clean_pr": {
       "title": "[Test Improver] test: add pack_dir_clean unit tests (group 13)",
       "status": "open",
-      "note": "Created this run (2026-03-09 06:42), number TBD"
+      "note": "PR for g13 (12 tests) - 2026-03-09 23:27, number TBD"
     }
   },
   "open_issues": {
     "108": "[Test Improver] Monthly Activity 2026-03",
     "114": "[plan] Add .shellcheckrc and targeted suppressions",
-    "204": "[Test Improver] strip_binary issue - RESOLVED by merged PR #208, should be closed",
+    "204": "stale - close",
     "226": "Address shellcheck findings - prepare to make it required status check (created by maintainer)"
   },
   "backlog": [
@@ -43,7 +43,7 @@
     }
   ],
   "completed_work": [
-    "pack_dir_clean unit tests (group 13, 11 tests) - PR submitted 2026-03-09 (number TBD)",
+    "pack_dir_clean g13 (12 tests) - PR submitted 2026-03-09",
     "strip_binary unit tests (test-strip-binary.sh) - PR #208 MERGED 2026-03-08",
     "copy_dir / copy_dir_clean unit tests - PR #183 MERGED 2026-03-07",
     "saveenv/restoreenv/prependenvvar/prepend_path unit tests - merged",
@@ -52,23 +52,26 @@
     "shell-unit-tests.yml CI workflow - merged"
   ],
   "task_round_robin": {
-    "last_run_tasks": ["task3_implement", "task7_monthly_activity"],
+    "last_run_tasks": [
+      "task3_implement",
+      "task7_monthly_activity"
+    ],
     "task1_last_run": "2026-03-07",
     "task2_last_run": "2026-03-07",
-    "task3_last_run": "2026-03-09",
+    "task3_last_run": "2026-03-09b",
     "task4_last_run": "2026-03-09",
     "task5_last_run": "2026-03-07",
     "task6_last_run": "2026-03-08",
-    "task7_last_run": "2026-03-09"
+    "task7_last_run": "2026-03-09b"
   },
   "notes": [
     "PR creation via safe-outputs is asynchronous - PR number only known on next run",
     "Shallow clone with only HEAD commit - must fetch base branch explicitly when creating new branches",
     "All main testable functions in build-common.sh now have unit tests. copy_multi_libs requires real GCC binary (not unit-testable).",
     "test-build-common.sh now has groups 1-13 covering all testable functions",
-    "test-build-common.sh: 60 tests; test-build-toolchain-args.sh: 59; test-strip-binary.sh: 13; total: 132",
+    "build-common.sh: 61 tests; toolchain-args: 59; strip-binary: 13; total: 133",
     "Maintainer created issue #226 to address shellcheck findings - strong signal to enforce shellcheck",
     "Shellcheck PR chain being handled by Copilot - Test Improver defers",
-    "New standalone stage scripts in PRs #242-#244: build-gcc-final.sh, build-gdb.sh, build-gcc-size-libstdcxx.sh - future test candidates"
+    "build-gdb.sh/build-newlib.sh/build-newlib-nano.sh in repo; arg parsing already covered"
   ]
 }
