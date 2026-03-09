@@ -129,7 +129,7 @@ fi
 cd "$SRCDIR"
 
 if [ "$skip_native_build" != "yes" ] ; then
-    echo Task [I-0] /$HOST_NATIVE/zlib/ | tee -a "$BUILDDIR_NATIVE/.stage"
+    echo "Task [I-0] /$HOST_NATIVE/zlib/" | tee -a "$BUILDDIR_NATIVE/.stage"
     rm -rf $BUILDDIR_NATIVE/zlib
     copy_dir_clean $SRCDIR/$ZLIB $BUILDDIR_NATIVE/zlib
     pushd $BUILDDIR_NATIVE/zlib
@@ -139,7 +139,7 @@ if [ "$skip_native_build" != "yes" ] ; then
     make install
     popd
 
-    echo Task [I-1] /$HOST_NATIVE/gmp/ | tee -a "$BUILDDIR_NATIVE/.stage"
+    echo "Task [I-1] /$HOST_NATIVE/gmp/" | tee -a "$BUILDDIR_NATIVE/.stage"
     rm -rf $BUILDDIR_NATIVE/gmp && mkdir -p $BUILDDIR_NATIVE/gmp
     pushd $BUILDDIR_NATIVE/gmp
 
@@ -155,7 +155,7 @@ if [ "$skip_native_build" != "yes" ] ; then
     #make check
     popd
 
-    echo Task [I-2] /$HOST_NATIVE/mpfr/ | tee -a "$BUILDDIR_NATIVE/.stage"
+    echo "Task [I-2] /$HOST_NATIVE/mpfr/" | tee -a "$BUILDDIR_NATIVE/.stage"
     rm -rf $BUILDDIR_NATIVE/mpfr && mkdir -p $BUILDDIR_NATIVE/mpfr
     pushd $BUILDDIR_NATIVE/mpfr
 
@@ -171,7 +171,7 @@ if [ "$skip_native_build" != "yes" ] ; then
     #make check
     popd
 
-    echo Task [I-3] /$HOST_NATIVE/mpc/ | tee -a "$BUILDDIR_NATIVE/.stage"
+    echo "Task [I-3] /$HOST_NATIVE/mpc/" | tee -a "$BUILDDIR_NATIVE/.stage"
     rm -rf $BUILDDIR_NATIVE/mpc && mkdir -p $BUILDDIR_NATIVE/mpc
     pushd $BUILDDIR_NATIVE/mpc
 
@@ -188,7 +188,7 @@ if [ "$skip_native_build" != "yes" ] ; then
     #make check
     popd
 
-    echo Task [I-4] /$HOST_NATIVE/isl/ | tee -a "$BUILDDIR_NATIVE/.stage"
+    echo "Task [I-4] /$HOST_NATIVE/isl/" | tee -a "$BUILDDIR_NATIVE/.stage"
     rm -rf $BUILDDIR_NATIVE/isl && mkdir -p $BUILDDIR_NATIVE/isl
     pushd $BUILDDIR_NATIVE/isl
 
@@ -204,7 +204,7 @@ if [ "$skip_native_build" != "yes" ] ; then
     #make check
     popd
 
-    echo Task [I-5] /$HOST_NATIVE/expat/ | tee -a "$BUILDDIR_NATIVE/.stage"
+    echo "Task [I-5] /$HOST_NATIVE/expat/" | tee -a "$BUILDDIR_NATIVE/.stage"
     rm -rf $BUILDDIR_NATIVE/expat && mkdir -p $BUILDDIR_NATIVE/expat
     pushd $BUILDDIR_NATIVE/expat
 
@@ -244,7 +244,7 @@ rm -rf $BUILDDIR_MINGW/liblongpath-win32
 $SRCDIR/liblongpath-win32/helper.py --generate $BUILDDIR_MINGW/liblongpath-win32 --triplet $HOST_MINGW_TOOL
 
 
-echo Task [II-0] /$HOST_MINGW/zlib/ | tee -a "$BUILDDIR_MINGW/.stage"
+echo "Task [II-0] /$HOST_MINGW/zlib/" | tee -a "$BUILDDIR_MINGW/.stage"
 rm -rf $BUILDDIR_MINGW/zlib
 copy_dir_clean $SRCDIR/$ZLIB $BUILDDIR_MINGW/zlib
 #saveenv
@@ -257,7 +257,7 @@ make install
 popd
 #restoreenv
 
-echo Task [II-1] /$HOST_MINGW/libiconv/ | tee -a "$BUILDDIR_MINGW/.stage"
+echo "Task [II-1] /$HOST_MINGW/libiconv/" | tee -a "$BUILDDIR_MINGW/.stage"
 rm -rf $BUILDDIR_MINGW/libiconv && mkdir -p $BUILDDIR_MINGW/libiconv
 pushd $BUILDDIR_MINGW/libiconv
 
@@ -272,7 +272,7 @@ make -j$JOBS
 make install
 popd
 
-echo Task [II-2] /$HOST_MINGW/gmp/ | tee -a "$BUILDDIR_MINGW/.stage"
+echo "Task [II-2] /$HOST_MINGW/gmp/" | tee -a "$BUILDDIR_MINGW/.stage"
 rm -rf $BUILDDIR_MINGW/gmp && mkdir -p $BUILDDIR_MINGW/gmp
 pushd $BUILDDIR_MINGW/gmp
 
@@ -287,7 +287,7 @@ make -j$JOBS
 make install
 popd
 
-echo Task [II-3] /$HOST_MINGW/mpfr/ | tee -a "$BUILDDIR_MINGW/.stage"
+echo "Task [II-3] /$HOST_MINGW/mpfr/" | tee -a "$BUILDDIR_MINGW/.stage"
 rm -rf $BUILDDIR_MINGW/mpfr && mkdir -p $BUILDDIR_MINGW/mpfr
 pushd $BUILDDIR_MINGW/mpfr
 
@@ -302,7 +302,7 @@ make -j$JOBS
 make install
 popd
 
-echo Task [II-4] /$HOST_MINGW/mpc/ | tee -a "$BUILDDIR_MINGW/.stage"
+echo "Task [II-4] /$HOST_MINGW/mpc/" | tee -a "$BUILDDIR_MINGW/.stage"
 rm -rf $BUILDDIR_MINGW/mpc && mkdir -p $BUILDDIR_MINGW/mpc
 pushd $BUILDDIR_MINGW/mpc
 
@@ -318,7 +318,7 @@ make -j$JOBS
 make install
 popd
 
-echo Task [II-5] /$HOST_MINGW/isl/ | tee -a "$BUILDDIR_MINGW/.stage"
+echo "Task [II-5] /$HOST_MINGW/isl/" | tee -a "$BUILDDIR_MINGW/.stage"
 rm -rf $BUILDDIR_MINGW/isl && mkdir -p $BUILDDIR_MINGW/isl
 pushd $BUILDDIR_MINGW/isl
 
@@ -333,7 +333,7 @@ make
 make install
 popd
 
-echo Task [II-6] /$HOST_MINGW/expat/ | tee -a "$BUILDDIR_MINGW/.stage"
+echo "Task [II-6] /$HOST_MINGW/expat/" | tee -a "$BUILDDIR_MINGW/.stage"
 rm -rf $BUILDDIR_MINGW/expat && mkdir -p $BUILDDIR_MINGW/expat
 pushd $BUILDDIR_MINGW/expat
 
