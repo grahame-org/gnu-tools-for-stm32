@@ -26,19 +26,19 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-# build-gcc-first.sh: Builds the gcc-first component (stage III-1) of the
+# build-newlib.sh: Builds the newlib component (stage III-2) of the
 # GNU Tools for STM32 toolchain.  This script is extracted from
 # build-toolchain.sh so that changes to other parts of the toolchain build
-# do not invalidate the gcc-first stage cache.
+# do not invalidate the newlib stage cache.
 #
 # Usage:
-#   ./build-gcc-first.sh [--build_type=...] [--skip_steps=...]
+#   ./build-newlib.sh [--build_type=...] [--skip_steps=...]
 #
 # The script accepts the same --build_type and --skip_steps flags as
 # build-toolchain.sh.  The --skip_stages flag is accepted but ignored (this
-# script always builds the gcc-first stage).
+# script always builds the newlib stage).
 #
-# The binutils stage (III-0) output must already be present in install-native/
+# The gcc-first stage (III-1) output must already be present in install-native/
 # before calling this script.
 
 set -e
@@ -52,7 +52,6 @@ umask 022
 
 exec < /dev/null
 
-# shellcheck disable=SC2046
 script_path=$(cd $(dirname $0) && pwd -P)
 cd "$script_path"
 . $script_path/build-common.sh
@@ -60,16 +59,8 @@ cd "$script_path"
 . "$script_path/build-toolchain-args.sh"
 parse_toolchain_args "$@"
 
-if [ "x$BUILD" == "xx86_64-apple-darwin10" ] || [ "x$is_ppa_release" == "xyes" ]; then
-    BUILD_OPTIONS="$BUILD_OPTIONS -fbracket-depth=512"
-fi
-
 if [ "x$is_ppa_release" != "xyes" ]; then
-  GCC_CONFIG_OPTS=" --build=$BUILD --host=$HOST_NATIVE
-                    --with-gmp=$BUILDDIR_NATIVE/host-libs/usr
-                    --with-mpfr=$BUILDDIR_NATIVE/host-libs/usr
-                    --with-mpc=$BUILDDIR_NATIVE/host-libs/usr
-                    --with-isl=$BUILDDIR_NATIVE/host-libs/usr "
+  NEWLIB_CONFIG_OPTS=" --build=$BUILD --host=$HOST_NATIVE "
 fi
 
 if [ "x$skip_native_build" != "xyes" ] ; then
@@ -81,52 +72,45 @@ fi
 cd $SRCDIR
 
 if [ "x$skip_native_build" != "xyes" ] ; then
-    echo Task [III-1] /$HOST_NATIVE/gcc-first/ | tee -a "$BUILDDIR_NATIVE/.stage"
-    rm -rf $BUILDDIR_NATIVE/gcc-first && mkdir -p $BUILDDIR_NATIVE/gcc-first
-    pushd $BUILDDIR_NATIVE/gcc-first
-    $SRCDIR/$GCC/configure --target=$TARGET \
+    echo Task [III-2] /$HOST_NATIVE/newlib/ | tee -a "$BUILDDIR_NATIVE/.stage"
+    saveenv
+    prepend_path PATH $INSTALLDIR_NATIVE/bin
+    saveenvvar CFLAGS_FOR_TARGET '-g -Os -ffunction-sections -fdata-sections -fno-unroll-loops -DPREFER_SIZE_OVER_SPEED -D__OPTIMIZE_SIZE__ -DSMALL_MEMORY'
+    rm -rf $BUILDDIR_NATIVE/newlib && mkdir -p $BUILDDIR_NATIVE/newlib
+    pushd $BUILDDIR_NATIVE/newlib
+
+    $SRCDIR/$NEWLIB/configure  \
+        $NEWLIB_CONFIG_OPTS \
+        --target=$TARGET \
         --prefix=$INSTALLDIR_NATIVE \
-        --libexecdir=$INSTALLDIR_NATIVE/lib \
         --infodir=$INSTALLDIR_NATIVE_DOC/info \
         --mandir=$INSTALLDIR_NATIVE_DOC/man \
         --htmldir=$INSTALLDIR_NATIVE_DOC/html \
         --pdfdir=$INSTALLDIR_NATIVE_DOC/pdf \
-        --enable-checking=release \
-        --enable-languages=c \
-        --disable-decimal-float \
-        --disable-libffi \
-        --disable-libgomp \
-        --disable-libmudflap \
-        --disable-libquadmath \
-        --disable-libssp \
-        --disable-libstdcxx-pch \
-        --disable-nls \
-        --disable-shared \
-        --disable-threads \
-        --disable-tls \
-        --disable-libatomic \
-        --disable-libsanitizer \
-        --with-newlib \
-        --without-headers \
-        --with-gnu-as \
-        --with-gnu-ld \
-        --with-python-dir=share/gcc-arm-none-eabi \
-        --with-sysroot=$INSTALLDIR_NATIVE/arm-none-eabi \
-        --with-zstd=no \
-        ${GCC_CONFIG_OPTS}                              \
-        "${GCC_CONFIG_OPTS_LCPP}"                              \
-        "--with-pkgversion=$PKGVERSION" \
-        ${MULTILIB_LIST}
+        --enable-newlib-io-long-long \
+        --enable-newlib-io-c99-formats \
+        --enable-newlib-reent-check-verify \
+        --enable-newlib-register-fini \
+        --enable-newlib-retargetable-locking \
+        --disable-newlib-supplied-syscalls \
+        --disable-nls
 
-    make -j$JOBS CXXFLAGS="$BUILD_OPTIONS" all-gcc
+    make -j$JOBS
 
-    make install-gcc
+    make install
+
+    if [ "x$skip_manual" != "xyes" ]; then
+        make pdf
+        mkdir -p $INSTALLDIR_NATIVE_DOC/pdf
+        cp $BUILDDIR_NATIVE/newlib/arm-none-eabi/newlib/libc/libc.pdf $INSTALLDIR_NATIVE_DOC/pdf/libc.pdf
+        cp $BUILDDIR_NATIVE/newlib/arm-none-eabi/newlib/libm/libm.pdf $INSTALLDIR_NATIVE_DOC/pdf/libm.pdf
+
+        make html
+        mkdir -p $INSTALLDIR_NATIVE_DOC/html
+        copy_dir $BUILDDIR_NATIVE/newlib/arm-none-eabi/newlib/libc/libc.html $INSTALLDIR_NATIVE_DOC/html/libc
+        copy_dir $BUILDDIR_NATIVE/newlib/arm-none-eabi/newlib/libm/libm.html $INSTALLDIR_NATIVE_DOC/html/libm
+    fi
 
     popd
-
-    pushd $INSTALLDIR_NATIVE
-    rm -rf bin/arm-none-eabi-gccbug
-    rm -rf ./lib/libiberty.a
-    rm -rf  include
-    popd
+    restoreenv
 fi
