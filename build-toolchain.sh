@@ -284,66 +284,7 @@ if [ "$skip_native_build" != "yes" ] ; then
     if stage_is_skipped "gdb"; then
         echo "Skipping stage: gdb (cache hit)"
     else
-    echo Task [III-6] /$HOST_NATIVE/gdb/ | tee -a "$BUILDDIR_NATIVE/.stage"
-    build_gdb()
-    {
-        GDB_EXTRA_CONFIG_OPTS=$1
-
-        rm -rf $BUILDDIR_NATIVE/gdb && mkdir -p $BUILDDIR_NATIVE/gdb
-        pushd $BUILDDIR_NATIVE/gdb
-        saveenv
-        saveenvvar CFLAGS "$ENV_CFLAGS"
-        saveenvvar CPPFLAGS "$ENV_CPPFLAGS"
-        saveenvvar LDFLAGS "$ENV_LDFLAGS"
-
-        $SRCDIR/$GDB/configure  \
-            --target=$TARGET \
-            --prefix=$INSTALLDIR_NATIVE \
-            --infodir=$INSTALLDIR_NATIVE_DOC/info \
-            --mandir=$INSTALLDIR_NATIVE_DOC/man \
-            --htmldir=$INSTALLDIR_NATIVE_DOC/html \
-            --pdfdir=$INSTALLDIR_NATIVE_DOC/pdf \
-            --disable-nls \
-            --disable-sim \
-            --disable-gas \
-            --disable-binutils \
-            --disable-ld \
-            --disable-gprof \
-            --with-libexpat \
-            --with-lzma=no \
-            --with-system-gdbinit=$INSTALLDIR_NATIVE/$HOST_NATIVE/arm-none-eabi/lib/gdbinit \
-            --with-zstd=no \
-            $GDB_CONFIG_OPTS \
-            $GDB_EXTRA_CONFIG_OPTS \
-            '--with-gdb-datadir='\''${prefix}'\''/arm-none-eabi/share/gdb' \
-            "--with-pkgversion=$PKGVERSION"
-
-        make -j$JOBS
-
-        make install
-
-        if [ "$skip_manual" != "yes" ]; then
-            make install-html install-pdf
-            rm -v $INSTALLDIR_NATIVE_DOC/html/gdb/qMemTags.html
-        fi
-
-        restoreenv
-        popd
-    }
-
-
-    #Always enable python support in GDB for PPA build.
-    if [ "$is_ppa_release" == "yes" ]; then
-        build_gdb "--with-python=python3"
-    else
-        #First we build GDB without python support.
-        build_gdb "--with-python=no"
-
-        #Then build gdb with python support.
-        if [ "$skip_gdb_with_python" == "no" ]; then
-            build_gdb "--with-python=python3 --program-prefix=$TARGET-  --program-suffix=-py"
-        fi
-    fi
+        "$script_path/build-gdb.sh" "$@"
     fi  # gdb stage
 
     echo Task [III-8] /$HOST_NATIVE/pretidy/ | tee -a "$BUILDDIR_NATIVE/.stage"
