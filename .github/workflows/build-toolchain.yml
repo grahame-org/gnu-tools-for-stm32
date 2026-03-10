@@ -28,15 +28,15 @@ jobs:
             build:
               - 'src/**'
               - 'build-binutils.sh'
+              - 'build-common.sh'
               - 'build-gcc-first.sh'
+              - 'build-gcc-final.sh'
+              - 'build-gcc-size-libstdcxx.sh'
               - 'build-gdb.sh'
               - 'build-newlib.sh'
               - 'build-newlib-nano.sh'
-              - 'build-gcc-final.sh'
-              - 'build-gcc-size-libstdcxx.sh'
-              - 'build-toolchain.sh'
               - 'build-prerequisites.sh'
-              - 'build-common.sh'
+              - 'build-toolchain.sh'
               - '.github/workflows/build-toolchain.yml'
               - 'test_project/**'
 
@@ -157,7 +157,7 @@ jobs:
           ./build-prerequisites.sh --skip_steps=mingw,howto,package_sources
 
       - name: Save cache – prerequisites
-        if: steps.cache-prerequisites.outputs.cache-hit != 'true' && github.event_name != 'merge_group'
+        if: steps.cache-prerequisites.outputs.cache-hit != 'true'
         uses: actions/cache/save@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           path: build-native/host-libs
@@ -208,7 +208,11 @@ jobs:
         uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           path: install-native
-          key: ${{ runner.os }}-toolchain-${{ hashFiles('build-toolchain.sh', 'build-prerequisites.sh', 'build-common.sh') }}-${{ steps.src-hashes.outputs.toolchain-src }}
+          # hashFiles('build-*.sh') is intentionally broad: the final toolchain
+          # cache represents the assembled output of every stage, so a change to
+          # any per-stage script must invalidate it.  Individual stage caches use
+          # narrower per-stage keys computed in the Compute stage source hashes step.
+          key: ${{ runner.os }}-toolchain-${{ hashFiles('build-*.sh') }}-${{ steps.src-hashes.outputs.toolchain-src }}
 
       # --- Stage: binutils ---
       - name: Restore cache – binutils
@@ -222,12 +226,13 @@ jobs:
       - name: Build stage – binutils
         if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-binutils.outputs.cache-hit != 'true'
         run: |
-          export JOBS=$(nproc)
+          JOBS=$(nproc)
+          export JOBS
           ./build-binutils.sh \
             --skip_steps=mingw,mingw-gdb-with-python,gdb-with-python,manual,package_sources
 
       - name: Save cache – binutils
-        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-binutils.outputs.cache-hit != 'true' && github.event_name != 'merge_group'
+        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-binutils.outputs.cache-hit != 'true'
         uses: actions/cache/save@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           path: install-native
@@ -343,6 +348,14 @@ jobs:
           path: build-native/host-libs
           key: ${{ runner.os }}-prerequisites-${{ hashFiles('build-prerequisites.sh', 'build-common.sh', 'src/gmp/**', 'src/mpfr/**', 'src/mpc/**', 'src/isl/**', 'src/expat/**', 'src/zlib*/**') }}
 
+      - name: Build prerequisites on cache miss
+        if: steps.cache-prerequisites.outputs.cache-hit != 'true'
+        run: |
+          set -euo pipefail
+          JOBS="${JOBS:-$(nproc)}"
+          export JOBS
+          ./build-prerequisites.sh --skip_steps=mingw,howto,package_sources
+
       - name: Compute stage source hashes
         id: stage-hashes
         run: |
@@ -388,7 +401,11 @@ jobs:
         uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           path: install-native
-          key: ${{ runner.os }}-toolchain-${{ hashFiles('build-toolchain.sh', 'build-prerequisites.sh', 'build-common.sh') }}-${{ steps.src-hashes.outputs.toolchain-src }}
+          # hashFiles('build-*.sh') is intentionally broad: the final toolchain
+          # cache represents the assembled output of every stage, so a change to
+          # any per-stage script must invalidate it.  Individual stage caches use
+          # narrower per-stage keys computed in the Compute stage source hashes step.
+          key: ${{ runner.os }}-toolchain-${{ hashFiles('build-*.sh') }}-${{ steps.src-hashes.outputs.toolchain-src }}
 
       # --- Stage: gdb ---
       - name: Restore cache – gdb
@@ -409,12 +426,13 @@ jobs:
       - name: Build stage – gdb
         if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-gdb.outputs.cache-hit != 'true'
         run: |
-          export JOBS=$(nproc)
+          JOBS=$(nproc)
+          export JOBS
           ./build-gdb.sh \
             --skip_steps=mingw,mingw-gdb-with-python,gdb-with-python,manual,package_sources
 
       - name: Save cache – gdb
-        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-gdb.outputs.cache-hit != 'true' && github.event_name != 'merge_group'
+        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-gdb.outputs.cache-hit != 'true'
         uses: actions/cache/save@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           path: install-native
@@ -573,7 +591,11 @@ jobs:
         uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           path: install-native
-          key: ${{ runner.os }}-toolchain-${{ hashFiles('build-toolchain.sh', 'build-prerequisites.sh', 'build-common.sh') }}-${{ steps.src-hashes.outputs.toolchain-src }}
+          # hashFiles('build-*.sh') is intentionally broad: the final toolchain
+          # cache represents the assembled output of every stage, so a change to
+          # any per-stage script must invalidate it.  Individual stage caches use
+          # narrower per-stage keys computed in the Compute stage source hashes step.
+          key: ${{ runner.os }}-toolchain-${{ hashFiles('build-*.sh') }}-${{ steps.src-hashes.outputs.toolchain-src }}
 
       # --- Stage: gcc-first ---
       - name: Restore cache – gcc-first
@@ -594,12 +616,13 @@ jobs:
       - name: Build stage – gcc-first
         if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-gcc-first.outputs.cache-hit != 'true'
         run: |
-          export JOBS=$(nproc)
+          JOBS=$(nproc)
+          export JOBS
           ./build-gcc-first.sh \
             --skip_steps=mingw,mingw-gdb-with-python,gdb-with-python,manual,package_sources
 
       - name: Save cache – gcc-first
-        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-gcc-first.outputs.cache-hit != 'true' && github.event_name != 'merge_group'
+        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-gcc-first.outputs.cache-hit != 'true'
         uses: actions/cache/save@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           path: install-native
@@ -759,7 +782,11 @@ jobs:
         uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           path: install-native
-          key: ${{ runner.os }}-toolchain-${{ hashFiles('build-toolchain.sh', 'build-prerequisites.sh', 'build-common.sh') }}-${{ steps.src-hashes.outputs.toolchain-src }}
+          # hashFiles('build-*.sh') is intentionally broad: the final toolchain
+          # cache represents the assembled output of every stage, so a change to
+          # any per-stage script must invalidate it.  Individual stage caches use
+          # narrower per-stage keys computed in the Compute stage source hashes step.
+          key: ${{ runner.os }}-toolchain-${{ hashFiles('build-*.sh') }}-${{ steps.src-hashes.outputs.toolchain-src }}
 
       # --- Stage: newlib ---
       - name: Restore cache – newlib
@@ -786,7 +813,7 @@ jobs:
             --skip_steps=mingw,mingw-gdb-with-python,gdb-with-python,manual,package_sources
 
       - name: Save cache – newlib
-        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-newlib.outputs.cache-hit != 'true' && github.event_name != 'merge_group'
+        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-newlib.outputs.cache-hit != 'true'
         uses: actions/cache/save@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           path: install-native
@@ -947,7 +974,11 @@ jobs:
         uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           path: install-native
-          key: ${{ runner.os }}-toolchain-${{ hashFiles('build-toolchain.sh', 'build-prerequisites.sh', 'build-common.sh') }}-${{ steps.src-hashes.outputs.toolchain-src }}
+          # hashFiles('build-*.sh') is intentionally broad: the final toolchain
+          # cache represents the assembled output of every stage, so a change to
+          # any per-stage script must invalidate it.  Individual stage caches use
+          # narrower per-stage keys computed in the Compute stage source hashes step.
+          key: ${{ runner.os }}-toolchain-${{ hashFiles('build-*.sh') }}-${{ steps.src-hashes.outputs.toolchain-src }}
 
       # --- Stage: newlib-nano ---
       - name: Restore cache – newlib-nano
@@ -974,7 +1005,7 @@ jobs:
             --skip_steps=mingw,mingw-gdb-with-python,gdb-with-python,manual,package_sources
 
       - name: Save cache – newlib-nano
-        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-newlib-nano.outputs.cache-hit != 'true' && github.event_name != 'merge_group'
+        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-newlib-nano.outputs.cache-hit != 'true'
         uses: actions/cache/save@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           path: build-native/target-libs
@@ -1134,7 +1165,11 @@ jobs:
         uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           path: install-native
-          key: ${{ runner.os }}-toolchain-${{ hashFiles('build-toolchain.sh', 'build-prerequisites.sh', 'build-common.sh') }}-${{ steps.src-hashes.outputs.toolchain-src }}
+          # hashFiles('build-*.sh') is intentionally broad: the final toolchain
+          # cache represents the assembled output of every stage, so a change to
+          # any per-stage script must invalidate it.  Individual stage caches use
+          # narrower per-stage keys computed in the Compute stage source hashes step.
+          key: ${{ runner.os }}-toolchain-${{ hashFiles('build-*.sh') }}-${{ steps.src-hashes.outputs.toolchain-src }}
 
       # --- Stage: gcc-final ---
       - name: Restore cache – gcc-final
@@ -1160,7 +1195,7 @@ jobs:
             --skip_steps=mingw,mingw-gdb-with-python,gdb-with-python,manual,package_sources
 
       - name: Save cache – gcc-final
-        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-gcc-final.outputs.cache-hit != 'true' && github.event_name != 'merge_group'
+        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-gcc-final.outputs.cache-hit != 'true'
         uses: actions/cache/save@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           path: install-native
@@ -1320,7 +1355,11 @@ jobs:
         uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           path: install-native
-          key: ${{ runner.os }}-toolchain-${{ hashFiles('build-toolchain.sh', 'build-prerequisites.sh', 'build-common.sh') }}-${{ steps.src-hashes.outputs.toolchain-src }}
+          # hashFiles('build-*.sh') is intentionally broad: the final toolchain
+          # cache represents the assembled output of every stage, so a change to
+          # any per-stage script must invalidate it.  Individual stage caches use
+          # narrower per-stage keys computed in the Compute stage source hashes step.
+          key: ${{ runner.os }}-toolchain-${{ hashFiles('build-*.sh') }}-${{ steps.src-hashes.outputs.toolchain-src }}
 
       # --- Stage: gcc-size-libstdcxx ---
       - name: Restore cache – gcc-size-libstdcxx
@@ -1337,7 +1376,26 @@ jobs:
         if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-gcc-size-libstdcxx.outputs.cache-hit != 'true'
         uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
-          path: install-native
+          path: |
+            install-native
+            build-native/target-libs
+          key: ${{ runner.os }}-stage-v1-${{ steps.stage-hashes.outputs['gcc-final'] }}
+
+      - name: Build stage – gcc-final
+        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-gcc-final.outputs.cache-hit != 'true'
+        run: |
+          JOBS=$(nproc)
+          export JOBS
+          ./build-gcc-final.sh \
+            --skip_steps=mingw,mingw-gdb-with-python,gdb-with-python,manual,package_sources
+
+      - name: Save cache – gcc-final
+        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-gcc-final.outputs.cache-hit != 'true'
+        uses: actions/cache/save@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        with:
+          path: |
+            install-native
+            build-native/target-libs
           key: ${{ runner.os }}-stage-v1-${{ steps.stage-hashes.outputs['gcc-final'] }}
 
       - name: Restore cache – newlib-nano
@@ -1350,12 +1408,13 @@ jobs:
       - name: Build stage – gcc-size-libstdcxx
         if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-gcc-size-libstdcxx.outputs.cache-hit != 'true'
         run: |
-          export JOBS=$(nproc)
+          JOBS=$(nproc)
+          export JOBS
           ./build-gcc-size-libstdcxx.sh \
             --skip_steps=mingw,mingw-gdb-with-python,gdb-with-python,manual,package_sources
 
       - name: Save cache – gcc-size-libstdcxx
-        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-gcc-size-libstdcxx.outputs.cache-hit != 'true' && github.event_name != 'merge_group'
+        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-gcc-size-libstdcxx.outputs.cache-hit != 'true'
         uses: actions/cache/save@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           path: |
@@ -1519,9 +1578,13 @@ jobs:
         uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           path: install-native
-          key: ${{ runner.os }}-toolchain-${{ hashFiles('build-toolchain.sh', 'build-prerequisites.sh', 'build-common.sh') }}-${{ steps.src-hashes.outputs.toolchain-src }}
+          # hashFiles('build-*.sh') is intentionally broad: the final toolchain
+          # cache represents the assembled output of every stage, so a change to
+          # any per-stage script must invalidate it.  Individual stage caches use
+          # narrower per-stage keys computed in the Compute stage source hashes step.
+          key: ${{ runner.os }}-toolchain-${{ hashFiles('build-*.sh') }}-${{ steps.src-hashes.outputs.toolchain-src }}
 
-      # Restore gcc-size-libstdcxx snapshot (full gcc chain output)
+      # Restore gcc-size-libstdcxx snapshot
       - name: Restore cache – gcc-size-libstdcxx
         if: steps.cache-toolchain.outputs.cache-hit != 'true'
         uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
@@ -1544,12 +1607,16 @@ jobs:
       - name: Build toolchain – final assembly
         if: steps.cache-toolchain.outputs.cache-hit != 'true'
         run: |
-          export JOBS=$(nproc)
+          JOBS=$(nproc)
+          export JOBS
           ./build-toolchain.sh \
             --skip_steps=mingw,mingw-gdb-with-python,gdb-with-python,manual,package_sources \
             --skip_stages=binutils,gcc-first,newlib,newlib-nano,gcc-final,gcc-size-libstdcxx,gdb
 
       - name: Save cache – toolchain
+        # Don't cache if this is a merge_group event, since the merge commit's tree won't be reused
+        # for the final push event and thus the cache won't be reusable either.
+        # Other jobs / steps may benefit from caching the intermediate toolchain state even in a merge_group.
         if: steps.cache-toolchain.outputs.cache-hit != 'true' && github.event_name != 'merge_group'
         uses: actions/cache/save@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:

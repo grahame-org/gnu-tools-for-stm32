@@ -25,6 +25,9 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+# shellcheck shell=bash
+# This script is sourced (not executed directly), so it has no shebang line.
+
 error () {
     set +u
     echo "$0: error: $*" >&2
@@ -123,21 +126,21 @@ saveenvvar () {
     fi
     local varname="$1"
     local newval="$2"
-    # shellcheck disable=SC1083
+    # shellcheck disable=SC1083 # \${$varname} intentionally uses literal braces: eval resolves the dynamic variable name at runtime
     eval local oldval=\"\${$varname}\"
-    # shellcheck disable=SC1083
+    # shellcheck disable=SC1083 # \${level_saved_…} intentionally uses literal braces: eval resolves the dynamic variable name at runtime
     eval local saved=\"\${level_saved_${stack_level}_${varname}}\"
     # shellcheck disable=SC2154
-    if [ "x$saved" = "x" ]; then
+    if [ "$saved" = "" ]; then
         # The variable wasn't saved in the level before. Save it
-        # shellcheck disable=SC1083
+        # shellcheck disable=SC1083 # \${stack_list_…} intentionally uses literal braces: eval resolves the dynamic variable name at runtime
         eval local temp=\"\${stack_list_$stack_level}\"
         # shellcheck disable=SC2154
         eval stack_list_$stack_level=\"$varname $temp\"
         # shellcheck disable=SC2154
         eval save_level_${stack_level}_$varname=\"$oldval\"
         eval level_saved_${stack_level}_$varname="yes"
-        # shellcheck disable=SC1083
+        # shellcheck disable=SC1083 # \${$varname+set} intentionally uses literal braces: eval resolves the dynamic variable name and +set modifier at runtime
         eval level_preset_${stack_level}_${varname}=\"\${$varname+set}\"
         #echo Save $varname: \"$oldval\"
     fi
@@ -153,16 +156,16 @@ restoreenv () {
         error "Trying to restore from an empty stack"
     fi
 
-    # shellcheck disable=SC1083
+    # shellcheck disable=SC1083 # \${stack_list_…} intentionally uses literal braces: eval resolves the dynamic variable name at runtime
     eval local list=\"\${stack_list_$stack_level}\"
     local varname
     # shellcheck disable=SC2154
     for varname in $list; do
-        # shellcheck disable=SC1083
+        # shellcheck disable=SC1083 # \${level_preset_…} intentionally uses literal braces: eval resolves the dynamic variable name at runtime
         eval local varname_preset=\"\${level_preset_${stack_level}_${varname}}\"
         # shellcheck disable=SC2154
-        if [ "x$varname_preset" = "xset" ] ; then
-            # shellcheck disable=SC1083
+        if [ "$varname_preset" = "set" ] ; then
+            # shellcheck disable=SC1083 # \${save_level_…} intentionally uses literal braces: eval resolves the dynamic variable name at runtime
             eval $varname=\"\${save_level_${stack_level}_$varname}\"
         else
             unset $varname
@@ -186,7 +189,7 @@ prepend_path() {
     set +u
     eval local old_path="\"\$$1\""
     # shellcheck disable=SC2154
-    if [ x"$old_path" == "x" ]; then
+    if [ "$old_path" == "" ]; then
         prependenvvar "$1" "$2"
     else
         prependenvvar "$1" "$2:"
@@ -331,7 +334,7 @@ TAR=tar
 # on Ubuntu and Mac OS X.
 uname_string=$(uname | sed 'y/LINUXDARWIN/linuxdarwin/')
 host_arch=$(uname -m | sed 'y/XI/xi/')
-if [ "x$uname_string" == "xlinux" ] ; then
+if [ "$uname_string" == "linux" ] ; then
     BUILD="$host_arch"-linux-gnu
     HOST_NATIVE="$host_arch"-linux-gnu
     READLINK=readlink
@@ -340,7 +343,7 @@ if [ "x$uname_string" == "xlinux" ] ; then
     MD5="md5sum -b"
     PACKAGE_NAME_SUFFIX="${host_arch}-linux"
     WGET="wget -q"
-elif [ "x$uname_string" == "xdarwin" ] ; then
+elif [ "$uname_string" == "darwin" ] ; then
     BUILD=x86_64-apple-darwin10
     HOST_NATIVE=x86_64-apple-darwin10
     READLINK=greadlink
@@ -361,7 +364,7 @@ SRC_PREREQS="GMP MPFR MPC ISL EXPAT LIBICONV ZLIB"
 WIN_PREREQS="PYTHON_WIN"
 
 PREREQS="$SRC_PREREQS"
-if [ "x$BUILD" != "xx86_64-apple-darwin10" ]; then
+if [ "$BUILD" != "x86_64-apple-darwin10" ]; then
     PREREQS="$SRC_PREREQS $WIN_PREREQS"
 fi
 
