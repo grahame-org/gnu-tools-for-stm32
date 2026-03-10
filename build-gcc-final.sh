@@ -82,6 +82,7 @@ cd $SRCDIR
 if [ "x$skip_native_build" != "xyes" ] ; then
     echo Task [III-4] /$HOST_NATIVE/gcc-final/ | tee -a "$BUILDDIR_NATIVE/.stage"
     rm -f $INSTALLDIR_NATIVE/arm-none-eabi/usr
+    mkdir -p $INSTALLDIR_NATIVE/arm-none-eabi
     ln -s . $INSTALLDIR_NATIVE/arm-none-eabi/usr
 
     rm -rf $BUILDDIR_NATIVE/gcc-final && mkdir -p $BUILDDIR_NATIVE/gcc-final
