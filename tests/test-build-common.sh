@@ -396,16 +396,31 @@ pack_dir_clean "$_PDC_TMPDIR" "src" "$_PDC_ARCHIVE"
 
 _PDC_CONTENTS=$(tar tjf "$_PDC_ARCHIVE")
 
+# Use -Fx (fixed-string + full-line) so each assertion matches exactly one
+# archive entry.  Plain grep with regex mode would treat '.' as a wildcard
+# (matching src/normalXtxt etc.) and a substring match would pass if the
+# target path appeared embedded in a longer entry.
+# CLARIFY: tar is invoked with "-C $1 $2" so entries are expected to be
+# listed as "src/normal.txt" (no leading "./" prefix); if the tar invocation
+# or version changes to emit "./src/normal.txt" these patterns will need
+# updating.
 assert_eq "pack_dir_clean archives top-level file" \
-    "src/normal.txt" "$(echo "$_PDC_CONTENTS" | grep "src/normal\.txt" || true)"
+    "src/normal.txt" "$(echo "$_PDC_CONTENTS" | grep -Fx "src/normal.txt" || true)"
 assert_eq "pack_dir_clean archives nested file in regular subdir" \
-    "src/subdir/child.txt" "$(echo "$_PDC_CONTENTS" | grep "src/subdir/child\.txt" || true)"
+    "src/subdir/child.txt" "$(echo "$_PDC_CONTENTS" | grep -Fx "src/subdir/child.txt" || true)"
+# Use directory-boundary anchoring: (^|/)NAME(/|$) matches NAME only as an
+# exact path component (with or without a trailing slash, as tar may omit it).
+# Plain substring grep (e.g. grep "\.git") would false-fail on legitimately
+# archived files whose names merely contain these strings, such as
+# src/.gitignore, src/.gitattributes, or src/CVSroot.
+# CLARIFY: if the test fixture is ever extended to include such files (e.g. a
+# .gitignore that should be archived), verify these patterns still hold.
 assert_eq "pack_dir_clean excludes .git directory" \
-    "" "$(echo "$_PDC_CONTENTS" | grep "\.git" || true)"
+    "" "$(echo "$_PDC_CONTENTS" | grep -E '(^|/)\.git(/|$)' || true)"
 assert_eq "pack_dir_clean excludes CVS directory" \
-    "" "$(echo "$_PDC_CONTENTS" | grep "CVS" || true)"
+    "" "$(echo "$_PDC_CONTENTS" | grep -E '(^|/)CVS(/|$)' || true)"
 assert_eq "pack_dir_clean excludes .svn directory" \
-    "" "$(echo "$_PDC_CONTENTS" | grep "\.svn" || true)"
+    "" "$(echo "$_PDC_CONTENTS" | grep -E '(^|/)\.svn(/|$)' || true)"
 assert_eq "pack_dir_clean excludes .pc directory" \
     "" "$(echo "$_PDC_CONTENTS" | grep "/\.pc" || true)"
 assert_eq "pack_dir_clean excludes *~ backup files" \
