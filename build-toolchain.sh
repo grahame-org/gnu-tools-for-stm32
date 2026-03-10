@@ -158,127 +158,13 @@ if [ "$skip_native_build" != "yes" ] ; then
     if stage_is_skipped "gcc-final"; then
         echo "Skipping stage: gcc-final (cache hit)"
     else
-    echo "Task [III-4] /$HOST_NATIVE/gcc-final/" | tee -a "$BUILDDIR_NATIVE/.stage"
-    rm -f $INSTALLDIR_NATIVE/arm-none-eabi/usr
-    ln -s . $INSTALLDIR_NATIVE/arm-none-eabi/usr
-
-    rm -rf $BUILDDIR_NATIVE/gcc-final && mkdir -p $BUILDDIR_NATIVE/gcc-final
-    pushd $BUILDDIR_NATIVE/gcc-final
-
-    $SRCDIR/$GCC/configure --target=$TARGET \
-        --prefix=$INSTALLDIR_NATIVE \
-        --libexecdir=$INSTALLDIR_NATIVE/lib \
-        --infodir=$INSTALLDIR_NATIVE_DOC/info \
-        --mandir=$INSTALLDIR_NATIVE_DOC/man \
-        --htmldir=$INSTALLDIR_NATIVE_DOC/html \
-        --pdfdir=$INSTALLDIR_NATIVE_DOC/pdf \
-        --enable-checking=release \
-        --enable-languages=c,c++ \
-        --enable-plugins \
-        --disable-decimal-float \
-        --disable-libffi \
-        --disable-libgomp \
-        --disable-libmudflap \
-        --disable-libquadmath \
-        --disable-libssp \
-        --disable-libstdcxx-pch \
-        --disable-nls \
-        --disable-shared \
-        --disable-threads \
-        --disable-tls \
-        --with-gnu-as \
-        --with-gnu-ld \
-        --with-newlib \
-        --with-headers=yes \
-        --with-python-dir=share/gcc-arm-none-eabi \
-        --with-sysroot=$INSTALLDIR_NATIVE/arm-none-eabi \
-        --with-zstd=no \
-        $GCC_CONFIG_OPTS                                \
-        "${GCC_CONFIG_OPTS_LCPP}"                              \
-        "--with-pkgversion=$PKGVERSION" \
-        ${MULTILIB_LIST}
-
-    # Passing USE_TM_CLONE_REGISTRY=0 via INHIBIT_LIBC_CFLAGS to disable
-    # transactional memory related code in crtbegin.o.
-    # This is a workaround. Better approach is have a t-* to set this flag via
-    # CRTSTUFF_T_CFLAGS
-    make -j$JOBS CXXFLAGS="$BUILD_OPTIONS" \
-            LDFLAGS_FOR_TARGET="--specs=nosys.specs" \
-            INHIBIT_LIBC_CFLAGS="-DUSE_TM_CLONE_REGISTRY=0"
-
-    make install
-
-    if [ "$skip_manual" != "yes" ]; then
-        make install-html install-pdf
-    fi
-
-    pushd $INSTALLDIR_NATIVE
-    rm -rf bin/arm-none-eabi-gccbug
-    LIBIBERTY_LIBRARIES=$(find $INSTALLDIR_NATIVE/arm-none-eabi/lib -name libiberty.a)
-    for libiberty_lib in $LIBIBERTY_LIBRARIES ; do
-        rm -rf $libiberty_lib
-    done
-    rm -rf ./lib/libiberty.a
-    rm -rf  include
-    popd
-
-    rm -f $INSTALLDIR_NATIVE/arm-none-eabi/usr
-    popd
+        "$script_path/build-gcc-final.sh" "$@"
     fi  # gcc-final stage
 
     if stage_is_skipped "gcc-size-libstdcxx"; then
         echo "Skipping stage: gcc-size-libstdcxx (cache hit)"
     else
-    echo "Task [III-5] /$HOST_NATIVE/gcc-size-libstdcxx/" | tee -a "$BUILDDIR_NATIVE/.stage"
-    rm -f $BUILDDIR_NATIVE/target-libs/arm-none-eabi/usr
-    ln -s . $BUILDDIR_NATIVE/target-libs/arm-none-eabi/usr
-
-    rm -rf $BUILDDIR_NATIVE/gcc-size-libstdcxx && mkdir -p $BUILDDIR_NATIVE/gcc-size-libstdcxx
-    pushd $BUILDDIR_NATIVE/gcc-size-libstdcxx
-
-    $SRCDIR/$GCC/configure --target=$TARGET \
-        --prefix=$BUILDDIR_NATIVE/target-libs \
-        --enable-languages=c,c++ \
-        --disable-decimal-float \
-        --disable-libffi \
-        --disable-libgomp \
-        --disable-libmudflap \
-        --disable-libquadmath \
-        --disable-libssp \
-        --disable-libstdcxx-pch \
-        --disable-libstdcxx-verbose \
-        --disable-nls \
-        --disable-shared \
-        --disable-threads \
-        --disable-tls \
-        --with-gnu-as \
-        --with-gnu-ld \
-        --with-newlib \
-        --with-headers=yes \
-        --with-python-dir=share/gcc-arm-none-eabi \
-        --with-sysroot=$BUILDDIR_NATIVE/target-libs/arm-none-eabi \
-        --with-zstd=no \
-        $GCC_CONFIG_OPTS \
-        "${GCC_CONFIG_OPTS_LCPP}"                              \
-        "--with-pkgversion=$PKGVERSION" \
-        ${MULTILIB_LIST}
-
-    make -j$JOBS CCXXFLAGS="$BUILD_OPTIONS" \
-            LDFLAGS_FOR_TARGET="--specs=nosys.specs" \
-            CXXFLAGS_FOR_TARGET="-g -Os -ffunction-sections -fdata-sections -fno-exceptions"
-    make install
-
-    copy_multi_libs src_prefix="$BUILDDIR_NATIVE/target-libs/arm-none-eabi/lib" \
-                    dst_prefix="$INSTALLDIR_NATIVE/arm-none-eabi/lib"           \
-                    target_gcc="$BUILDDIR_NATIVE/target-libs/bin/arm-none-eabi-gcc"
-
-    # Copy the nano configured newlib.h file into the location that nano.specs
-    # expects it to be.
-    mkdir -p $INSTALLDIR_NATIVE/arm-none-eabi/include/newlib-nano
-    cp -f $BUILDDIR_NATIVE/target-libs/arm-none-eabi/include/newlib.h \
-          $INSTALLDIR_NATIVE/arm-none-eabi/include/newlib-nano/newlib.h
-
-    popd
+        "$script_path/build-gcc-size-libstdcxx.sh" "$@"
     fi  # gcc-size-libstdcxx stage
 
     if stage_is_skipped "gdb"; then
