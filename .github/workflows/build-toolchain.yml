@@ -209,6 +209,10 @@ jobs:
         uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           path: install-native
+          # hashFiles('build-*.sh') is intentionally broad: the final toolchain
+          # cache represents the assembled output of every stage, so a change to
+          # any per-stage script must invalidate it.  Individual stage caches use
+          # narrower per-stage keys computed in the Compute stage source hashes step.
           key: ${{ runner.os }}-toolchain-${{ hashFiles('build-*.sh') }}-${{ steps.src-hashes.outputs.toolchain-src }}
 
       # --- Stage: binutils ---
