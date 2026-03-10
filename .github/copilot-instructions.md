@@ -348,5 +348,5 @@ the squash commit message).
 3. Open a PR — the PR title must be a valid Conventional Commits message.
 4. CI will run only the workflows relevant to the files you changed (via
    `check-changes` path filters).
-5. The full toolchain build takes up to 6 hours; it is cached per source tree
+5. The full toolchain build takes up to 4 hours; it is cached per source tree
    hash to avoid rebuilding when only unrelated files change.
