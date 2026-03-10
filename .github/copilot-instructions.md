@@ -31,6 +31,7 @@ sources with STM32-specific patches and backports.
 ├── build-toolchain.sh       # Main toolchain build script (all stages III-0 … III-14)
 ├── docs/
 │   ├── build-stages.md      # Detailed stage-by-stage build reference
+│   ├── build-times.md       # Measured CI build times (cold cache and warm cache)
 │   └── testing.md           # Test suite guide for all components
 ├── src/                     # All upstream + patched source trees
 ├── test_project/            # STM32 CMake test project (built to validate the toolchain)
@@ -42,6 +43,23 @@ sources with STM32-specific patches and backports.
 ├── CONTRIBUTING.md          # Conventional Commits requirements
 └── package.json             # commitlint config anchor (Node.js tooling only for linting)
 ```
+
+---
+
+## Diagrams
+
+When producing diagrams (dependency graphs, flow charts, timelines, etc.),
+use **valid Mermaid markdown** inside a fenced code block tagged `mermaid`
+rather than ASCII art.  Mermaid diagrams render natively in GitHub Markdown
+and are easier to maintain.  Example:
+
+````markdown
+```mermaid
+graph LR
+  A --> B
+  A --> C
+```
+````
 
 ---
 
@@ -212,6 +230,25 @@ timeout that would occur scanning `src/**` directly.
     )
     echo "toolchain-src=${toolchain_src_hash}" >> "${GITHUB_OUTPUT}"
 ```
+
+### Build-Time Reference (`docs/build-times.md`)
+
+`docs/build-times.md` records measured cold-cache and warm-cache build times
+for every job in `build-toolchain.yml`, derived from real workflow run logs.
+
+**Refresh this document when:**
+- Any job is added to or removed from `build-toolchain.yml`.
+- The dependency graph between jobs changes (e.g. a new parallel branch is
+  introduced or a sequential dependency is altered).
+- A build script is significantly refactored in a way that materially affects
+  compile time (e.g. a new GCC stage, a large source change).
+- Periodic review — timing data drifts as GitHub Actions runner capacity
+  changes; re-measure from actual run logs at least once per release cycle.
+
+To refresh: query the GitHub Actions API for recent completed runs of
+`build-toolchain.yml`, extract `started_at` / `completed_at` for each
+`Build stage – <name>` step, and update the tables with the new values.
+Always cite the specific run IDs used as sources.
 
 ### Adding a New CI Workflow
 
