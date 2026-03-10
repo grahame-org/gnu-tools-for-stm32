@@ -367,6 +367,59 @@ assert_eq "copy_dir_clean excludes .#* emacs lock files" \
 rm -rf "$_CDC_TMPDIR"
 
 # ---------------------------------------------------------------------------
+# Test group 13: pack_dir_clean
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "=== Group 13: pack_dir_clean ==="
+
+_PDC_TMPDIR=$(mktemp -d)
+
+mkdir -p "$_PDC_TMPDIR/src/.git"
+mkdir -p "$_PDC_TMPDIR/src/CVS"
+mkdir -p "$_PDC_TMPDIR/src/.svn"
+mkdir -p "$_PDC_TMPDIR/src/.pc"
+mkdir -p "$_PDC_TMPDIR/src/subdir"
+echo "keep me" > "$_PDC_TMPDIR/src/normal.txt"
+echo "nested" > "$_PDC_TMPDIR/src/subdir/child.txt"
+echo "git object" > "$_PDC_TMPDIR/src/.git/object"
+echo "cvs entry" > "$_PDC_TMPDIR/src/CVS/Entries"
+echo "svn entry" > "$_PDC_TMPDIR/src/.svn/entries"
+echo "quilt patch" > "$_PDC_TMPDIR/src/.pc/series"
+echo "backup" > "$_PDC_TMPDIR/src/file.txt~"
+echo "orig" > "$_PDC_TMPDIR/src/patch.orig"
+echo "rej" > "$_PDC_TMPDIR/src/patch.rej"
+echo "emacs lock" > "$_PDC_TMPDIR/src/.#lockfile"
+
+_PDC_ARCHIVE="$_PDC_TMPDIR/out.tar.bz2"
+pack_dir_clean "$_PDC_TMPDIR" "src" "$_PDC_ARCHIVE"
+
+_PDC_CONTENTS=$(tar tjf "$_PDC_ARCHIVE")
+
+assert_eq "pack_dir_clean archives top-level file" \
+    "yes" "$(echo "$_PDC_CONTENTS" | grep -q "src/normal.txt" && echo "yes" || echo "no")"
+assert_eq "pack_dir_clean archives nested file in regular subdir" \
+    "yes" "$(echo "$_PDC_CONTENTS" | grep -q "src/subdir/child.txt" && echo "yes" || echo "no")"
+assert_eq "pack_dir_clean excludes .git directory" \
+    "no" "$(echo "$_PDC_CONTENTS" | grep -q "\.git" && echo "yes" || echo "no")"
+assert_eq "pack_dir_clean excludes CVS directory" \
+    "no" "$(echo "$_PDC_CONTENTS" | grep -q "CVS" && echo "yes" || echo "no")"
+assert_eq "pack_dir_clean excludes .svn directory" \
+    "no" "$(echo "$_PDC_CONTENTS" | grep -q "\.svn" && echo "yes" || echo "no")"
+assert_eq "pack_dir_clean excludes .pc directory" \
+    "no" "$(echo "$_PDC_CONTENTS" | grep -q "/\.pc" && echo "yes" || echo "no")"
+assert_eq "pack_dir_clean excludes *~ backup files" \
+    "no" "$(echo "$_PDC_CONTENTS" | grep -q "file\.txt~" && echo "yes" || echo "no")"
+assert_eq "pack_dir_clean excludes *.orig files" \
+    "no" "$(echo "$_PDC_CONTENTS" | grep -q "patch\.orig" && echo "yes" || echo "no")"
+assert_eq "pack_dir_clean excludes *.rej files" \
+    "no" "$(echo "$_PDC_CONTENTS" | grep -q "patch\.rej" && echo "yes" || echo "no")"
+assert_eq "pack_dir_clean excludes .#* emacs lock files" \
+    "no" "$(echo "$_PDC_CONTENTS" | grep -q "\.#lockfile" && echo "yes" || echo "no")"
+
+rm -rf "$_PDC_TMPDIR"
+
+# ---------------------------------------------------------------------------
 # Summary
 # ---------------------------------------------------------------------------
 
