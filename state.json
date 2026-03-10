@@ -1,18 +1,10 @@
 {
-  "last_run": "2026-03-10T18:32Z", "run_id": "22918140174",
-  "cmds": {
-    "tests": "bash tests/test-build-common.sh && bash tests/test-build-toolchain-args.sh && bash tests/test-strip-binary.sh",
-    "libiberty": "mkdir -p build/libiberty && cd build/libiberty && ../../src/binutils/libiberty/configure && make -j$(nproc) && make check"
-  },
-  "counts": { "build_common": 59, "toolchain_args": 59, "strip_binary": 13, "total": 131 },
-  "open_prs": { "pack_dir_clean": "PR submitted run 22918140174, number TBD" },
-  "open_issues": { "108": "Monthly Activity 2026-03", "204": "stale - work merged as #208" },
-  "backlog": [
-    {"id": "shellcheck-ci", "p": 1, "desc": "shellcheck CI - Copilot issue #114", "status": "deferred"},
-    {"id": "close-204", "p": 2, "desc": "Close stale issue #204", "status": "pending"},
-    {"id": "toolchain-args-extend", "p": 3, "desc": "Extend build-toolchain-args tests: stage_is_skipped, ppa flags", "status": "pending"}
-  ],
-  "done": ["pack_dir_clean g13 10 tests 2026-03-10","strip_binary PR#208","copy_dir/clean PR#183","saveenv/restoreenv","parse_toolchain_args","break_hardlink","shell-unit-tests.yml"],
-  "tasks_run": {"t1":"2026-03-10","t2":"2026-03-10","t3":"2026-03-10","t4":"2026-03-09","t5":"2026-03-07","t6":"2026-03-10","t7":"2026-03-10"},
-  "notes": ["PR# known next run","Shallow clone: fetch base before branch","Groups 1-13 done; copy_multi_libs not testable","Issue #204 stale work merged #208","Next: extend toolchain-args tests"]
+  "last_run": "2026-03-10T19:05Z",
+  "tests": "bash tests/test-build-toolchain-args.sh && bash tests/test-build-common.sh && bash tests/test-strip-binary.sh",
+  "counts": {"toolchain_args": 81, "build_common": 49, "strip_binary": 13, "total": 143},
+  "prs": {"253": "pack_dir_clean g13 open", "g8": "toolchain-args edge cases TBD"},
+  "issues": {"108": "Monthly Activity 2026-03", "204": "stale"},
+  "backlog": ["shellcheck-ci #114 deferred", "close-204 pending"],
+  "done": ["toolchain-args-g8","pack_dir_clean-g13","strip_binary","copy_dir/clean","saveenv/restoreenv","parse_toolchain_args","break_hardlink","shell-unit-tests.yml"],
+  "tasks_run": {"t1":"2026-03-10","t2":"2026-03-10","t3":"2026-03-10","t4":"2026-03-09","t5":"2026-03-07","t6":"2026-03-10","t7":"2026-03-10"}
 }
