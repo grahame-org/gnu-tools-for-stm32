@@ -126,21 +126,21 @@ saveenvvar () {
     fi
     local varname="$1"
     local newval="$2"
-    # shellcheck disable=SC1083
+    # shellcheck disable=SC1083 # \${$varname} intentionally uses literal braces: eval resolves the dynamic variable name at runtime
     eval local oldval=\"\${$varname}\"
-    # shellcheck disable=SC1083
+    # shellcheck disable=SC1083 # \${level_saved_…} intentionally uses literal braces: eval resolves the dynamic variable name at runtime
     eval local saved=\"\${level_saved_${stack_level}_${varname}}\"
     # shellcheck disable=SC2154
     if [ "$saved" = "" ]; then
         # The variable wasn't saved in the level before. Save it
-        # shellcheck disable=SC1083
+        # shellcheck disable=SC1083 # \${stack_list_…} intentionally uses literal braces: eval resolves the dynamic variable name at runtime
         eval local temp=\"\${stack_list_$stack_level}\"
         # shellcheck disable=SC2154
         eval stack_list_$stack_level=\"$varname $temp\"
         # shellcheck disable=SC2154
         eval save_level_${stack_level}_$varname=\"$oldval\"
         eval level_saved_${stack_level}_$varname="yes"
-        # shellcheck disable=SC1083
+        # shellcheck disable=SC1083 # \${$varname+set} intentionally uses literal braces: eval resolves the dynamic variable name and +set modifier at runtime
         eval level_preset_${stack_level}_${varname}=\"\${$varname+set}\"
         #echo Save $varname: \"$oldval\"
     fi
@@ -156,16 +156,16 @@ restoreenv () {
         error "Trying to restore from an empty stack"
     fi
 
-    # shellcheck disable=SC1083
+    # shellcheck disable=SC1083 # \${stack_list_…} intentionally uses literal braces: eval resolves the dynamic variable name at runtime
     eval local list=\"\${stack_list_$stack_level}\"
     local varname
     # shellcheck disable=SC2154
     for varname in $list; do
-        # shellcheck disable=SC1083
+        # shellcheck disable=SC1083 # \${level_preset_…} intentionally uses literal braces: eval resolves the dynamic variable name at runtime
         eval local varname_preset=\"\${level_preset_${stack_level}_${varname}}\"
         # shellcheck disable=SC2154
         if [ "$varname_preset" = "set" ] ; then
-            # shellcheck disable=SC1083
+            # shellcheck disable=SC1083 # \${save_level_…} intentionally uses literal braces: eval resolves the dynamic variable name at runtime
             eval $varname=\"\${save_level_${stack_level}_$varname}\"
         else
             unset $varname

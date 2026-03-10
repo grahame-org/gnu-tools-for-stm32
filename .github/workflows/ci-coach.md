@@ -21,10 +21,11 @@ safe-outputs:
     title-prefix: "[ci-coach] "
 timeout-minutes: 30
 imports:
-  - shared/mood.md
+  - shared/ci-data-analysis.md
   - shared/ci-optimization-strategies.md
   - shared/reporting.md
-source: github/gh-aw/.github/workflows/ci-coach.md@852cb06ad52958b402ed982b69957ffc57ca0619
+features:
+  copilot-requests: true
 ---
 
 # CI Optimization Coach
@@ -46,17 +47,25 @@ Analyze the CI workflow daily to identify concrete optimization opportunities th
   - `.github/workflows/gdb-selftests.yml` — GDB selftests
   - `.github/workflows/libiberty-tests.yml` — libiberty unit tests
   - `.github/workflows/shell-unit-tests.yml` — Shell unit tests
+  - `.github/workflows/actionlint.yml` - Action linter
+  - `.github/workflows/shellcheck.yml` - Shell script linter
 
 ## Data Available
 
-Use the GitHub tools available to you to fetch live data:
+The `ci-data-analysis` shared module has pre-downloaded CI run data and built the project. Available data:
 
-1. **CI Workflow Runs**: Use `list_workflow_runs` (e.g. for `build-toolchain.yml`) to get recent run history, timings, and success rates
-2. **CI Configurations**: Read `.github/workflows/*.yml` files directly from the repository
-3. **Cache Memory**: `/tmp/gh-aw/cache-memory/` — Historical analysis data from previous runs
-4. **Shell Unit Tests**: `tests/test-build-common.sh` — The repository's existing shell test suite
+1. **CI Runs**: `/tmp/ci-runs.json` - Last 100 workflow runs
+2. **Artifacts**: `/tmp/ci-artifacts/` - Coverage reports, benchmarks, and **fuzz test results**
+3. **CI Configuration**: `.github/workflows/ci.yml` - Current workflow
+4. **Cache Memory**: `/tmp/cache-memory/` - Historical analysis data
+5. **Test Results**: `/tmp/gh-aw/test-results.json` - Test performance data
+6. **Fuzz Results**: `/tmp/ci-artifacts/*/fuzz-results/` - Fuzz test output and corpus data
 
-Note: This is a **shell-based bare-metal C toolchain project** (not a Go or Node.js project). There is no `go.mod`, no `Makefile`, and no `actions/setup/js/` directory. Build scripts are `build-toolchain.sh` and `build-prerequisites.sh`.
+The project has been **built, linted, and tested** so you can validate changes immediately.
+
+> [!Note]: This is a **shell-based bare-metal C toolchain project** (not a Go or Node.js project).
+> There is no `go.mod`, no `Makefile`, and no `actions/setup/js/` directory.
+> Build scripts are `build-toolchain.sh` and `build-prerequisites.sh`.
 
 ## Analysis Framework
 
@@ -69,30 +78,36 @@ Follow the optimization strategies defined in the `ci-optimization-strategies` s
 ### Phase 2: Analyze Test Coverage (10 minutes)
 **CRITICAL**: Ensure all tests are executed by the CI matrix
 
-This is a **shell-based C toolchain project**. Tests are:
-- Shell unit tests in `tests/test-build-common.sh` — run by `shell-unit-tests.yml`
+- Check for orphaned tests not covered by any CI job
+- Verify catch-all matrix groups exist for packages with specific patterns
+- Identify coverage gaps and propose fixes if needed
+- **Verify test suite integrity**:
+  - Check that the test suite FAILS when individual tests fail (not just reporting failures)
+  - Review test job exit codes - ensure failed tests cause the job to exit with non-zero status
+  - Validate that test result artifacts show actual test failures, not swallowed errors
+
+This is a **project to build a C / C++ toolchain**. Tests are:
+- Build scripts use `bash`
+- Individual tools use a mixture of:
+  - C
+  - C++
+- Shell unit tests run by `shell-unit-tests.yml`
 - Binutils DejaGnu regression tests — run by `binutils-tests.yml`
 - GCC internal selftests — run by `gcc-selftests.yml`
 - GDB selftests — run by `gdb-selftests.yml`
 - libiberty unit tests — run by `libiberty-tests.yml`
 - Full toolchain build + test_project validation — run by `build-toolchain.yml`
 
-Check:
-- Are any test workflows misconfigured or missing coverage?
-- Do all workflows use `check-changes` path filters correctly?
-- **Verify test suite integrity**:
-  - Check that the test suite FAILS when individual tests fail
-  - Review test job exit codes — ensure failed tests cause the job to exit with non-zero status
 
 ### Phase 3: Identify Optimization Opportunities (10 minutes)
 Apply the optimization strategies from the shared module:
 1. **Job Parallelization** - Reduce critical path
-2. **Cache Optimization** - Improve cache hit rates (the toolchain build caches a ~210k-file `src/` tree)
+2. **Cache Optimization** - Improve cache hit rates
 3. **Test Suite Restructuring** - Balance test execution
-4. **Resource Right-Sizing** - Optimize timeouts and runners
+4. **Resource Right-Sizing** - Optimize timeouts, runners and runner types (e.g. ubuntu-latest vs ubuntu-slim)
 5. **Artifact Management** - Reduce unnecessary uploads
 6. **Matrix Strategy** - Balance breadth vs. speed
-7. **Conditional Execution** - Skip unnecessary jobs (all workflows use `dorny/paths-filter`)
+7. **Conditional Execution** - Skip unnecessary jobs
 8. **Dependency Installation** - Reduce redundant work
 
 ### Phase 4: Cost-Benefit Analysis (3 minutes)
@@ -114,9 +129,8 @@ If you identify improvements worth implementing:
    - Add comments explaining why changes improve efficiency
 
 2. **Validate changes immediately**:
-   ```bash
-   bash tests/test-build-common.sh
-   ```
+   - run unit tests
+   - carry out linting
 
    **IMPORTANT**: Only proceed to creating a PR if all validations pass.
 
@@ -124,8 +138,8 @@ If you identify improvements worth implementing:
 
 4. **Save analysis** to cache memory:
    ```bash
-   mkdir -p /tmp/gh-aw/cache-memory/ci-coach
-   cat > /tmp/gh-aw/cache-memory/ci-coach/last-analysis.json << EOF
+   mkdir -p /tmp/cache-memory/ci-coach
+   cat > /tmp/cache-memory/ci-coach/last-analysis.json << EOF
    {
      "date": "$(date -I)",
      "optimizations_proposed": [...],
@@ -133,7 +147,6 @@ If you identify improvements worth implementing:
    }
    EOF
    ```
-
 5. **Create pull request** using the `create_pull_request` tool (title auto-prefixed with "[ci-coach]")
 
 ### Phase 6: No Changes Path
@@ -143,73 +156,12 @@ If no improvements are found or changes are too risky:
 2. Exit gracefully - no pull request needed
 3. Log findings for future reference
 
-## Report Formatting Guidelines
-
-When creating CI optimization reports and pull request descriptions, follow these formatting standards to ensure readability and professionalism:
-
-### 1. Header Levels
-**Use h3 (###) or lower for all headers in your report to maintain proper document hierarchy.**
-
-The PR or discussion title serves as h1, so all content headers should start at h3:
-- Use `###` for main sections (e.g., "### CI Optimization Opportunities", "### Expected Impact")
-- Use `####` for subsections (e.g., "#### Performance Analysis", "#### Cache Optimization")
-- Never use `##` (h2) or `#` (h1) in the report body
-
-Example:
-```markdown
-### CI Optimization Opportunities
-#### Performance Analysis
-```
-
-### 2. Progressive Disclosure
-**Wrap detailed sections like full job logs, timing breakdowns, and verbose analysis in `<details><summary><b>Section Name</b></summary>` tags to improve readability and reduce scrolling.**
-
-Use collapsible sections for:
-- Detailed timing analysis and per-job breakdowns
-- Full workflow configuration comparisons
-- Verbose metrics and historical data
-- Extended technical analysis
-
-Always keep critical information visible:
-- Executive summary with key optimizations
-- Top optimization opportunities
-- Expected impact and savings
-- Validation results
-- Actionable recommendations
-
-Example:
-```markdown
-<details>
-<summary><b>Detailed Timing Analysis</b></summary>
-
-[Per-job timing breakdown, critical path analysis, detailed metrics...]
-
-</details>
-```
-
-### 3. Recommended Report Structure
-
-Your CI optimization reports should follow this structure for optimal readability:
-
-1. **Executive Summary** (always visible): Brief overview of total optimizations found, expected time/cost savings
-2. **Top Optimization Opportunities** (always visible): Top 3-5 highest-impact changes with brief descriptions
-3. **Detailed Analysis per Workflow** (in `<details>` tags): Complete breakdown of each optimization with before/after comparisons
-4. **Expected Impact** (always visible): Total time savings, cost reduction, risk assessment
-5. **Validation Results** (always visible): Confirmation that all validations passed
-6. **Recommendations** (always visible): Actionable next steps and testing plan
-
-### Design Principles (Airbnb-Inspired)
-
-Your optimization reports should:
-1. **Build trust through clarity**: Most important optimization opportunities and expected benefits immediately visible
-2. **Exceed expectations**: Add helpful context like estimated time savings, cost impact, historical trends
-3. **Create delight**: Use progressive disclosure to present deep analysis without overwhelming reviewers
-4. **Maintain consistency**: Follow the same patterns as other reporting workflows like `daily-copilot-token-report`, `daily-code-metrics`, and `auto-triage-issues`
-
 ## Pull Request Structure (if created)
 
+**Report Formatting**: Use h3 (###) or lower for all headers in your PR description to maintain proper document hierarchy. The PR title serves as h1, so start section headers at h3.
+
 ```markdown
-## CI Optimization Proposal
+### CI Optimization Proposal
 
 ### Summary
 [Brief overview of proposed changes and expected benefits]
@@ -226,43 +178,61 @@ Your optimization reports should:
 
 **Rationale**: [Why this improves efficiency]
 
-#### Example: Cache Key Optimisation
-**Type**: Cache Optimisation
-**Impact**: ~2 minutes saved per pull-request run (reduced cache restore overhead)
+#### Example: Test Suite Restructuring
+**Type**: Test Suite Optimization
+**Impact**: ~5 minutes per run (40% reduction in test phase)
 **Risk**: Low
 **Changes**:
-- Lines 45–52: Tighten the source-tree hash to only include changed sub-trees
-- Lines 60–65: Add a secondary restore key that falls back to the most recent matching entry
+- Lines 15-57: Split unit test job into 3 parallel jobs by package
+- Lines 58-117: Rebalance integration test matrix groups
+- Line 83: Split "Workflow" tests into separate groups with specific patterns
 
-**Rationale**: The current cache key hashes all source sub-trees unconditionally. Adding targeted restore-keys improves hit rates on incremental PRs without breaking correctness.
+**Rationale**: Current integration tests wait unnecessarily for unit tests to complete. Integration tests don't use unit test outputs, so they can run in parallel. Splitting unit tests by package and rebalancing integration matrix reduces the critical path by 52%.
 
 <details>
-<summary><b>View Detailed Cache Structure Comparison</b></summary>
+<summary><b>View Detailed Test Structure Comparison</b></summary>
 
-**Current Cache Structure:**
+**Current Test Structure:**
 ```yaml
-- name: Cache toolchain build
-  uses: actions/cache@...
-  with:
-    key: toolchain-${{ steps.hash.outputs.toolchain-src }}
-    path: install-native/
+test:
+  needs: [lint]
+  run: go test -v -count=1 -timeout=3m -tags '!integration' ./...
+  # Takes ~2.5 minutes, runs all unit tests sequentially
+
+integration:
+  needs: [test]  # Blocks on test completion
+  matrix: 6 groups (imbalanced: "Workflow" takes 8min, others 3-4min)
 ```
 
-**Proposed Cache Structure:**
+**Proposed Test Structure:**
 ```yaml
-- name: Cache toolchain build
-  uses: actions/cache@...
-  with:
-    key: toolchain-${{ steps.hash.outputs.toolchain-src }}
-    restore-keys: |
-      toolchain-
-    path: install-native/
+test-unit-cli:
+  needs: [lint]
+  run: go test -v -parallel=4 -timeout=2m -tags '!integration' ./pkg/cli/...
+  # ~1.5 minutes
+
+test-unit-workflow:
+  needs: [lint]
+  run: go test -v -parallel=4 -timeout=2m -tags '!integration' ./pkg/workflow/...
+  # ~1.5 minutes
+
+test-unit-parser:
+  needs: [lint]
+  run: go test -v -parallel=4 -timeout=2m -tags '!integration' ./pkg/parser/...
+  # ~1 minute
+
+integration:
+  needs: [lint]  # Run in parallel with unit tests
+  matrix: 8 balanced groups (each ~4 minutes)
+  # Split "Workflow" into 3 groups: workflow-compile, workflow-safe-outputs, workflow-tools
 ```
 
 **Benefits:**
-- PRs that don't touch `src/` now get a partial cache hit instead of a full miss
-- Full cache hit still takes priority when the hash matches exactly
-- Worst case is unchanged: a complete rebuild when no cached entry is found
+- Unit tests run in parallel (1.5 min vs 2.5 min)
+- Integration starts immediately after lint (no waiting for unit tests)
+- Better matrix balance reduces longest job from 8 min to 4 min
+- Critical path: lint (2 min) → integration (4 min) = 6 min total
+- Previous path: lint (2 min) → test (2.5 min) → integration (8 min) = 12.5 min
 
 </details>
 
@@ -275,7 +245,10 @@ Your optimization reports should:
 
 ### Validation Results
 ✅ All validations passed:
-- Shell unit tests: `bash tests/test-build-common.sh` - passed
+- Linting: `make lint` - passed
+- Build: `make build` - passed
+- Unit tests: `make test-unit` - passed
+- Lock file compilation: `make recompile` - passed
 
 ### Testing Plan
 - [ ] Verify workflow syntax
@@ -300,7 +273,7 @@ Your optimization reports should:
 
 **NEVER MODIFY TEST CODE TO HIDE ERRORS**
 
-The CI Coach workflow must NEVER alter test code (shell test scripts in `tests/`) in ways that:
+The CI Coach workflow must NEVER alter test code (`*_test.go` files) in ways that:
 - Swallow errors or suppress failures
 - Make failing tests appear to pass
 - Add error suppression patterns like `|| true`, `|| :`, or `|| echo "ignoring"`
@@ -331,7 +304,8 @@ The CI Coach workflow must NEVER alter test code (shell test scripts in `tests/`
 - **Reversible**: Changes should be easy to roll back if needed
 
 ### Safety Checks
-- **Validate changes before PR**: Run `bash tests/test-build-common.sh` after making changes
+
+- **Validate changes before PR**: Run linting tools and test suites after making changes
 - **Validate YAML syntax** - ensure workflow files are valid
 - **Preserve job dependencies** that ensure correctness
 - **Maintain test coverage** - never sacrifice quality for speed
@@ -339,16 +313,17 @@ The CI Coach workflow must NEVER alter test code (shell test scripts in `tests/`
 - **Document trade-offs** clearly
 - **Only create PR if validations pass** - don't propose broken changes
 - **NEVER change test code to hide errors**:
-  - NEVER modify shell test files (e.g. `tests/test-*.sh`) to swallow errors or ignore failures
+  - NEVER modify test files to swallow errors or ignore failures
   - NEVER add `|| true` or similar patterns to make failing tests appear to pass
   - NEVER wrap test commands with error suppression (e.g., `set +e`, `|| echo "ignoring"`)
   - If tests are failing, fix the root cause or update the CI matrix, not the test code
   - Test code integrity is non-negotiable - tests must accurately reflect pass/fail status
 
 ### Analysis Discipline
-- **Use GitHub tools to fetch live data** — workflow run history, job timings, and configurations are all accessible via the GitHub MCP tools
+- **Use pre-downloaded data** - all data is already available
 - **Focus on concrete improvements** - avoid vague recommendations
 - **Calculate real impact** - estimate time/cost savings
+- **Fact driven** - always use real data where it is available
 - **Consider maintenance burden** - don't over-optimize
 - **Learn from history** - check cache memory for previous attempts
 
@@ -365,9 +340,14 @@ The CI Coach workflow must NEVER alter test code (shell test scripts in `tests/`
 ✅ Examined available artifacts and metrics
 ✅ Checked historical context from cache memory
 ✅ Identified concrete optimization opportunities OR confirmed CI is well-optimized
-✅ If changes proposed: Validated them with `bash tests/test-build-common.sh`
 ✅ Created PR with specific, low-risk, validated improvements OR saved analysis noting no changes needed
 ✅ Documented expected impact with metrics
 ✅ Completed analysis in under 30 minutes
 
-Begin your analysis now. Study the CI configurations, query recent workflow run data using GitHub tools, and identify concrete opportunities to make the workflows more efficient while minimising costs. If you propose changes to a workflow file, validate them by running `bash tests/test-build-common.sh` before creating a pull request. Only create a PR if all validations pass.
+Begin your analysis now. Study the CI configuration, analyze the run data, and identify concrete opportunities to make the test suite more efficient while minimizing costs. If you propose changes to the CI workflow, validate them by running the build, lint, and test commands before creating a pull request. Only create a PR if all validations pass.
+
+**Important**: If no action is needed after completing your analysis, you **MUST** call the `noop` safe-output tool with a brief explanation. Failing to call any safe-output tool is the most common cause of safe-output workflow failures.
+
+```json
+{"noop": {"message": "No action needed: [brief explanation of what was analyzed and why]"}}
+```
