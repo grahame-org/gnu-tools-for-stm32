@@ -1614,7 +1614,10 @@ jobs:
             --skip_stages=binutils,gcc-first,newlib,newlib-nano,gcc-final,gcc-size-libstdcxx,gdb
 
       - name: Save cache – toolchain
-        if: steps.cache-toolchain.outputs.cache-hit != 'true'
+        # Don't cache if this is a merge_group event, since the merge commit's tree won't be reused
+        # for the final push event and thus the cache won't be reusable either.
+        # Other jobs / steps may benefit from caching the intermediate toolchain state even in a merge_group.
+        if: steps.cache-toolchain.outputs.cache-hit != 'true' && github.event_name != 'merge_group'
         uses: actions/cache/save@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           path: install-native
