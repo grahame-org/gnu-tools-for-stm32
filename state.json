@@ -1,39 +1,18 @@
 {
-  "last_updated": "2026-03-10T05:05Z",
-  "last_run_id": "22887958216",
-  "commands": {
-    "shell_unit_tests": "bash tests/test-build-common.sh && bash tests/test-build-toolchain-args.sh && bash tests/test-strip-binary.sh",
-    "libiberty_tests": "mkdir -p build/libiberty && cd build/libiberty && ../../src/binutils/libiberty/configure && make -j$(nproc) && make check"
+  "last_run": "2026-03-10T18:32Z", "run_id": "22918140174",
+  "cmds": {
+    "tests": "bash tests/test-build-common.sh && bash tests/test-build-toolchain-args.sh && bash tests/test-strip-binary.sh",
+    "libiberty": "mkdir -p build/libiberty && cd build/libiberty && ../../src/binutils/libiberty/configure && make -j$(nproc) && make check"
   },
-  "test_counts": { "test_build_common": 61, "test_build_toolchain_args": 59, "test_strip_binary": 13, "total": 133 },
-  "open_prs": {
-    "pack_dir_clean_pr": { "title": "[Test Improver] test: add pack_dir_clean unit tests (group 13)", "status": "open", "note": "PR submitted 2026-03-10, number TBD" }
-  },
-  "open_issues": { "108": "[Test Improver] Monthly Activity 2026-03", "204": "stale - strip_binary patch failed push (merged as #208)" },
+  "counts": { "build_common": 59, "toolchain_args": 59, "strip_binary": 13, "total": 131 },
+  "open_prs": { "pack_dir_clean": "PR submitted run 22918140174, number TBD" },
+  "open_issues": { "108": "Monthly Activity 2026-03", "204": "stale - work merged as #208" },
   "backlog": [
-    { "id": "shellcheck-ci", "priority": 1, "description": "shellcheck CI - handled by Copilot; issue #226", "status": "deferred" },
-    { "id": "close-stale-204", "priority": 2, "description": "Close issue #204 (stale, work merged as PR #208)", "status": "pending" }
+    {"id": "shellcheck-ci", "p": 1, "desc": "shellcheck CI - Copilot issue #114", "status": "deferred"},
+    {"id": "close-204", "p": 2, "desc": "Close stale issue #204", "status": "pending"},
+    {"id": "toolchain-args-extend", "p": 3, "desc": "Extend build-toolchain-args tests: stage_is_skipped, ppa flags", "status": "pending"}
   ],
-  "completed_work": [
-    "pack_dir_clean g13 12 tests + paths filter fix - 2026-03-10",
-    "strip_binary tests PR #208 merged 2026-03-08",
-    "copy_dir/copy_dir_clean tests merged 2026-03-07",
-    "saveenv/restoreenv/prependenvvar tests merged",
-    "parse_toolchain_args tests merged",
-    "break_hardlink tests merged",
-    "shell-unit-tests.yml CI workflow merged"
-  ],
-  "task_round_robin": {
-    "task1_last_run": "2026-03-07", "task2_last_run": "2026-03-07",
-    "task3_last_run": "2026-03-10", "task4_last_run": "2026-03-09",
-    "task5_last_run": "2026-03-07", "task6_last_run": "2026-03-10",
-    "task7_last_run": "2026-03-10"
-  },
-  "notes": [
-    "PR number only known on next run (safe-outputs async)",
-    "Shallow clone - must fetch base branch before creating new branches",
-    "All testable build-common.sh functions now covered (groups 1-13); copy_multi_libs not unit-testable",
-    "build-gcc-final.sh/build-gdb.sh/build-gcc-size-libstdcxx.sh merged (#242-244); paths filter updated",
-    "Issue #204 stale - strip_binary push failure; work merged as PR #208"
-  ]
+  "done": ["pack_dir_clean g13 10 tests 2026-03-10","strip_binary PR#208","copy_dir/clean PR#183","saveenv/restoreenv","parse_toolchain_args","break_hardlink","shell-unit-tests.yml"],
+  "tasks_run": {"t1":"2026-03-10","t2":"2026-03-10","t3":"2026-03-10","t4":"2026-03-09","t5":"2026-03-07","t6":"2026-03-10","t7":"2026-03-10"},
+  "notes": ["PR# known next run","Shallow clone: fetch base before branch","Groups 1-13 done; copy_multi_libs not testable","Issue #204 stale work merged #208","Next: extend toolchain-args tests"]
 }
