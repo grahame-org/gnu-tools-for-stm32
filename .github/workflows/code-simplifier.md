@@ -29,7 +29,7 @@ tools:
 
 timeout-minutes: 30
 strict: true
-source: github/gh-aw/.github/workflows/code-simplifier.md@0ce8adde9abb3d0841cfb16ede313b9f99301642
+source: github/gh-aw/.github/workflows/code-simplifier.md@f5aa6a7699752651789e8c80c9d24f8e9fa31809
 engine: copilot
 ---
 
