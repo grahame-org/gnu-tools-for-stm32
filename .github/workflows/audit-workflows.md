@@ -9,7 +9,7 @@ permissions:
   issues: read
   pull-requests: read
 tracker-id: audit-workflows-daily
-engine: copilot
+engine: claude
 tools:
   agentic-workflows:
   repo-memory:
@@ -30,7 +30,7 @@ imports:
   - shared/jqschema.md
   - shared/reporting.md
   - shared/trending-charts-simple.md
-source: github/gh-aw/.github/workflows/audit-workflows.md@852cb06ad52958b402ed982b69957ffc57ca0619
+source: github/gh-aw/.github/workflows/ci-coach.md@0ce8adde9abb3d0841cfb16ede313b9f99301642
 ---
 
 # Agentic Workflow Audit Agent
@@ -79,100 +79,21 @@ Output is saved to: /tmp/gh-aw/aw-mcp/logs
 - `patterns/{errors,missing-tools,mcp-failures}.json`
 - Compare with historical data
 
-### Report Formatting Guidelines
-
-**Header Levels**: Use h3 (###) or lower for all headers in your audit report. The discussion title serves as h1, so content headers should start at h3.
-
-**Progressive Disclosure**: The template already uses appropriate `<details>` tags - maintain this pattern for any additional long sections.
-
-**Create Discussion**: Always create report with audit findings including summary, statistics, missing tools, errors, affected workflows, recommendations, and historical context.
-```markdown
-# 🔍 Agentic Workflow Audit Report - [DATE]
-
-### Audit Summary
-
-- **Period**: Last 24 hours
-- **Runs Analyzed**: [NUMBER]
-- **Workflows Active**: [NUMBER]
-- **Success Rate**: [PERCENTAGE]
-- **Issues Found**: [NUMBER]
-
-### Missing Tools
-
-[If any missing tools were detected, list them with frequency and affected workflows]
-
-| Tool Name | Request Count | Workflows Affected | Reason |
-|-----------|---------------|-------------------|---------|
-| [tool]    | [count]       | [workflows]       | [reason]|
-
-### Error Analysis
-
-[Detailed breakdown of errors found]
-
-#### Critical Errors
-- [Error description with affected workflows]
-
-#### Warnings
-- [Warning description with affected workflows]
-
-### MCP Server Failures
-
-[If any MCP server failures detected]
-
-| Server Name | Failure Count | Workflows Affected |
-|-------------|---------------|-------------------|
-| [server]    | [count]       | [workflows]       |
-
-### Firewall Analysis
-
-[If firewall logs were collected and analyzed]
-
-- **Total Requests**: [NUMBER]
-- **Allowed Requests**: [NUMBER]
-- **Denied Requests**: [NUMBER]
-
-#### Allowed Domains
-[List of allowed domains with request counts]
-
-#### Denied Domains
-[List of denied domains with request counts - these may indicate blocked network access attempts]
-
-### Performance Metrics
-
-- **Average Token Usage**: [NUMBER]
-- **Total Cost (24h)**: $[AMOUNT]
-- **Highest Cost Workflow**: [NAME] ($[AMOUNT])
-- **Average Turns**: [NUMBER]
-
-### Affected Workflows
-
-[List of workflows with issues]
-
-### Recommendations
-
-1. [Specific actionable recommendation]
-2. [Specific actionable recommendation]
-3. [...]
-
-### Historical Context
-
-[Compare with previous audits if available from cache memory]
-
-### Next Steps
-
-- [ ] [Action item 1]
-- [ ] [Action item 2]
-```
-
 ## Guidelines
 
 **Security**: Never execute untrusted code, validate data, sanitize paths
-**Quality**: Be thorough, specific, actionable, accurate  
+**Quality**: Be thorough, specific, actionable, accurate
 **Efficiency**: Use repo memory, batch operations, respect timeouts
 
 Memory structure: `/tmp/gh-aw/repo-memory/default/{audits,patterns,metrics}/*.json`
 
 Always create discussion with findings and update repo memory.
+
+**Important**: If no action is needed after completing your analysis, you **MUST** call the `noop` safe-output tool with a brief explanation. Failing to call any safe-output tool is the most common cause of safe-output workflow failures.
+
+```json
+{"noop": {"message": "No action needed: [brief explanation of what was analyzed and why]"}}
+```
 
 ## Large-Repository Compatibility
 
