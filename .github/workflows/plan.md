@@ -121,7 +121,7 @@ All created issues will be automatically grouped under a parent tracking issue.
 
 ## Instructions
 
-Review instructions in `.github/instructions/*.instructions.md` if you need guidance.
+Review instructions in `.github/copilot-instructions.md` if you need guidance.
 
 ## Begin Planning
 
