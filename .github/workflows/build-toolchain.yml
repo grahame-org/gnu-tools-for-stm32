@@ -410,7 +410,8 @@ jobs:
       - name: Build stage – gdb
         if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-gdb.outputs.cache-hit != 'true'
         run: |
-          export JOBS=$(nproc)
+          JOBS=$(nproc)
+          export JOBS
           ./build-gdb.sh \
             --skip_steps=mingw,mingw-gdb-with-python,gdb-with-python,manual,package_sources
 
@@ -1339,7 +1340,26 @@ jobs:
         if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-gcc-size-libstdcxx.outputs.cache-hit != 'true'
         uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
-          path: install-native
+          path: |
+            install-native
+            build-native/target-libs
+          key: ${{ runner.os }}-stage-v1-${{ steps.stage-hashes.outputs['gcc-final'] }}
+
+      - name: Build stage – gcc-final
+        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-gcc-final.outputs.cache-hit != 'true'
+        run: |
+          JOBS=$(nproc)
+          export JOBS
+          ./build-gcc-final.sh \
+            --skip_steps=mingw,mingw-gdb-with-python,gdb-with-python,manual,package_sources
+
+      - name: Save cache – gcc-final
+        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-gcc-final.outputs.cache-hit != 'true' && github.event_name != 'merge_group'
+        uses: actions/cache/save@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        with:
+          path: |
+            install-native
+            build-native/target-libs
           key: ${{ runner.os }}-stage-v1-${{ steps.stage-hashes.outputs['gcc-final'] }}
 
       - name: Restore cache – newlib-nano
@@ -1352,7 +1372,8 @@ jobs:
       - name: Build stage – gcc-size-libstdcxx
         if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-gcc-size-libstdcxx.outputs.cache-hit != 'true'
         run: |
-          export JOBS=$(nproc)
+          JOBS=$(nproc)
+          export JOBS
           ./build-gcc-size-libstdcxx.sh \
             --skip_steps=mingw,mingw-gdb-with-python,gdb-with-python,manual,package_sources
 
