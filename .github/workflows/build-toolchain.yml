@@ -410,7 +410,8 @@ jobs:
       - name: Build stage – gdb
         if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-gdb.outputs.cache-hit != 'true'
         run: |
-          export JOBS=$(nproc)
+          JOBS=$(nproc)
+          export JOBS
           ./build-gdb.sh \
             --skip_steps=mingw,mingw-gdb-with-python,gdb-with-python,manual,package_sources
 
@@ -675,7 +676,8 @@ jobs:
       - name: Build stage – gcc-final
         if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-gcc-final.outputs.cache-hit != 'true'
         run: |
-          export JOBS=$(nproc)
+          JOBS=$(nproc)
+          export JOBS
           ./build-gcc-final.sh \
             --skip_steps=mingw,mingw-gdb-with-python,gdb-with-python,manual,package_sources
 
@@ -702,7 +704,8 @@ jobs:
       - name: Build stage – gcc-size-libstdcxx
         if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-gcc-size-libstdcxx.outputs.cache-hit != 'true'
         run: |
-          export JOBS=$(nproc)
+          JOBS=$(nproc)
+          export JOBS
           ./build-gcc-size-libstdcxx.sh \
             --skip_steps=mingw,mingw-gdb-with-python,gdb-with-python,manual,package_sources
 
