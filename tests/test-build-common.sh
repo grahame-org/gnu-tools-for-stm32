@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Unit tests for saveenv/restoreenv/saveenvvar/prependenvvar/prepend_path,
-# break_hardlink, copy_dir, and copy_dir_clean in build-common.sh.
+# break_hardlink, copy_dir, copy_dir_clean, and pack_dir_clean in build-common.sh.
 #
 # Run with: bash tests/test-build-common.sh
 
@@ -396,26 +396,41 @@ pack_dir_clean "$_PDC_TMPDIR" "src" "$_PDC_ARCHIVE"
 
 _PDC_CONTENTS=$(tar tjf "$_PDC_ARCHIVE")
 
+# Use -Fx (fixed-string + full-line) so each assertion matches exactly one
+# archive entry.  Plain grep with regex mode would treat '.' as a wildcard
+# (matching src/normalXtxt etc.) and a substring match would pass if the
+# target path appeared embedded in a longer entry.
+# CLARIFY: tar is invoked with "-C $1 $2" so entries are expected to be
+# listed as "src/normal.txt" (no leading "./" prefix); if the tar invocation
+# or version changes to emit "./src/normal.txt" these patterns will need
+# updating.
 assert_eq "pack_dir_clean archives top-level file" \
-    "yes" "$(echo "$_PDC_CONTENTS" | grep -q "src/normal.txt" && echo "yes" || echo "no")"
+    "src/normal.txt" "$(echo "$_PDC_CONTENTS" | grep -Fx "src/normal.txt" || true)"
 assert_eq "pack_dir_clean archives nested file in regular subdir" \
-    "yes" "$(echo "$_PDC_CONTENTS" | grep -q "src/subdir/child.txt" && echo "yes" || echo "no")"
+    "src/subdir/child.txt" "$(echo "$_PDC_CONTENTS" | grep -Fx "src/subdir/child.txt" || true)"
+# Use directory-boundary anchoring: (^|/)NAME(/|$) matches NAME only as an
+# exact path component (with or without a trailing slash, as tar may omit it).
+# Plain substring grep (e.g. grep "\.git") would false-fail on legitimately
+# archived files whose names merely contain these strings, such as
+# src/.gitignore, src/.gitattributes, or src/CVSroot.
+# CLARIFY: if the test fixture is ever extended to include such files (e.g. a
+# .gitignore that should be archived), verify these patterns still hold.
 assert_eq "pack_dir_clean excludes .git directory" \
-    "no" "$(echo "$_PDC_CONTENTS" | grep -q "\.git" && echo "yes" || echo "no")"
+    "" "$(echo "$_PDC_CONTENTS" | grep -E '(^|/)\.git(/|$)' || true)"
 assert_eq "pack_dir_clean excludes CVS directory" \
-    "no" "$(echo "$_PDC_CONTENTS" | grep -q "CVS" && echo "yes" || echo "no")"
+    "" "$(echo "$_PDC_CONTENTS" | grep -E '(^|/)CVS(/|$)' || true)"
 assert_eq "pack_dir_clean excludes .svn directory" \
-    "no" "$(echo "$_PDC_CONTENTS" | grep -q "\.svn" && echo "yes" || echo "no")"
+    "" "$(echo "$_PDC_CONTENTS" | grep -E '(^|/)\.svn(/|$)' || true)"
 assert_eq "pack_dir_clean excludes .pc directory" \
-    "no" "$(echo "$_PDC_CONTENTS" | grep -q "/\.pc" && echo "yes" || echo "no")"
+    "" "$(echo "$_PDC_CONTENTS" | grep -E '(^|/)\.pc(/|$)' || true)"
 assert_eq "pack_dir_clean excludes *~ backup files" \
-    "no" "$(echo "$_PDC_CONTENTS" | grep -q "file\.txt~" && echo "yes" || echo "no")"
+    "" "$(echo "$_PDC_CONTENTS" | grep "file\.txt~" || true)"
 assert_eq "pack_dir_clean excludes *.orig files" \
-    "no" "$(echo "$_PDC_CONTENTS" | grep -q "patch\.orig" && echo "yes" || echo "no")"
+    "" "$(echo "$_PDC_CONTENTS" | grep "patch\.orig" || true)"
 assert_eq "pack_dir_clean excludes *.rej files" \
-    "no" "$(echo "$_PDC_CONTENTS" | grep -q "patch\.rej" && echo "yes" || echo "no")"
+    "" "$(echo "$_PDC_CONTENTS" | grep "patch\.rej" || true)"
 assert_eq "pack_dir_clean excludes .#* emacs lock files" \
-    "no" "$(echo "$_PDC_CONTENTS" | grep -q "\.#lockfile" && echo "yes" || echo "no")"
+    "" "$(echo "$_PDC_CONTENTS" | grep "\.#lockfile" || true)"
 
 rm -rf "$_PDC_TMPDIR"
 
