@@ -167,15 +167,65 @@ jobs:
       - name: Compute stage source hashes
         id: stage-hashes
         run: |
-          hash_dir() { git rev-parse HEAD:"$1" 2>/dev/null || echo "missing-$1"; }
-          scripts_hash=$(echo "$(hash_dir build-toolchain.sh)$(hash_dir build-binutils.sh)$(hash_dir build-toolchain-args.sh)$(hash_dir build-common.sh)" | sha256sum | cut -d' ' -f1)
-          binutils_scripts_hash=$(echo "$(hash_dir build-binutils.sh)$(hash_dir build-toolchain-args.sh)$(hash_dir build-common.sh)" | sha256sum | cut -d' ' -f1)
-          gcc_first_scripts_hash=$(echo "$(hash_dir build-gcc-first.sh)$(hash_dir build-toolchain-args.sh)$(hash_dir build-common.sh)" | sha256sum | cut -d' ' -f1)
-          newlib_scripts_hash=$(echo "$(hash_dir build-newlib.sh)$(hash_dir build-toolchain-args.sh)$(hash_dir build-common.sh)" | sha256sum | cut -d' ' -f1)
-          newlib_nano_scripts_hash=$(echo "$(hash_dir build-newlib-nano.sh)$(hash_dir build-toolchain-args.sh)$(hash_dir build-common.sh)" | sha256sum | cut -d' ' -f1)
-          gcc_final_scripts_hash=$(echo "$(hash_dir build-gcc-final.sh)$(hash_dir build-toolchain-args.sh)$(hash_dir build-common.sh)" | sha256sum | cut -d' ' -f1)
-          gcc_size_libstdcxx_scripts_hash=$(echo "$(hash_dir build-gcc-size-libstdcxx.sh)$(hash_dir build-toolchain-args.sh)$(hash_dir build-common.sh)" | sha256sum | cut -d' ' -f1)
-          gdb_scripts_hash=$(echo "$(hash_dir build-gdb.sh)$(hash_dir build-toolchain-args.sh)$(hash_dir build-common.sh)" | sha256sum | cut -d' ' -f1)
+          set -euo pipefail
+          hash_dir() { git rev-parse "HEAD:$1"; }
+          scripts_hash=$(
+            printf '%s\n' \
+              "$(hash_dir build-toolchain.sh)" \
+              "$(hash_dir build-binutils.sh)" \
+              "$(hash_dir build-toolchain-args.sh)" \
+              "$(hash_dir build-common.sh)" \
+            | sha256sum | cut -d' ' -f1
+          )
+          binutils_scripts_hash=$(
+            printf '%s\n' \
+              "$(hash_dir build-binutils.sh)" \
+              "$(hash_dir build-toolchain-args.sh)" \
+              "$(hash_dir build-common.sh)" \
+            | sha256sum | cut -d' ' -f1
+          )
+          gcc_first_scripts_hash=$(
+            printf '%s\n' \
+              "$(hash_dir build-gcc-first.sh)" \
+              "$(hash_dir build-toolchain-args.sh)" \
+              "$(hash_dir build-common.sh)" \
+            | sha256sum | cut -d' ' -f1
+          )
+          newlib_scripts_hash=$(
+            printf '%s\n' \
+              "$(hash_dir build-newlib.sh)" \
+              "$(hash_dir build-toolchain-args.sh)" \
+              "$(hash_dir build-common.sh)" \
+            | sha256sum | cut -d' ' -f1
+          )
+          newlib_nano_scripts_hash=$(
+            printf '%s\n' \
+              "$(hash_dir build-newlib-nano.sh)" \
+              "$(hash_dir build-toolchain-args.sh)" \
+              "$(hash_dir build-common.sh)" \
+            | sha256sum | cut -d' ' -f1
+          )
+          gcc_final_scripts_hash=$(
+            printf '%s\n' \
+              "$(hash_dir build-gcc-final.sh)" \
+              "$(hash_dir build-toolchain-args.sh)" \
+              "$(hash_dir build-common.sh)" \
+            | sha256sum | cut -d' ' -f1
+          )
+          gcc_size_libstdcxx_scripts_hash=$(
+            printf '%s\n' \
+              "$(hash_dir build-gcc-size-libstdcxx.sh)" \
+              "$(hash_dir build-toolchain-args.sh)" \
+              "$(hash_dir build-common.sh)" \
+            | sha256sum | cut -d' ' -f1
+          )
+          gdb_scripts_hash=$(
+            printf '%s\n' \
+              "$(hash_dir build-gdb.sh)" \
+              "$(hash_dir build-toolchain-args.sh)" \
+              "$(hash_dir build-common.sh)" \
+            | sha256sum | cut -d' ' -f1
+          )
           prereqs_key="${{ steps.cache-prerequisites.outputs.cache-primary-key }}"
 
           binutils_src=$(hash_dir src/binutils)
@@ -360,15 +410,65 @@ jobs:
       - name: Compute stage source hashes
         id: stage-hashes
         run: |
-          hash_dir() { git rev-parse HEAD:"$1" 2>/dev/null || echo "missing-$1"; }
-          scripts_hash=$(echo "$(hash_dir build-toolchain.sh)$(hash_dir build-binutils.sh)$(hash_dir build-toolchain-args.sh)$(hash_dir build-common.sh)" | sha256sum | cut -d' ' -f1)
-          binutils_scripts_hash=$(echo "$(hash_dir build-binutils.sh)$(hash_dir build-toolchain-args.sh)$(hash_dir build-common.sh)" | sha256sum | cut -d' ' -f1)
-          gcc_first_scripts_hash=$(echo "$(hash_dir build-gcc-first.sh)$(hash_dir build-toolchain-args.sh)$(hash_dir build-common.sh)" | sha256sum | cut -d' ' -f1)
-          newlib_scripts_hash=$(echo "$(hash_dir build-newlib.sh)$(hash_dir build-toolchain-args.sh)$(hash_dir build-common.sh)" | sha256sum | cut -d' ' -f1)
-          newlib_nano_scripts_hash=$(echo "$(hash_dir build-newlib-nano.sh)$(hash_dir build-toolchain-args.sh)$(hash_dir build-common.sh)" | sha256sum | cut -d' ' -f1)
-          gcc_final_scripts_hash=$(echo "$(hash_dir build-gcc-final.sh)$(hash_dir build-toolchain-args.sh)$(hash_dir build-common.sh)" | sha256sum | cut -d' ' -f1)
-          gcc_size_libstdcxx_scripts_hash=$(echo "$(hash_dir build-gcc-size-libstdcxx.sh)$(hash_dir build-toolchain-args.sh)$(hash_dir build-common.sh)" | sha256sum | cut -d' ' -f1)
-          gdb_scripts_hash=$(echo "$(hash_dir build-gdb.sh)$(hash_dir build-toolchain-args.sh)$(hash_dir build-common.sh)" | sha256sum | cut -d' ' -f1)
+          set -euo pipefail
+          hash_dir() { git rev-parse "HEAD:$1"; }
+          scripts_hash=$(
+            printf '%s\n' \
+              "$(hash_dir build-toolchain.sh)" \
+              "$(hash_dir build-binutils.sh)" \
+              "$(hash_dir build-toolchain-args.sh)" \
+              "$(hash_dir build-common.sh)" \
+            | sha256sum | cut -d' ' -f1
+          )
+          binutils_scripts_hash=$(
+            printf '%s\n' \
+              "$(hash_dir build-binutils.sh)" \
+              "$(hash_dir build-toolchain-args.sh)" \
+              "$(hash_dir build-common.sh)" \
+            | sha256sum | cut -d' ' -f1
+          )
+          gcc_first_scripts_hash=$(
+            printf '%s\n' \
+              "$(hash_dir build-gcc-first.sh)" \
+              "$(hash_dir build-toolchain-args.sh)" \
+              "$(hash_dir build-common.sh)" \
+            | sha256sum | cut -d' ' -f1
+          )
+          newlib_scripts_hash=$(
+            printf '%s\n' \
+              "$(hash_dir build-newlib.sh)" \
+              "$(hash_dir build-toolchain-args.sh)" \
+              "$(hash_dir build-common.sh)" \
+            | sha256sum | cut -d' ' -f1
+          )
+          newlib_nano_scripts_hash=$(
+            printf '%s\n' \
+              "$(hash_dir build-newlib-nano.sh)" \
+              "$(hash_dir build-toolchain-args.sh)" \
+              "$(hash_dir build-common.sh)" \
+            | sha256sum | cut -d' ' -f1
+          )
+          gcc_final_scripts_hash=$(
+            printf '%s\n' \
+              "$(hash_dir build-gcc-final.sh)" \
+              "$(hash_dir build-toolchain-args.sh)" \
+              "$(hash_dir build-common.sh)" \
+            | sha256sum | cut -d' ' -f1
+          )
+          gcc_size_libstdcxx_scripts_hash=$(
+            printf '%s\n' \
+              "$(hash_dir build-gcc-size-libstdcxx.sh)" \
+              "$(hash_dir build-toolchain-args.sh)" \
+              "$(hash_dir build-common.sh)" \
+            | sha256sum | cut -d' ' -f1
+          )
+          gdb_scripts_hash=$(
+            printf '%s\n' \
+              "$(hash_dir build-gdb.sh)" \
+              "$(hash_dir build-toolchain-args.sh)" \
+              "$(hash_dir build-common.sh)" \
+            | sha256sum | cut -d' ' -f1
+          )
           prereqs_key="${{ steps.cache-prerequisites.outputs.cache-primary-key }}"
 
           binutils_src=$(hash_dir src/binutils)
@@ -555,15 +655,65 @@ jobs:
       - name: Compute stage source hashes
         id: stage-hashes
         run: |
-          hash_dir() { git rev-parse HEAD:"$1" 2>/dev/null || echo "missing-$1"; }
-          scripts_hash=$(echo "$(hash_dir build-toolchain.sh)$(hash_dir build-binutils.sh)$(hash_dir build-toolchain-args.sh)$(hash_dir build-common.sh)" | sha256sum | cut -d' ' -f1)
-          binutils_scripts_hash=$(echo "$(hash_dir build-binutils.sh)$(hash_dir build-toolchain-args.sh)$(hash_dir build-common.sh)" | sha256sum | cut -d' ' -f1)
-          gcc_first_scripts_hash=$(echo "$(hash_dir build-gcc-first.sh)$(hash_dir build-toolchain-args.sh)$(hash_dir build-common.sh)" | sha256sum | cut -d' ' -f1)
-          newlib_scripts_hash=$(echo "$(hash_dir build-newlib.sh)$(hash_dir build-toolchain-args.sh)$(hash_dir build-common.sh)" | sha256sum | cut -d' ' -f1)
-          newlib_nano_scripts_hash=$(echo "$(hash_dir build-newlib-nano.sh)$(hash_dir build-toolchain-args.sh)$(hash_dir build-common.sh)" | sha256sum | cut -d' ' -f1)
-          gcc_final_scripts_hash=$(echo "$(hash_dir build-gcc-final.sh)$(hash_dir build-toolchain-args.sh)$(hash_dir build-common.sh)" | sha256sum | cut -d' ' -f1)
-          gcc_size_libstdcxx_scripts_hash=$(echo "$(hash_dir build-gcc-size-libstdcxx.sh)$(hash_dir build-toolchain-args.sh)$(hash_dir build-common.sh)" | sha256sum | cut -d' ' -f1)
-          gdb_scripts_hash=$(echo "$(hash_dir build-gdb.sh)$(hash_dir build-toolchain-args.sh)$(hash_dir build-common.sh)" | sha256sum | cut -d' ' -f1)
+          set -euo pipefail
+          hash_dir() { git rev-parse "HEAD:$1"; }
+          scripts_hash=$(
+            printf '%s\n' \
+              "$(hash_dir build-toolchain.sh)" \
+              "$(hash_dir build-binutils.sh)" \
+              "$(hash_dir build-toolchain-args.sh)" \
+              "$(hash_dir build-common.sh)" \
+            | sha256sum | cut -d' ' -f1
+          )
+          binutils_scripts_hash=$(
+            printf '%s\n' \
+              "$(hash_dir build-binutils.sh)" \
+              "$(hash_dir build-toolchain-args.sh)" \
+              "$(hash_dir build-common.sh)" \
+            | sha256sum | cut -d' ' -f1
+          )
+          gcc_first_scripts_hash=$(
+            printf '%s\n' \
+              "$(hash_dir build-gcc-first.sh)" \
+              "$(hash_dir build-toolchain-args.sh)" \
+              "$(hash_dir build-common.sh)" \
+            | sha256sum | cut -d' ' -f1
+          )
+          newlib_scripts_hash=$(
+            printf '%s\n' \
+              "$(hash_dir build-newlib.sh)" \
+              "$(hash_dir build-toolchain-args.sh)" \
+              "$(hash_dir build-common.sh)" \
+            | sha256sum | cut -d' ' -f1
+          )
+          newlib_nano_scripts_hash=$(
+            printf '%s\n' \
+              "$(hash_dir build-newlib-nano.sh)" \
+              "$(hash_dir build-toolchain-args.sh)" \
+              "$(hash_dir build-common.sh)" \
+            | sha256sum | cut -d' ' -f1
+          )
+          gcc_final_scripts_hash=$(
+            printf '%s\n' \
+              "$(hash_dir build-gcc-final.sh)" \
+              "$(hash_dir build-toolchain-args.sh)" \
+              "$(hash_dir build-common.sh)" \
+            | sha256sum | cut -d' ' -f1
+          )
+          gcc_size_libstdcxx_scripts_hash=$(
+            printf '%s\n' \
+              "$(hash_dir build-gcc-size-libstdcxx.sh)" \
+              "$(hash_dir build-toolchain-args.sh)" \
+              "$(hash_dir build-common.sh)" \
+            | sha256sum | cut -d' ' -f1
+          )
+          gdb_scripts_hash=$(
+            printf '%s\n' \
+              "$(hash_dir build-gdb.sh)" \
+              "$(hash_dir build-toolchain-args.sh)" \
+              "$(hash_dir build-common.sh)" \
+            | sha256sum | cut -d' ' -f1
+          )
           prereqs_key="${{ steps.cache-prerequisites.outputs.cache-primary-key }}"
 
           binutils_src=$(hash_dir src/binutils)
@@ -853,15 +1003,65 @@ jobs:
       - name: Compute stage source hashes
         id: stage-hashes
         run: |
-          hash_dir() { git rev-parse HEAD:"$1" 2>/dev/null || echo "missing-$1"; }
-          scripts_hash=$(echo "$(hash_dir build-toolchain.sh)$(hash_dir build-binutils.sh)$(hash_dir build-toolchain-args.sh)$(hash_dir build-common.sh)" | sha256sum | cut -d' ' -f1)
-          binutils_scripts_hash=$(echo "$(hash_dir build-binutils.sh)$(hash_dir build-toolchain-args.sh)$(hash_dir build-common.sh)" | sha256sum | cut -d' ' -f1)
-          gcc_first_scripts_hash=$(echo "$(hash_dir build-gcc-first.sh)$(hash_dir build-toolchain-args.sh)$(hash_dir build-common.sh)" | sha256sum | cut -d' ' -f1)
-          newlib_scripts_hash=$(echo "$(hash_dir build-newlib.sh)$(hash_dir build-toolchain-args.sh)$(hash_dir build-common.sh)" | sha256sum | cut -d' ' -f1)
-          newlib_nano_scripts_hash=$(echo "$(hash_dir build-newlib-nano.sh)$(hash_dir build-toolchain-args.sh)$(hash_dir build-common.sh)" | sha256sum | cut -d' ' -f1)
-          gcc_final_scripts_hash=$(echo "$(hash_dir build-gcc-final.sh)$(hash_dir build-toolchain-args.sh)$(hash_dir build-common.sh)" | sha256sum | cut -d' ' -f1)
-          gcc_size_libstdcxx_scripts_hash=$(echo "$(hash_dir build-gcc-size-libstdcxx.sh)$(hash_dir build-toolchain-args.sh)$(hash_dir build-common.sh)" | sha256sum | cut -d' ' -f1)
-          gdb_scripts_hash=$(echo "$(hash_dir build-gdb.sh)$(hash_dir build-toolchain-args.sh)$(hash_dir build-common.sh)" | sha256sum | cut -d' ' -f1)
+          set -euo pipefail
+          hash_dir() { git rev-parse "HEAD:$1"; }
+          scripts_hash=$(
+            printf '%s\n' \
+              "$(hash_dir build-toolchain.sh)" \
+              "$(hash_dir build-binutils.sh)" \
+              "$(hash_dir build-toolchain-args.sh)" \
+              "$(hash_dir build-common.sh)" \
+            | sha256sum | cut -d' ' -f1
+          )
+          binutils_scripts_hash=$(
+            printf '%s\n' \
+              "$(hash_dir build-binutils.sh)" \
+              "$(hash_dir build-toolchain-args.sh)" \
+              "$(hash_dir build-common.sh)" \
+            | sha256sum | cut -d' ' -f1
+          )
+          gcc_first_scripts_hash=$(
+            printf '%s\n' \
+              "$(hash_dir build-gcc-first.sh)" \
+              "$(hash_dir build-toolchain-args.sh)" \
+              "$(hash_dir build-common.sh)" \
+            | sha256sum | cut -d' ' -f1
+          )
+          newlib_scripts_hash=$(
+            printf '%s\n' \
+              "$(hash_dir build-newlib.sh)" \
+              "$(hash_dir build-toolchain-args.sh)" \
+              "$(hash_dir build-common.sh)" \
+            | sha256sum | cut -d' ' -f1
+          )
+          newlib_nano_scripts_hash=$(
+            printf '%s\n' \
+              "$(hash_dir build-newlib-nano.sh)" \
+              "$(hash_dir build-toolchain-args.sh)" \
+              "$(hash_dir build-common.sh)" \
+            | sha256sum | cut -d' ' -f1
+          )
+          gcc_final_scripts_hash=$(
+            printf '%s\n' \
+              "$(hash_dir build-gcc-final.sh)" \
+              "$(hash_dir build-toolchain-args.sh)" \
+              "$(hash_dir build-common.sh)" \
+            | sha256sum | cut -d' ' -f1
+          )
+          gcc_size_libstdcxx_scripts_hash=$(
+            printf '%s\n' \
+              "$(hash_dir build-gcc-size-libstdcxx.sh)" \
+              "$(hash_dir build-toolchain-args.sh)" \
+              "$(hash_dir build-common.sh)" \
+            | sha256sum | cut -d' ' -f1
+          )
+          gdb_scripts_hash=$(
+            printf '%s\n' \
+              "$(hash_dir build-gdb.sh)" \
+              "$(hash_dir build-toolchain-args.sh)" \
+              "$(hash_dir build-common.sh)" \
+            | sha256sum | cut -d' ' -f1
+          )
           prereqs_key="${{ steps.cache-prerequisites.outputs.cache-primary-key }}"
 
           binutils_src=$(hash_dir src/binutils)
