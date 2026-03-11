@@ -1218,7 +1218,7 @@ jobs:
 
   build-status:
     runs-on: ubuntu-slim
-    needs: [check-changes, build-final]
+    needs: [check-changes, build-binutils, build-gdb, build-gcc-chain, build-final]
     if: always()
     steps:
       - name: Report build status
@@ -1226,7 +1226,16 @@ jobs:
           if [[ "${{ needs.check-changes.result }}" == "failure" || "${{ needs.check-changes.result }}" == "cancelled" ]]; then
             echo "check-changes job failed or was cancelled" && exit 1
           fi
+          if [[ "${{ needs.build-binutils.result }}" == "failure" || "${{ needs.build-binutils.result }}" == "cancelled" ]]; then
+            echo "build-binutils failed or was cancelled" && exit 1
+          fi
+          if [[ "${{ needs.build-gdb.result }}" == "failure" || "${{ needs.build-gdb.result }}" == "cancelled" ]]; then
+            echo "build-gdb failed or was cancelled" && exit 1
+          fi
+          if [[ "${{ needs.build-gcc-chain.result }}" == "failure" || "${{ needs.build-gcc-chain.result }}" == "cancelled" ]]; then
+            echo "build-gcc-chain failed or was cancelled" && exit 1
+          fi
           if [[ "${{ needs.build-final.result }}" == "failure" || "${{ needs.build-final.result }}" == "cancelled" ]]; then
-            echo "Build failed or was cancelled" && exit 1
+            echo "build-final failed or was cancelled" && exit 1
           fi
           echo "Build skipped or succeeded"
