@@ -314,7 +314,7 @@ jobs:
       - name: Restore cache – gcc-final
         id: cache-gcc-final
         uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
-        if: steps.cache-newlib-nano.outputs.cache-hit != 'true'
+        if: steps.cache-toolchain.outputs.cache-hit != 'true'
         with:
           path: install-native
           key: ${{ runner.os }}-stage-v1-${{ steps.stage-hashes.outputs['gcc-final'] }}
@@ -338,7 +338,7 @@ jobs:
       # --- Stage: gcc-size-libstdcxx ---
       - name: Restore cache – gcc-size-libstdcxx
         id: cache-gcc-size-libstdcxx
-        if: steps.cache-gcc-final.outputs.cache-hit != 'true'
+        if: steps.cache-toolchain.outputs.cache-hit != 'true'
         uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           path: install-native
