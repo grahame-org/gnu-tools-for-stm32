@@ -422,7 +422,7 @@ assert_eq "pack_dir_clean excludes CVS directory" \
 assert_eq "pack_dir_clean excludes .svn directory" \
     "" "$(echo "$_PDC_CONTENTS" | grep -E '(^|/)\.svn(/|$)' || true)"
 assert_eq "pack_dir_clean excludes .pc directory" \
-    "" "$(echo "$_PDC_CONTENTS" | grep "/\.pc" || true)"
+    "" "$(echo "$_PDC_CONTENTS" | grep -E '(^|/)\.pc(/|$)' || true)"
 assert_eq "pack_dir_clean excludes *~ backup files" \
     "" "$(echo "$_PDC_CONTENTS" | grep "file\.txt~" || true)"
 assert_eq "pack_dir_clean excludes *.orig files" \
