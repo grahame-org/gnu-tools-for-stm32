@@ -1985,7 +1985,16 @@ jobs:
 
   build-status:
     runs-on: ubuntu-slim
-    needs: [check-changes, build-binutils, build-gdb, build-gcc-chain, build-final]
+    needs:
+      - check-changes
+      - build-binutils
+      - build-gdb
+      - build-gcc-first
+      - build-newlib
+      - build-newlib-nano
+      - build-gcc-final
+      - build-gcc-size-libstdcxx
+      - build-final
     if: always()
     steps:
       - name: Report build status
@@ -1999,8 +2008,20 @@ jobs:
           if [[ "${{ needs.build-gdb.result }}" == "failure" || "${{ needs.build-gdb.result }}" == "cancelled" ]]; then
             echo "build-gdb failed or was cancelled" && exit 1
           fi
-          if [[ "${{ needs.build-gcc-chain.result }}" == "failure" || "${{ needs.build-gcc-chain.result }}" == "cancelled" ]]; then
-            echo "build-gcc-chain failed or was cancelled" && exit 1
+          if [[ "${{ needs.build-gcc-first.result }}" == "failure" || "${{ needs.build-gcc-first.result }}" == "cancelled" ]]; then
+            echo "build-gcc-first failed or was cancelled" && exit 1
+          fi
+          if [[ "${{ needs.build-newlib.result }}" == "failure" || "${{ needs.build-newlib.result }}" == "cancelled" ]]; then
+            echo "build-newlib failed or was cancelled" && exit 1
+          fi
+          if [[ "${{ needs.build-newlib-nano.result }}" == "failure" || "${{ needs.build-newlib-nano.result }}" == "cancelled" ]]; then
+            echo "build-newlib-nano failed or was cancelled" && exit 1
+          fi
+          if [[ "${{ needs.build-gcc-final.result }}" == "failure" || "${{ needs.build-gcc-final.result }}" == "cancelled" ]]; then
+            echo "build-gcc-final failed or was cancelled" && exit 1
+          fi
+          if [[ "${{ needs.build-gcc-size-libstdcxx.result }}" == "failure" || "${{ needs.build-gcc-size-libstdcxx.result }}" == "cancelled" ]]; then
+            echo "build-gcc-size-libstdcxx failed or was cancelled" && exit 1
           fi
           if [[ "${{ needs.build-final.result }}" == "failure" || "${{ needs.build-final.result }}" == "cancelled" ]]; then
             echo "build-final failed or was cancelled" && exit 1
