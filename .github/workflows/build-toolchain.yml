@@ -359,14 +359,30 @@ jobs:
           path: install-native
           key: ${{ runner.os }}-stage-v1-${{ steps.stage-hashes.outputs['gcc-size-libstdcxx'] }}
 
-      - name: Build toolchain
-        if: steps.cache-toolchain.outputs.cache-hit != 'true'
+      # --- Stage: gdb ---
+      - name: Restore cache – gdb
+        id: cache-gdb
+        if: steps.cache-gcc-size-libstdcxx.outputs.cache-hit != 'true'
+        uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        with:
+          path: install-native
+          key: ${{ runner.os }}-stage-v1-${{ steps.stage-hashes.outputs.gdb }}
+
+      - name: Build stage – gdb
+        if: steps.cache-gdb.outputs.cache-hit != 'true' && steps.cache-toolchain.outputs.cache-hit != 'true'
         run: |
           JOBS=$(nproc)
           export JOBS
           ./build-toolchain.sh \
             --skip_steps=mingw,mingw-gdb-with-python,gdb-with-python,manual,package_sources \
             --skip_stages=binutils,gcc-first,newlib,newlib-nano,gcc-final,gcc-size-libstdcxx
+
+      - name: Save cache – gdb
+        if: steps.cache-gdb.outputs.cache-hit != 'true' && steps.cache-toolchain.outputs.cache-hit != 'true' && github.event_name != 'merge_group'
+        uses: actions/cache/save@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        with:
+          path: install-native
+          key: ${{ runner.os }}-stage-v1-${{ steps.stage-hashes.outputs.gdb }}
 
       - name: Save cache – toolchain
         if: steps.cache-toolchain.outputs.cache-hit != 'true' && github.event_name != 'merge_group'
