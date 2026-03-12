@@ -839,9 +839,7 @@ jobs:
         if: steps.cache-toolchain.outputs.cache-hit != 'true'
         uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
-          path: |
-            install-native
-            build-native/target-libs
+          path: install-native
           key: ${{ runner.os }}-stage-v1-${{ steps.stage-hashes.outputs['gcc-final'] }}
 
       - name: Build stage – gcc-final
@@ -856,9 +854,7 @@ jobs:
         if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-gcc-final.outputs.cache-hit != 'true'
         uses: actions/cache/save@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
-          path: |
-            install-native
-            build-native/target-libs
+          path: install-native
           key: ${{ runner.os }}-stage-v1-${{ steps.stage-hashes.outputs['gcc-final'] }}
 
       # --- Stage: gcc-size-libstdcxx ---
