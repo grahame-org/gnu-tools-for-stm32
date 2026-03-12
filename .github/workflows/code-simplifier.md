@@ -18,6 +18,7 @@ imports:
 
 safe-outputs:
   create-pull-request:
+    base-branch: "${{ github.ref_name }}"
     title-prefix: "[code-simplifier] "
     labels: [refactoring, code-quality, automation]
     reviewers: [copilot]
