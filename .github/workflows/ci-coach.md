@@ -19,6 +19,9 @@ safe-outputs:
   create-pull-request:
     expires: 2d
     title-prefix: "[ci-coach] "
+  create-issue:
+    expires: 2d
+    title-prefix: "[ci-coach] "
 timeout-minutes: 30
 imports:
   - shared/ci-data-analysis.md
@@ -123,7 +126,7 @@ Prioritize optimizations with high impact, low risk, and low to medium effort.
 
 If you identify improvements worth implementing:
 
-1. **Make focused changes** to the relevant `.github/workflows/*.yml` file:
+1. **Make focused changes** to the relevant CI files:
    - Use the `edit` tool to make precise modifications
    - Keep changes minimal and well-documented
    - Add comments explaining why changes improve efficiency
@@ -132,9 +135,9 @@ If you identify improvements worth implementing:
    - run unit tests
    - carry out linting
 
-   **IMPORTANT**: Only proceed to creating a PR if all validations pass.
+   **IMPORTANT**: Only proceed to a safe output if all validations pass.
 
-3. **Document changes** in the PR description (see template below)
+3. **Document changes** in the PR or issue description (see template below)
 
 4. **Save analysis** to cache memory:
    ```bash
@@ -147,7 +150,14 @@ If you identify improvements worth implementing:
    }
    EOF
    ```
-5. **Create pull request** using the `create_pull_request` tool (title auto-prefixed with "[ci-coach]")
+5. **Choose the correct safe output**:
+   - If any required change touches `.github/workflows/**`, do **not** call `create_pull_request`.
+     Use `create_issue` instead and include:
+     - a concise optimization title
+     - the validated rationale and expected CI impact
+     - the exact files affected
+     - a concrete YAML diff or snippet a maintainer can apply manually
+   - Only use `create_pull_request` for validated changes that stay outside `.github/workflows/**`
 
 ### Phase 6: No Changes Path
 

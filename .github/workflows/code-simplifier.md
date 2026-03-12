@@ -18,10 +18,12 @@ imports:
 
 safe-outputs:
   create-pull-request:
+    base-branch: "${{ github.ref_name }}"
     title-prefix: "[code-simplifier] "
     labels: [refactoring, code-quality, automation]
     reviewers: [copilot]
     expires: 1d
+    protected-files: fallback-to-issue
 
 tools:
   github:
