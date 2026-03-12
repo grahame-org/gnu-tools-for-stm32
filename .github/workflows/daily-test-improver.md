@@ -36,7 +36,6 @@ safe-outputs:
     target: "*"
     hide-older-comments: true
   create-pull-request:
-    base-branch: "${{ github.ref_name }}"
     draft: true
     title-prefix: "[Test Improver] "
     labels: [automation, testing]
