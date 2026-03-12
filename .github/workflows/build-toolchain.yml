@@ -241,7 +241,6 @@ jobs:
           key_gcc_final=$(printf '%s' "${{ runner.os }}-stage-gcc-final-${gcc_final_scripts_hash}-${key_newlib_nano}-${gcc_src}" | sha256sum | cut -d' ' -f1)
           key_gcc_size=$(printf '%s' "${{ runner.os }}-stage-gcc-size-libstdcxx-${gcc_size_libstdcxx_scripts_hash}-${key_gcc_final}-${gcc_src}" | sha256sum | cut -d' ' -f1)
           key_gdb=$(printf '%s' "${{ runner.os }}-stage-gdb-${gdb_scripts_hash}-${key_binutils}-${gdb_src}" | sha256sum | cut -d' ' -f1)
-          key_final=$(printf '%s' "${{ runner.os }}-stage-final-${scripts_hash}-${key_gcc_size}-${key_gdb}-${specs_src}" | sha256sum | cut -d' ' -f1)
 
           {
             echo "binutils=${key_binutils}"
@@ -251,7 +250,6 @@ jobs:
             echo "gcc-final=${key_gcc_final}"
             echo "gcc-size-libstdcxx=${key_gcc_size}"
             echo "gdb=${key_gdb}"
-            echo "final=${key_final}"
           } >> "$GITHUB_OUTPUT"
 
       - name: Restore cache – toolchain
@@ -484,7 +482,6 @@ jobs:
           key_gcc_final=$(printf '%s' "${{ runner.os }}-stage-gcc-final-${gcc_final_scripts_hash}-${key_newlib_nano}-${gcc_src}" | sha256sum | cut -d' ' -f1)
           key_gcc_size=$(printf '%s' "${{ runner.os }}-stage-gcc-size-libstdcxx-${gcc_size_libstdcxx_scripts_hash}-${key_gcc_final}-${gcc_src}" | sha256sum | cut -d' ' -f1)
           key_gdb=$(printf '%s' "${{ runner.os }}-stage-gdb-${gdb_scripts_hash}-${key_binutils}-${gdb_src}" | sha256sum | cut -d' ' -f1)
-          key_final=$(printf '%s' "${{ runner.os }}-stage-final-${scripts_hash}-${key_gcc_size}-${key_gdb}-${specs_src}" | sha256sum | cut -d' ' -f1)
 
           {
             echo "binutils=${key_binutils}"
@@ -494,7 +491,6 @@ jobs:
             echo "gcc-final=${key_gcc_final}"
             echo "gcc-size-libstdcxx=${key_gcc_size}"
             echo "gdb=${key_gdb}"
-            echo "final=${key_final}"
           } >> "$GITHUB_OUTPUT"
 
       - name: Restore cache – toolchain
@@ -729,7 +725,6 @@ jobs:
           key_gcc_final=$(printf '%s' "${{ runner.os }}-stage-gcc-final-${gcc_final_scripts_hash}-${key_newlib_nano}-${gcc_src}" | sha256sum | cut -d' ' -f1)
           key_gcc_size=$(printf '%s' "${{ runner.os }}-stage-gcc-size-libstdcxx-${gcc_size_libstdcxx_scripts_hash}-${key_gcc_final}-${gcc_src}" | sha256sum | cut -d' ' -f1)
           key_gdb=$(printf '%s' "${{ runner.os }}-stage-gdb-${gdb_scripts_hash}-${key_binutils}-${gdb_src}" | sha256sum | cut -d' ' -f1)
-          key_final=$(printf '%s' "${{ runner.os }}-stage-final-${scripts_hash}-${key_gcc_size}-${key_gdb}-${specs_src}" | sha256sum | cut -d' ' -f1)
 
           {
             echo "binutils=${key_binutils}"
@@ -739,7 +734,6 @@ jobs:
             echo "gcc-final=${key_gcc_final}"
             echo "gcc-size-libstdcxx=${key_gcc_size}"
             echo "gdb=${key_gdb}"
-            echo "final=${key_final}"
           } >> "$GITHUB_OUTPUT"
 
       - name: Restore cache – toolchain
@@ -1077,7 +1071,6 @@ jobs:
           key_gcc_final=$(printf '%s' "${{ runner.os }}-stage-gcc-final-${gcc_final_scripts_hash}-${key_newlib_nano}-${gcc_src}" | sha256sum | cut -d' ' -f1)
           key_gcc_size=$(printf '%s' "${{ runner.os }}-stage-gcc-size-libstdcxx-${gcc_size_libstdcxx_scripts_hash}-${key_gcc_final}-${gcc_src}" | sha256sum | cut -d' ' -f1)
           key_gdb=$(printf '%s' "${{ runner.os }}-stage-gdb-${gdb_scripts_hash}-${key_binutils}-${gdb_src}" | sha256sum | cut -d' ' -f1)
-          key_final=$(printf '%s' "${{ runner.os }}-stage-final-${scripts_hash}-${key_gcc_size}-${key_gdb}-${specs_src}" | sha256sum | cut -d' ' -f1)
 
           {
             echo "binutils=${key_binutils}"
@@ -1087,7 +1080,6 @@ jobs:
             echo "gcc-final=${key_gcc_final}"
             echo "gcc-size-libstdcxx=${key_gcc_size}"
             echo "gdb=${key_gdb}"
-            echo "final=${key_final}"
           } >> "$GITHUB_OUTPUT"
 
       - name: Restore cache – toolchain
