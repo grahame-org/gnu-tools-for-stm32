@@ -1531,6 +1531,13 @@ jobs:
           path: install-native
           key: ${{ runner.os }}-stage-v1-${{ steps.stage-hashes.outputs['gcc-final'] }}
 
+      - name: Restore cache – newlib (baseline for gcc-final rebuild)
+        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-gcc-size-libstdcxx.outputs.cache-hit != 'true' && steps.cache-gcc-final.outputs.cache-hit != 'true'
+        uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        with:
+          path: install-native
+          key: ${{ runner.os }}-stage-v1-${{ steps.stage-hashes.outputs.newlib }}
+
       - name: Build stage – gcc-final
         if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-gcc-final.outputs.cache-hit != 'true'
         run: |
