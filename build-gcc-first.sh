@@ -127,6 +127,6 @@ if [ "x$skip_native_build" != "xyes" ] ; then
     pushd $INSTALLDIR_NATIVE
     rm -rf bin/arm-none-eabi-gccbug
     rm -rf ./lib/libiberty.a
-    rm -rf  include
+    rm -rf include
     popd
 fi
