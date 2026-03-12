@@ -137,7 +137,7 @@ If you identify improvements worth implementing:
 
    **IMPORTANT**: Only proceed to a safe output if all validations pass.
 
-3. **Document changes** in the PR description (see template below)
+3. **Document changes** in the PR or issue description (see template below)
 
 4. **Save analysis** to cache memory:
    ```bash
@@ -163,7 +163,7 @@ If you identify improvements worth implementing:
 
 If no improvements are found or changes are too risky:
 1. Save analysis to cache memory
-2. Call the `noop` safe output and exit gracefully
+2. Exit gracefully - no pull request needed
 3. Log findings for future reference
 
 ## Pull Request Structure (if created)
