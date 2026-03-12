@@ -1,0 +1,9 @@
+2026-03-07T17:53:33.8020000Z Job is about to start running on the hosted runner: GitHub Actions 1000002169
+2026-03-07T17:53:33.8020000Z Job is waiting for a hosted runner to come online.
+2026-03-07T17:53:33.7970000Z Evaluating safe_outputs.if
+2026-03-07T17:53:33.7970000Z Evaluating: ((((!cancelled()) && ((needs.agent.result != 'skipped')))) && ((needs.agent.outputs.detection_success == 'true')))
+2026-03-07T17:53:33.7970000Z Expanded: ((!false && ('success' != 'skipped')) && ('true' == 'true'))
+2026-03-07T17:53:33.7970000Z Result: true
+2026-03-07T17:53:33.7990000Z Requested labels: ubuntu-slim
+2026-03-07T17:53:33.7990000Z Job defined at: grahame-org/gnu-tools-for-stm32/.github/workflows/code-simplifier.lock.yml@refs/heads/13.3.rel1
+2026-03-07T17:53:33.7990000Z Waiting for a runner to pick up this job...

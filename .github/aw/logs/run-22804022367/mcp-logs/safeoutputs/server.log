@@ -1,0 +1,116 @@
+Safe Outputs MCP Server Log
+Start time: Sat Mar  7 17:49:02 UTC 2026
+===========================================
+
+[2026-03-07T17:49:03.960Z] [safe-outputs-entry] Entry point script executing
+[2026-03-07T17:49:04.107Z] [safe_outputs_mcp_server_http] Module is being loaded
+[2026-03-07T17:49:04.162Z] [safe_outputs_mcp_server_http] Loaded http
+[2026-03-07T17:49:04.175Z] [safe_outputs_mcp_server_http] Loaded crypto
+[2026-03-07T17:49:04.175Z] [mcp_http_transport] Module is being loaded
+[2026-03-07T17:49:04.176Z] [mcp_server_core] Module is being loaded
+[2026-03-07T17:49:04.177Z] [safe_outputs_mcp_server_http] Loaded mcp_http_transport.cjs
+[2026-03-07T17:49:04.177Z] [safe_outputs_mcp_server_http] Loaded mcp_logger.cjs
+[2026-03-07T17:49:04.179Z] [safe_outputs_mcp_server_http] Loaded safe_outputs_bootstrap.cjs
+[2026-03-07T17:49:04.179Z] [safe_outputs_mcp_server_http] Loaded safe_outputs_append.cjs
+[2026-03-07T17:49:04.278Z] [safe_outputs_mcp_server_http] Loaded safe_outputs_handlers.cjs
+[2026-03-07T17:49:04.278Z] [safe_outputs_mcp_server_http] Loaded safe_outputs_tools_loader.cjs
+[2026-03-07T17:49:04.278Z] [safe_outputs_mcp_server_http] All modules loaded successfully
+[2026-03-07T17:49:04.279Z] [safe-outputs-entry] Successfully required safe_outputs_mcp_server_http.cjs
+[2026-03-07T17:49:04.279Z] [safe-outputs-entry] In require.main === module block
+[2026-03-07T17:49:04.279Z] [safe-outputs-entry] Port: 3001, LogDir: /tmp/gh-aw/mcp-logs/safeoutputs
+[2026-03-07T17:49:04.279Z] [safe-outputs-entry] Calling startHttpServer...
+[2026-03-07T17:49:04.279Z] [safe-outputs-startup] startHttpServer called with port=3001, stateless=true
+[2026-03-07T17:49:04.279Z] [safe-outputs-startup] === Starting Safe Outputs MCP HTTP Server ===
+[2026-03-07T17:49:04.279Z] [safe-outputs-startup] Port: 3001
+[2026-03-07T17:49:04.279Z] [safe-outputs-startup] Mode: stateless
+[2026-03-07T17:49:04.279Z] [safe-outputs-startup] Environment: NODE_VERSION=v20.20.0, PLATFORM=linux
+[2026-03-07T17:49:04.279Z] [safe-outputs-startup] About to call createMCPServer...
+[2026-03-07T17:49:04.279Z] [safeoutputs] === Creating MCP Server ===
+[2026-03-07T17:49:04.279Z] [safeoutputs] Loading safe-outputs configuration
+[2026-03-07T17:49:04.279Z] [safeoutputs] Reading config from file: /opt/gh-aw/safeoutputs/config.json
+[2026-03-07T17:49:04.279Z] [safeoutputs] Config file exists at: /opt/gh-aw/safeoutputs/config.json
+[2026-03-07T17:49:04.280Z] [safeoutputs] Config file content length: 160 characters
+[2026-03-07T17:49:04.280Z] [safeoutputs] Config file read successfully, attempting to parse JSON
+[2026-03-07T17:49:04.280Z] [safeoutputs] Successfully parsed config from file with 4 configuration keys
+[2026-03-07T17:49:04.280Z] [safeoutputs] Final processed config: {"create_pull_request":{"expires":24,"max":1,"reviewers":["copilot"],"title_prefix":"[code-simplifier] "},"missing_data":{},"missing_tool":{},"noop":{"max":1}}
+[2026-03-07T17:49:04.280Z] [safeoutputs] Loading safe-outputs tools
+[2026-03-07T17:49:04.280Z] [safeoutputs] Reading tools from file: /opt/gh-aw/safeoutputs/tools.json
+[2026-03-07T17:49:04.280Z] [safeoutputs] Tools file exists at: /opt/gh-aw/safeoutputs/tools.json
+[2026-03-07T17:49:04.280Z] [safeoutputs] Tools file content length: 6896 characters
+[2026-03-07T17:49:04.280Z] [safeoutputs] Tools file read successfully, attempting to parse JSON
+[2026-03-07T17:49:04.280Z] [safeoutputs] Successfully parsed 4 tools from file
+[2026-03-07T17:49:04.280Z] [safeoutputs] Server name: safeoutputs
+[2026-03-07T17:49:04.280Z] [safeoutputs] Server version: 1.0.0
+[2026-03-07T17:49:04.280Z] [safeoutputs] Output file: /opt/gh-aw/safeoutputs/outputs.jsonl
+[2026-03-07T17:49:04.280Z] [safeoutputs] Config: {"create_pull_request":{"expires":24,"max":1,"reviewers":["copilot"],"title_prefix":"[code-simplifier] "},"missing_data":{},"missing_tool":{},"noop":{"max":1}}
+[2026-03-07T17:49:04.281Z] [safeoutputs] Registering predefined tools...
+[2026-03-07T17:49:04.281Z] [safeoutputs] Registering tool: create_pull_request
+[2026-03-07T17:49:04.281Z] [safeoutputs] Registered tool: create_pull_request
+[2026-03-07T17:49:04.281Z] [safeoutputs] Registering tool: missing_tool
+[2026-03-07T17:49:04.281Z] [safeoutputs] Registered tool: missing_tool
+[2026-03-07T17:49:04.281Z] [safeoutputs] Registering tool: noop
+[2026-03-07T17:49:04.281Z] [safeoutputs] Registered tool: noop
+[2026-03-07T17:49:04.281Z] [safeoutputs] Registering tool: missing_data
+[2026-03-07T17:49:04.281Z] [safeoutputs] Registered tool: missing_data
+[2026-03-07T17:49:04.281Z] [safeoutputs] Registering dynamic tools...
+[2026-03-07T17:49:04.281Z] [safeoutputs] Tool registration complete: 4 registered
+[2026-03-07T17:49:04.281Z] [safeoutputs] === MCP Server Creation Complete ===
+[2026-03-07T17:49:04.281Z] [safeoutputs] MCP server created successfully
+[2026-03-07T17:49:04.281Z] [safeoutputs] Server name: safeoutputs
+[2026-03-07T17:49:04.281Z] [safeoutputs] Server version: 1.0.0
+[2026-03-07T17:49:04.281Z] [safeoutputs] Tools configured: 4
+[2026-03-07T17:49:04.281Z] [safeoutputs] Creating HTTP transport...
+[2026-03-07T17:49:04.281Z] [safeoutputs] HTTP transport created
+[2026-03-07T17:49:04.281Z] [safeoutputs] Connecting server to transport...
+[2026-03-07T17:49:04.281Z] [safeoutputs] About to call server.connect(transport)...
+[2026-03-07T17:49:04.281Z] [MCPServer] Starting connect...
+[2026-03-07T17:49:04.281Z] [MCPServer] Set transport
+[2026-03-07T17:49:04.281Z] [MCPServer] Called setServer
+[2026-03-07T17:49:04.281Z] [MCPHTTPTransport] Called, started=false
+[2026-03-07T17:49:04.281Z] [MCPHTTPTransport] Set started=true
+[2026-03-07T17:49:04.281Z] [safe-outputs-entry] startHttpServer call initiated (async)
+[2026-03-07T17:49:04.281Z] [MCPServer] Transport.start() completed
+[2026-03-07T17:49:04.281Z] [safeoutputs] server.connect(transport) completed successfully
+[2026-03-07T17:49:04.281Z] [safeoutputs] Server connected to transport successfully
+[2026-03-07T17:49:04.281Z] [safeoutputs] Creating HTTP server...
+[2026-03-07T17:49:04.286Z] [safeoutputs] Attempting to bind to port 3001...
+[2026-03-07T17:49:04.298Z] [safeoutputs] === Safe Outputs MCP HTTP Server Started Successfully ===
+[2026-03-07T17:49:04.298Z] [safeoutputs] HTTP server listening on http://localhost:3001
+[2026-03-07T17:49:04.298Z] [safeoutputs] MCP endpoint: POST http://localhost:3001/
+[2026-03-07T17:49:04.298Z] [safeoutputs] Server name: safeoutputs
+[2026-03-07T17:49:04.298Z] [safeoutputs] Server version: 1.0.0
+[2026-03-07T17:49:04.298Z] [safeoutputs] Tools available: 4
+[2026-03-07T17:49:04.298Z] [safeoutputs] Server is ready to accept requests
+[2026-03-07T17:52:18.880Z] [safeoutputs] Calling handler for tool: create_pull_request
+[2026-03-07T17:52:18.881Z] [safeoutputs] Generating patch for create_pull_request with branch: code-simplifier/fix-gcc-first-cache-2026-03-07
+[generate_git_patch] Starting patch generation: mode=full, branch=code-simplifier/fix-gcc-first-cache-2026-03-07, defaultBranch=13.3.rel1
+[generate_git_patch] Environment: cwd=/home/runner/work/gnu-tools-for-stm32/gnu-tools-for-stm32, GITHUB_SHA=cbdc2b74fc80f8192550a99ceebabdd0b9e4ab01
+[generate_git_patch] Strategy 1: Checking if branch 'code-simplifier/fix-gcc-first-cache-2026-03-07' exists locally
+[debug] Executing git command: git show-ref --verify --quiet refs/heads/code-simplifier/fix-gcc-first-cache-2026-03-07
+[debug] Git command completed successfully with no output
+[generate_git_patch] Strategy 1: Branch 'code-simplifier/fix-gcc-first-cache-2026-03-07' exists locally
+[generate_git_patch] Strategy 1 (full): Checking if origin/code-simplifier/fix-gcc-first-cache-2026-03-07 exists
+[debug] Executing git command: git show-ref --verify --quiet refs/remotes/origin/code-simplifier/fix-gcc-first-cache-2026-03-07
+[error] Git command failed: git show-ref --verify --quiet refs/remotes/origin/code-simplifier/fix-gcc-first-cache-2026-03-07
+[error] Exit status: 1
+[generate_git_patch] Strategy 1 (full): origin/code-simplifier/fix-gcc-first-cache-2026-03-07 not found, trying merge-base with 13.3.rel1
+[debug] Executing git command: git show-ref --verify --quiet refs/remotes/origin/13.3.rel1
+[debug] Git command completed successfully with no output
+[generate_git_patch] Strategy 1 (full): origin/13.3.rel1 exists locally
+[debug] Executing git command: git merge-base -- origin/13.3.rel1 code-simplifier/fix-gcc-first-cache-2026-03-07
+[debug] Git command output: cbdc2b74fc80f8192550a99ceebabdd0b9e4ab01
+
+[generate_git_patch] Strategy 1 (full): Computed merge-base: cbdc2b74fc80f8192550a99ceebabdd0b9e4ab01
+[debug] Executing git command: git rev-list --count cbdc2b74fc80f8192550a99ceebabdd0b9e4ab01..code-simplifier/fix-gcc-first-cache-2026-03-07
+[debug] Git command output: 1
+
+[generate_git_patch] Strategy 1: Found 1 commits between cbdc2b74fc80f8192550a99ceebabdd0b9e4ab01 and code-simplifier/fix-gcc-first-cache-2026-03-07
+[debug] Executing git command: git format-patch cbdc2b74fc80f8192550a99ceebabdd0b9e4ab01..code-simplifier/fix-gcc-first-cache-2026-03-07 --stdout
+[debug] Git command output: From 3f25c648ec1318a97a3f76a8ae27dd12641deb07 Mon Sep 17 00:00:00 2001
+From: Copilot <copilot@github.com>
+Date: Sat, 7 Mar 2026 17:52:07 +0000
+Subject: [PATCH] =?UTF-8?q?ci:=20add=20merge=5Fgroup=20gu...
+[generate_git_patch] Strategy 1: SUCCESS - Generated patch with 52 lines
+[generate_git_patch] Final: SUCCESS - patchSize=2063 bytes, patchLines=52
+[2026-03-07T17:52:18.900Z] [safeoutputs] Patch generated successfully: /tmp/gh-aw/aw-code-simplifier-fix-gcc-first-cache-2026-03-07.patch (2063 bytes, 52 lines)
+[2026-03-07T17:52:18.900Z] [safeoutputs] Handler returned for tool: create_pull_request

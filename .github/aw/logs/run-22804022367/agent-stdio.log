@@ -1,0 +1,316 @@
+[WARN] ⚠️  Using --env-all: All host environment variables will be passed to container
+[WARN]    This may expose sensitive credentials if logs or configs are shared
+[WARN] ⚠️  Host access enabled with host.docker.internal in allowed domains
+[WARN]    Containers can access ANY service running on the host machine
+[WARN]    Only use this for trusted workloads (e.g., MCP gateways)
+[INFO] API proxy enabled: OpenAI=false, Anthropic=false, Copilot=true
+[INFO] Allowed domains: api.business.githubcopilot.com, api.enterprise.githubcopilot.com, api.github.com, api.githubcopilot.com, api.individual.githubcopilot.com, api.snapcraft.io, archive.ubuntu.com, azure.archive.ubuntu.com, crl.geotrust.com, crl.globalsign.com, crl.identrust.com, crl.sectigo.com, crl.thawte.com, crl.usertrust.com, crl.verisign.com, crl3.digicert.com, crl4.digicert.com, crls.ssl.com, github.com, host.docker.internal, json-schema.org, json.schemastore.org, keyserver.ubuntu.com, ocsp.digicert.com, ocsp.geotrust.com, ocsp.globalsign.com, ocsp.identrust.com, ocsp.sectigo.com, ocsp.ssl.com, ocsp.thawte.com, ocsp.usertrust.com, ocsp.verisign.com, packagecloud.io, packages.cloud.google.com, packages.microsoft.com, ppa.launchpad.net, raw.githubusercontent.com, registry.npmjs.org, s.symcb.com, s.symcd.com, security.ubuntu.com, telemetry.enterprise.githubcopilot.com, ts-crl.ws.symantec.com, ts-ocsp.ws.symantec.com
+[INFO] Setting up host-level firewall network and iptables rules...
+[SUCCESS] Created network 'awf-net' with bridge 'fw-bridge'
+[INFO] Setting up host-level iptables rules...
+[SUCCESS] Host-level iptables rules configured successfully
+[INFO] Generating configuration files...
+[INFO] API proxy sidecar enabled - API keys will be held securely in sidecar container
+[INFO] API proxy will route through Squid to respect domain whitelisting
+[INFO] Starting containers...
+ Container awf-squid  Creating
+ Container awf-api-proxy  Creating
+ Container awf-squid  Created
+ Container awf-api-proxy  Created
+ Container awf-agent  Creating
+ Container awf-agent  Created
+ Container awf-api-proxy  Starting
+ Container awf-squid  Starting
+ Container awf-api-proxy  Started
+ Container awf-squid  Started
+ Container awf-api-proxy  Waiting
+ Container awf-squid  Waiting
+ Container awf-api-proxy  Healthy
+ Container awf-squid  Healthy
+ Container awf-agent  Starting
+ Container awf-agent  Started
+[SUCCESS] Containers started successfully
+[INFO] Executing agent command...
+[entrypoint] Agentic Workflow Firewall - Agent Container
+[entrypoint] ==================================
+[entrypoint] Adjusting awfuser UID:GID from 1000:1000 to 1001:1001
+[entrypoint] UID/GID adjustment complete
+[entrypoint] Configuring DNS...
+[entrypoint] DNS configured with Docker embedded DNS (127.0.0.11) and trusted servers: 8.8.8.8,8.8.4.4
+[iptables] Setting up NAT redirection to Squid proxy...
+[iptables] NOTE: Host-level DOCKER-USER chain handles egress filtering for all containers on this network
+[iptables] ip6tables is available
+[iptables] Squid proxy: squid-proxy:3128
+[iptables] Squid IP resolved to: 172.30.0.10
+[iptables] Allow localhost traffic...
+[iptables] Configuring DNS rules for trusted servers: 8.8.8.8,8.8.4.4
+[iptables]   IPv4 DNS servers: 8.8.8.8 8.8.4.4
+[iptables]   IPv6 DNS servers: none
+[iptables] Allow DNS to trusted IPv4 server: 8.8.8.8
+[iptables] Allow DNS to trusted IPv4 server: 8.8.4.4
+[iptables] Allow DNS to Docker embedded DNS (127.0.0.11)...
+[iptables] Allow traffic to trusted DNS servers...
+[iptables] Allow traffic to Squid proxy (172.30.0.10:3128)...
+[iptables] Allow traffic to API proxy sidecar (172.30.0.30)...
+[iptables] Allow direct traffic to host gateway (172.17.0.1) - bypassing Squid...
+[iptables] Allow direct traffic to network gateway (172.30.0.1) - bypassing Squid...
+[iptables] Configuring NAT blacklist for dangerous ports...
+[iptables] NAT blacklist applied for 15 dangerous ports
+[iptables] Redirect HTTP (80) and HTTPS (443) to Squid...
+[iptables] No additional ports specified (only 80, 443 allowed)
+[iptables] Configuring OUTPUT filter chain rules...
+[iptables] Drop all non-redirected TCP traffic (default deny)...
+[iptables] NAT rules applied successfully
+[iptables] Current IPv4 NAT OUTPUT rules:
+Chain OUTPUT (policy ACCEPT 2 packets, 132 bytes)
+ pkts bytes target     prot opt in     out     source               destination         
+    1    66 RETURN     all  --  *      lo      0.0.0.0/0            0.0.0.0/0           
+    0     0 RETURN     all  --  *      *       0.0.0.0/0            127.0.0.0/8         
+    1    66 RETURN     udp  --  *      *       0.0.0.0/0            8.8.8.8              udp dpt:53
+    0     0 RETURN     tcp  --  *      *       0.0.0.0/0            8.8.8.8              tcp dpt:53
+    0     0 RETURN     udp  --  *      *       0.0.0.0/0            8.8.4.4              udp dpt:53
+    0     0 RETURN     tcp  --  *      *       0.0.0.0/0            8.8.4.4              tcp dpt:53
+    0     0 RETURN     udp  --  *      *       0.0.0.0/0            127.0.0.11           udp dpt:53
+    0     0 RETURN     tcp  --  *      *       0.0.0.0/0            127.0.0.11           tcp dpt:53
+    0     0 RETURN     all  --  *      *       0.0.0.0/0            8.8.8.8             
+    0     0 RETURN     all  --  *      *       0.0.0.0/0            8.8.4.4             
+    0     0 RETURN     all  --  *      *       0.0.0.0/0            172.30.0.10         
+    0     0 RETURN     all  --  *      *       0.0.0.0/0            172.30.0.30         
+    0     0 RETURN     all  --  *      *       0.0.0.0/0            172.17.0.1          
+    0     0 RETURN     all  --  *      *       0.0.0.0/0            172.30.0.1          
+    0     0 RETURN     tcp  --  *      *       0.0.0.0/0            0.0.0.0/0            tcp dpt:22
+    0     0 RETURN     tcp  --  *      *       0.0.0.0/0            0.0.0.0/0            tcp dpt:23
+    0     0 RETURN     tcp  --  *      *       0.0.0.0/0            0.0.0.0/0            tcp dpt:25
+    0     0 RETURN     tcp  --  *      *       0.0.0.0/0            0.0.0.0/0            tcp dpt:110
+    0     0 RETURN     tcp  --  *      *       0.0.0.0/0            0.0.0.0/0            tcp dpt:143
+    0     0 RETURN     tcp  --  *      *       0.0.0.0/0            0.0.0.0/0            tcp dpt:445
+    0     0 RETURN     tcp  --  *      *       0.0.0.0/0            0.0.0.0/0            tcp dpt:1433
+    0     0 RETURN     tcp  --  *      *       0.0.0.0/0            0.0.0.0/0            tcp dpt:1521
+    0     0 RETURN     tcp  --  *      *       0.0.0.0/0            0.0.0.0/0            tcp dpt:3306
+    0     0 RETURN     tcp  --  *      *       0.0.0.0/0            0.0.0.0/0            tcp dpt:3389
+    0     0 RETURN     tcp  --  *      *       0.0.0.0/0            0.0.0.0/0            tcp dpt:5432
+    0     0 RETURN     tcp  --  *      *       0.0.0.0/0            0.0.0.0/0            tcp dpt:6379
+    0     0 RETURN     tcp  --  *      *       0.0.0.0/0            0.0.0.0/0            tcp dpt:27017
+    0     0 RETURN     tcp  --  *      *       0.0.0.0/0            0.0.0.0/0            tcp dpt:27018
+    0     0 RETURN     tcp  --  *      *       0.0.0.0/0            0.0.0.0/0            tcp dpt:28017
+    0     0 DNAT       tcp  --  *      *       0.0.0.0/0            0.0.0.0/0            tcp dpt:80 to:172.30.0.10:3128
+    0     0 DNAT       tcp  --  *      *       0.0.0.0/0            0.0.0.0/0            tcp dpt:443 to:172.30.0.10:3128
+[iptables] Current IPv6 NAT OUTPUT rules:
+Chain OUTPUT (policy ACCEPT 0 packets, 0 bytes)
+ pkts bytes target     prot opt in     out     source               destination         
+    0     0 RETURN     all      *      lo      ::/0                 ::/0                
+    0     0 RETURN     all      *      *       ::/0                 ::1                 
+[health-check] API Proxy Pre-flight Check
+[health-check] ==========================================
+[health-check] Checking GitHub Copilot API proxy configuration...
+[health-check] COPILOT_API_URL=http://172.30.0.30:10002
+[health-check] ✓ COPILOT_GITHUB_TOKEN is placeholder value (correct)
+[health-check] ✓ COPILOT_TOKEN is placeholder value (correct)
+[health-check] Testing connectivity to GitHub Copilot API proxy at http://172.30.0.30:10002...
+[health-check] ✓ GitHub Copilot API proxy is reachable at http://172.30.0.30:10002
+[health-check] ==========================================
+[health-check] ✓ All API proxy health checks passed
+[health-check] ✓ Credential isolation verified
+[health-check] ✓ Connectivity established
+[health-check] ==========================================
+[entrypoint] Pre-seeding JVM build tool proxy configuration (squid-proxy:3128)...
+[entrypoint] ✓ Created Maven proxy config (/host/home/runner/.m2/settings.xml)
+[entrypoint] ✓ Created Gradle proxy config (/host/home/runner/.gradle/gradle.properties)
+[entrypoint] ✓ Set JAVA_TOOL_OPTIONS with proxy and nonProxyHosts flags
+[entrypoint] Proxy configuration:
+[entrypoint]   HTTP_PROXY=http://172.30.0.10:3128
+[entrypoint]   HTTPS_PROXY=http://172.30.0.10:3128
+[entrypoint] Network information:
+[entrypoint]   IP address: 172.30.0.20 
+[entrypoint]   Hostname: 31ad8a70ff6d
+[entrypoint] ==================================
+[entrypoint] Chroot mode enabled - dropping CAP_NET_ADMIN, CAP_SYS_CHROOT, and CAP_SYS_ADMIN
+[entrypoint] Switching to awfuser (UID: 1001, GID: 1001)
+[entrypoint] Executing command: /bin/bash -c /bin/bash -c '/usr/local/bin/copilot --add-dir /tmp/gh-aw/ --log-level all --log-dir /tmp/gh-aw/sandbox/agent/logs/ --add-dir "${GITHUB_WORKSPACE}" --disable-builtin-mcps --allow-all-tools --allow-all-paths --prompt "$(cat /tmp/gh-aw/aw-prompts/prompt.txt)"'
+
+[entrypoint] Chroot mode: running command inside host filesystem (/host)
+[entrypoint] Mounted procfs at /host/proc (nosuid,nodev,noexec)
+[entrypoint] One-shot token library copied to chroot at /tmp/awf-lib/one-shot-token.so
+[entrypoint] DNS configuration created in chroot (/host/etc/resolv.conf)
+[entrypoint] Chroot working directory: /home/runner/work/gnu-tools-for-stm32/gnu-tools-for-stm32
+[entrypoint] Running as host user: runner (UID: 1001)
+[entrypoint] Using host PATH for chroot
+[entrypoint] Adding JAVA_HOME/bin to PATH: /usr/lib/jvm/temurin-17-jdk-amd64/bin
+[entrypoint] DNS configuration will be removed on exit
+[entrypoint] Unsetting sensitive tokens from parent shell environment...
+[entrypoint] Unset COPILOT_GITHUB_TOKEN from /proc/1/environ
+● Find recent commits in last 24 hours
+  $ cd /home/runner/work/gnu-tools-for-stm32/gnu-tools-for-stm32 && git log --since="24 hours ago"
+  --pretty=format:"%H %s" --no-merges 2>/dev/null
+  └ 2 lines...
+
+● github-search_pull_requests: repo:grahame-org/gnu-tools-for-stm32 is:pr is:merged
+merged:>=2026-03-06
+  └ Output too large to read at once (146.7 KB). Saved to: /tmp/1772905776896-cop...
+
+● Get files changed in recent commit
+  $ cd /home/runner/work/gnu-tools-for-stm32/gnu-tools-for-stm32 && git show --stat
+  cbdc2b74fc80f8192550a99ceebabdd0b9e4ab01 2>/dev/null
+  └ 81 lines...
+
+● stop_bash
+  └ 1 line...
+
+● Parse merged PRs from last 24 hours
+  $ cat /tmp/1772905776896-copilot-tool-output-awoe93.txt | python3 -c "
+  import json, sys
+  data = json.load(sys.stdin)
+  for pr in data['items']:
+      print(f\"PR #{pr['number']}: {pr['title']} (merged_at: {pr.get('pull_request', ...
+  └ 19 lines...
+
+● github-pull_request_read
+  └ [{"sha":"6fe4808acb21c48e1c2a02a6bc23e391b0a5de7c","filename":".github/workfl...
+
+● github-pull_request_read
+  └ [{"sha":"c78eb75003150b74534da714f33af0cce90ffe4f","filename":"tests/test-bui...
+
+● github-pull_request_read
+  └ [{"sha":"2fe14d449623afcfbd7bd897d6772bc783a8269e","filename":".github/workfl...
+
+Let me examine the key changed files to find simplification opportunities.
+
+● Read build-gcc-first.sh
+  └ 131 lines read
+
+● Read tests/test-build-common.sh lines 280-380
+  └ 99 lines read
+
+● Read build-common.sh lines 1-70
+  └ 70 lines read
+
+● Check script_path patterns in other build scripts
+  $ cd /home/runner/work/gnu-tools-for-stm32/gnu-tools-for-stm32 && grep -n
+  'script_path\|dirname\|source\|\. \$script' build-prerequisites.sh build-toolchain.sh
+  build-binutils.sh 2>/dev/null | head -30
+  └ 29 lines...
+
+● Check gcc-first cache save step for merge_group guard
+  $ cd /home/runner/work/gnu-tools-for-stm32/gnu-tools-for-stm32 && grep -n "Save
+  cache\|cache-hit\|merge_group\|gcc-first" .github/workflows/build-toolchain.yml | head -40
+  └ 26 lines...
+
+● Run shellcheck on build-gcc-first.sh
+  $ cd /home/runner/work/gnu-tools-for-stm32/gnu-tools-for-stm32 && shellcheck build-gcc-first.sh
+  2>&1 | head -50
+  └ 48 lines...
+
+● Read .shellcheckrc
+  └ 24 lines read
+
+● Check all Save cache if conditions
+  $ cd /home/runner/work/gnu-tools-for-stm32/gnu-tools-for-stm32 && grep -n "merge_group\|Save
+  cache\|cache-hit" .github/workflows/build-toolchain.yml | grep -A2 -B2 "Save cache"
+  └ 14 lines...
+
+● Check shellcheck findings on build-toolchain.sh for comparison
+  $ cd /home/runner/work/gnu-tools-for-stm32/gnu-tools-for-stm32 && shellcheck build-toolchain.sh
+  2>&1 | grep -v SC1091 | head -30
+  └ 29 lines...
+
+I found two clear issues to fix:
+1. Missing `&& github.event_name != 'merge_group'` guard on the `Save cache – gcc-first` step in `build-toolchain.yml`
+2. A double-space cosmetic issue on `rm -rf  include` in `build-gcc-first.sh`
+
+Let me run the existing tests as a baseline first:
+
+● Run all shell unit tests baseline
+  $ cd /home/runner/work/gnu-tools-for-stm32/gnu-tools-for-stm32 && for t in tests/test-*.sh; do
+  echo "--- $t ---"; bash "$t"; done 2>&1
+  └ 297 lines...
+
+All 108 tests pass. Now let me apply the two improvements:
+
+● Read .github/workflows/build-toolchain.yml lines 230-240
+  └ 11 lines read
+
+● Edit .github/workflows/build-toolchain.yml (+1 -1)
+
+● Edit build-gcc-first.sh (+1 -1)
+
+Now let me verify the changes look correct and run the tests again:
+
+● Verify all Save cache steps now have merge_group guard
+  $ cd /home/runner/work/gnu-tools-for-stm32/gnu-tools-for-stm32 && grep -n "Save
+  cache\|merge_group" .github/workflows/build-toolchain.yml | grep -v "^8:" | head -20
+  └ 9 lines...
+
+● Validate build-gcc-first.sh syntax and check rm lines
+  $ cd /home/runner/work/gnu-tools-for-stm32/gnu-tools-for-stm32 && bash -n build-gcc-first.sh &&
+  echo "Syntax OK" && grep -n "rm -rf" build-gcc-first.sh
+  └ 6 lines...
+
+Both fixes look correct. Now run the tests to confirm nothing is broken:
+
+● Run tests to confirm no regressions
+  $ cd /home/runner/work/gnu-tools-for-stm32/gnu-tools-for-stm32 && for t in tests/test-*.sh; do
+  bash "$t"; done 2>&1 | tail -10
+  └ 11 lines...
+
+All tests pass. Now let me create the branch and commit:
+
+● Create branch and stage changes
+  $ cd /home/runner/work/gnu-tools-for-stm32/gnu-tools-for-stm32 && git checkout -b
+  code-simplifier/fix-gcc-first-cache-2026-03-07 && git add .github/workflows/build-toolchain.yml
+  build-gcc-first.sh && git diff --cached --stat
+  └ 5 lines...
+
+● Commit the changes
+  $ cd /home/runner/work/gnu-tools-for-stm32/gnu-tools-for-stm32 && git commit -m "ci: add
+  merge_group guard to Save cache – gcc-first step
+
+  All other Save cache steps in build-toolchain.yml include
+  \`&& github.event_name != 'merge_group'\` in their if: condition...
+  └ 21 lines...
+
+● Configure git identity and commit
+  $ cd /home/runner/work/gnu-tools-for-stm32/gnu-tools-for-stm32 && git config user.email
+  "copilot@github.com" && git config user.name "Copilot" && git commit -m "ci: add merge_group
+  guard to Save cache – gcc-first step
+
+  All other Save cache steps in build-toolchain.yml include...
+  └ 11 lines...
+
+● safeoutputs-create_pull_request
+  └ {"result":"success","patch":{"path":"/tmp/gh-aw/aw-code-simplifier-fix-gcc-fi...
+
+PR created successfully. Here's a summary of what was found and fixed:
+
+**Two improvements applied to recently-merged PR #161 code:**
+
+1. **Missing `merge_group` guard** (`.github/workflows/build-toolchain.yml`): The `Save cache – gcc-first` step was the only `Save cache` step in the file without `&& github.event_name != 'merge_group'` in its `if:` condition. This guard prevents the cache from being written during merge queue runs, consistent with all other cache-save steps.
+
+2. **Double-space cosmetic fix** (`build-gcc-first.sh`): `rm -rf  include` → `rm -rf include`.
+
+All 108 shell unit tests continue to pass.
+
+
+Total usage est:        1 Premium request
+API time spent:         2m 12s
+Total session time:     3m 1s
+Total code changes:     +2 -2
+Breakdown by AI model:
+ claude-sonnet-4.6       1.0m in, 7.4k out, 946.9k cached (Est. 1 Premium request)
+[INFO] Stopping containers...
+ Container awf-agent  Stopping
+ Container awf-agent  Stopped
+ Container awf-agent  Removing
+ Container awf-agent  Removed
+ Container awf-squid  Stopping
+ Container awf-api-proxy  Stopping
+ Container awf-api-proxy  Stopped
+ Container awf-api-proxy  Removing
+ Container awf-api-proxy  Removed
+ Container awf-squid  Stopped
+ Container awf-squid  Removing
+ Container awf-squid  Removed
+[SUCCESS] Containers stopped successfully
+[INFO] API proxy logs available at: /tmp/gh-aw/sandbox/firewall/api-proxy-logs
+[INFO] Squid logs available at: /tmp/gh-aw/sandbox/firewall/logs
+[SUCCESS] Command completed successfully
+Process exiting with code: 0
