@@ -169,14 +169,6 @@ jobs:
         run: |
           set -euo pipefail
           hash_dir() { git rev-parse "HEAD:$1"; }
-          scripts_hash=$(
-            printf '%s\n' \
-              "$(hash_dir build-toolchain.sh)" \
-              "$(hash_dir build-binutils.sh)" \
-              "$(hash_dir build-toolchain-args.sh)" \
-              "$(hash_dir build-common.sh)" \
-            | sha256sum | cut -d' ' -f1
-          )
           binutils_scripts_hash=$(
             printf '%s\n' \
               "$(hash_dir build-binutils.sh)" \
@@ -232,7 +224,6 @@ jobs:
           gcc_src=$(hash_dir src/gcc)
           newlib_src=$(hash_dir src/newlib)
           gdb_src=$(hash_dir src/gdb)
-          specs_src=$(hash_dir src/specs)
 
           key_binutils=$(printf '%s' "${{ runner.os }}-stage-binutils-${binutils_scripts_hash}-${prereqs_key}-${binutils_src}" | sha256sum | cut -d' ' -f1)
           key_gcc_first=$(printf '%s' "${{ runner.os }}-stage-gcc-first-${gcc_first_scripts_hash}-${key_binutils}-${gcc_src}" | sha256sum | cut -d' ' -f1)
@@ -241,7 +232,6 @@ jobs:
           key_gcc_final=$(printf '%s' "${{ runner.os }}-stage-gcc-final-${gcc_final_scripts_hash}-${key_newlib_nano}-${gcc_src}" | sha256sum | cut -d' ' -f1)
           key_gcc_size=$(printf '%s' "${{ runner.os }}-stage-gcc-size-libstdcxx-${gcc_size_libstdcxx_scripts_hash}-${key_gcc_final}-${gcc_src}" | sha256sum | cut -d' ' -f1)
           key_gdb=$(printf '%s' "${{ runner.os }}-stage-gdb-${gdb_scripts_hash}-${key_binutils}-${gdb_src}" | sha256sum | cut -d' ' -f1)
-          key_final=$(printf '%s' "${{ runner.os }}-stage-final-${scripts_hash}-${key_gdb}-${specs_src}" | sha256sum | cut -d' ' -f1)
 
           {
             echo "binutils=${key_binutils}"
@@ -251,7 +241,6 @@ jobs:
             echo "gcc-final=${key_gcc_final}"
             echo "gcc-size-libstdcxx=${key_gcc_size}"
             echo "gdb=${key_gdb}"
-            echo "final=${key_final}"
           } >> "$GITHUB_OUTPUT"
 
       - name: Restore cache – toolchain
@@ -412,14 +401,6 @@ jobs:
         run: |
           set -euo pipefail
           hash_dir() { git rev-parse "HEAD:$1"; }
-          scripts_hash=$(
-            printf '%s\n' \
-              "$(hash_dir build-toolchain.sh)" \
-              "$(hash_dir build-binutils.sh)" \
-              "$(hash_dir build-toolchain-args.sh)" \
-              "$(hash_dir build-common.sh)" \
-            | sha256sum | cut -d' ' -f1
-          )
           binutils_scripts_hash=$(
             printf '%s\n' \
               "$(hash_dir build-binutils.sh)" \
@@ -475,7 +456,6 @@ jobs:
           gcc_src=$(hash_dir src/gcc)
           newlib_src=$(hash_dir src/newlib)
           gdb_src=$(hash_dir src/gdb)
-          specs_src=$(hash_dir src/specs)
 
           key_binutils=$(printf '%s' "${{ runner.os }}-stage-binutils-${binutils_scripts_hash}-${prereqs_key}-${binutils_src}" | sha256sum | cut -d' ' -f1)
           key_gcc_first=$(printf '%s' "${{ runner.os }}-stage-gcc-first-${gcc_first_scripts_hash}-${key_binutils}-${gcc_src}" | sha256sum | cut -d' ' -f1)
@@ -484,7 +464,6 @@ jobs:
           key_gcc_final=$(printf '%s' "${{ runner.os }}-stage-gcc-final-${gcc_final_scripts_hash}-${key_newlib_nano}-${gcc_src}" | sha256sum | cut -d' ' -f1)
           key_gcc_size=$(printf '%s' "${{ runner.os }}-stage-gcc-size-libstdcxx-${gcc_size_libstdcxx_scripts_hash}-${key_gcc_final}-${gcc_src}" | sha256sum | cut -d' ' -f1)
           key_gdb=$(printf '%s' "${{ runner.os }}-stage-gdb-${gdb_scripts_hash}-${key_binutils}-${gdb_src}" | sha256sum | cut -d' ' -f1)
-          key_final=$(printf '%s' "${{ runner.os }}-stage-final-${scripts_hash}-${key_gdb}-${specs_src}" | sha256sum | cut -d' ' -f1)
 
           {
             echo "binutils=${key_binutils}"
@@ -494,7 +473,6 @@ jobs:
             echo "gcc-final=${key_gcc_final}"
             echo "gcc-size-libstdcxx=${key_gcc_size}"
             echo "gdb=${key_gdb}"
-            echo "final=${key_final}"
           } >> "$GITHUB_OUTPUT"
 
       - name: Restore cache – toolchain
@@ -657,14 +635,6 @@ jobs:
         run: |
           set -euo pipefail
           hash_dir() { git rev-parse "HEAD:$1"; }
-          scripts_hash=$(
-            printf '%s\n' \
-              "$(hash_dir build-toolchain.sh)" \
-              "$(hash_dir build-binutils.sh)" \
-              "$(hash_dir build-toolchain-args.sh)" \
-              "$(hash_dir build-common.sh)" \
-            | sha256sum | cut -d' ' -f1
-          )
           binutils_scripts_hash=$(
             printf '%s\n' \
               "$(hash_dir build-binutils.sh)" \
@@ -720,7 +690,6 @@ jobs:
           gcc_src=$(hash_dir src/gcc)
           newlib_src=$(hash_dir src/newlib)
           gdb_src=$(hash_dir src/gdb)
-          specs_src=$(hash_dir src/specs)
 
           key_binutils=$(printf '%s' "${{ runner.os }}-stage-binutils-${binutils_scripts_hash}-${prereqs_key}-${binutils_src}" | sha256sum | cut -d' ' -f1)
           key_gcc_first=$(printf '%s' "${{ runner.os }}-stage-gcc-first-${gcc_first_scripts_hash}-${key_binutils}-${gcc_src}" | sha256sum | cut -d' ' -f1)
@@ -729,7 +698,6 @@ jobs:
           key_gcc_final=$(printf '%s' "${{ runner.os }}-stage-gcc-final-${gcc_final_scripts_hash}-${key_newlib_nano}-${gcc_src}" | sha256sum | cut -d' ' -f1)
           key_gcc_size=$(printf '%s' "${{ runner.os }}-stage-gcc-size-libstdcxx-${gcc_size_libstdcxx_scripts_hash}-${key_gcc_final}-${gcc_src}" | sha256sum | cut -d' ' -f1)
           key_gdb=$(printf '%s' "${{ runner.os }}-stage-gdb-${gdb_scripts_hash}-${key_binutils}-${gdb_src}" | sha256sum | cut -d' ' -f1)
-          key_final=$(printf '%s' "${{ runner.os }}-stage-final-${scripts_hash}-${key_gdb}-${specs_src}" | sha256sum | cut -d' ' -f1)
 
           {
             echo "binutils=${key_binutils}"
@@ -739,7 +707,6 @@ jobs:
             echo "gcc-final=${key_gcc_final}"
             echo "gcc-size-libstdcxx=${key_gcc_size}"
             echo "gdb=${key_gdb}"
-            echo "final=${key_final}"
           } >> "$GITHUB_OUTPUT"
 
       - name: Restore cache – toolchain
@@ -1005,14 +972,6 @@ jobs:
         run: |
           set -euo pipefail
           hash_dir() { git rev-parse "HEAD:$1"; }
-          scripts_hash=$(
-            printf '%s\n' \
-              "$(hash_dir build-toolchain.sh)" \
-              "$(hash_dir build-binutils.sh)" \
-              "$(hash_dir build-toolchain-args.sh)" \
-              "$(hash_dir build-common.sh)" \
-            | sha256sum | cut -d' ' -f1
-          )
           binutils_scripts_hash=$(
             printf '%s\n' \
               "$(hash_dir build-binutils.sh)" \
@@ -1068,7 +1027,6 @@ jobs:
           gcc_src=$(hash_dir src/gcc)
           newlib_src=$(hash_dir src/newlib)
           gdb_src=$(hash_dir src/gdb)
-          specs_src=$(hash_dir src/specs)
 
           key_binutils=$(printf '%s' "${{ runner.os }}-stage-binutils-${binutils_scripts_hash}-${prereqs_key}-${binutils_src}" | sha256sum | cut -d' ' -f1)
           key_gcc_first=$(printf '%s' "${{ runner.os }}-stage-gcc-first-${gcc_first_scripts_hash}-${key_binutils}-${gcc_src}" | sha256sum | cut -d' ' -f1)
@@ -1077,7 +1035,6 @@ jobs:
           key_gcc_final=$(printf '%s' "${{ runner.os }}-stage-gcc-final-${gcc_final_scripts_hash}-${key_newlib_nano}-${gcc_src}" | sha256sum | cut -d' ' -f1)
           key_gcc_size=$(printf '%s' "${{ runner.os }}-stage-gcc-size-libstdcxx-${gcc_size_libstdcxx_scripts_hash}-${key_gcc_final}-${gcc_src}" | sha256sum | cut -d' ' -f1)
           key_gdb=$(printf '%s' "${{ runner.os }}-stage-gdb-${gdb_scripts_hash}-${key_binutils}-${gdb_src}" | sha256sum | cut -d' ' -f1)
-          key_final=$(printf '%s' "${{ runner.os }}-stage-final-${scripts_hash}-${key_gdb}-${specs_src}" | sha256sum | cut -d' ' -f1)
 
           {
             echo "binutils=${key_binutils}"
@@ -1087,7 +1044,6 @@ jobs:
             echo "gcc-final=${key_gcc_final}"
             echo "gcc-size-libstdcxx=${key_gcc_size}"
             echo "gdb=${key_gdb}"
-            echo "final=${key_final}"
           } >> "$GITHUB_OUTPUT"
 
       - name: Restore cache – toolchain
