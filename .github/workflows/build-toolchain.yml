@@ -59,69 +59,6 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Free disk space
-        run: |
-          sudo apt-get remove -y \
-            '^dotnet-.*' \
-            '^llvm-.*' \
-            'php.*' \
-            azure-cli \
-            google-chrome-stable \
-            firefox \
-            powershell \
-            mono-devel \
-            || true
-          sudo apt-get autoremove -y
-          sudo apt-get clean
-          sudo rm -rf \
-            /usr/share/dotnet \
-            /usr/local/lib/android \
-            /opt/ghc \
-            /opt/hostedtoolcache/CodeQL
-          df -h
-
-      - name: Install system dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            yacc \
-            flex \
-            gcc-arm-none-eabi \
-            gdb-multiarch \
-            cmake \
-            git \
-            openocd \
-            python3 \
-            python3-pip \
-            python3-venv \
-            texi2html \
-            texinfo \
-            automake
-          for version in 1.15 1.14; do
-            for tool in aclocal automake; do
-              target="/usr/bin/${tool}-1.16"
-              link="/usr/bin/${tool}-${version}"
-              if [ -e "$link" ] || [ -L "$link" ]; then
-                if [ "$(readlink -f "$link" 2>/dev/null || echo "")" != "$target" ]; then
-                  echo "ERROR: $link already exists and does not point to $target" >&2
-                  exit 1
-                fi
-              else
-                sudo ln -s "$target" "$link"
-              fi
-            done
-          done
-
-      - name: Set up Python virtual environment
-        run: |
-          STM32_VENV_PATH=/opt/stm32-venv
-          sudo mkdir -p "${STM32_VENV_PATH}"
-          sudo chown "$USER" "${STM32_VENV_PATH}"
-          python3 -m venv "${STM32_VENV_PATH}"
-          "${STM32_VENV_PATH}/bin/python3" -m pip install python-magic==0.4.27
-          echo "${STM32_VENV_PATH}/bin" >> "${GITHUB_PATH}"
-          echo "STM32_VENV_PATH=${STM32_VENV_PATH}" >> "${GITHUB_ENV}"
-
       - name: Compute source tree hashes
         id: src-hashes
         run: |
@@ -149,20 +86,6 @@ jobs:
         with:
           path: build-native/host-libs
           key: ${{ runner.os }}-prerequisites-${{ hashFiles('build-prerequisites.sh', 'build-common.sh', 'src/gmp/**', 'src/mpfr/**', 'src/mpc/**', 'src/isl/**', 'src/expat/**', 'src/zlib*/**') }}
-
-      - name: Build prerequisites
-        if: steps.cache-prerequisites.outputs.cache-hit != 'true'
-        run: |
-          JOBS=$(nproc)
-          export JOBS
-          ./build-prerequisites.sh --skip_steps=mingw,howto,package_sources
-
-      - name: Save cache – prerequisites
-        if: steps.cache-prerequisites.outputs.cache-hit != 'true'
-        uses: actions/cache/save@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
-        with:
-          path: build-native/host-libs
-          key: ${{ steps.cache-prerequisites.outputs.cache-primary-key }}
 
       - name: Compute stage source hashes
         id: stage-hashes
@@ -263,6 +186,86 @@ jobs:
           path: install-native
           key: ${{ runner.os }}-stage-v1-${{ steps.stage-hashes.outputs.binutils }}
 
+      - name: Free disk space
+        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-binutils.outputs.cache-hit != 'true'
+        run: |
+          sudo apt-get remove -y \
+            '^dotnet-.*' \
+            '^llvm-.*' \
+            'php.*' \
+            azure-cli \
+            google-chrome-stable \
+            firefox \
+            powershell \
+            mono-devel \
+            || true
+          sudo apt-get autoremove -y
+          sudo apt-get clean
+          sudo rm -rf \
+            /usr/share/dotnet \
+            /usr/local/lib/android \
+            /opt/ghc \
+            /opt/hostedtoolcache/CodeQL
+          df -h
+
+      - name: Install system dependencies
+        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-binutils.outputs.cache-hit != 'true'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            yacc \
+            flex \
+            gcc-arm-none-eabi \
+            gdb-multiarch \
+            cmake \
+            git \
+            openocd \
+            python3 \
+            python3-pip \
+            python3-venv \
+            texi2html \
+            texinfo \
+            automake
+          for version in 1.15 1.14; do
+            for tool in aclocal automake; do
+              target="/usr/bin/${tool}-1.16"
+              link="/usr/bin/${tool}-${version}"
+              if [ -e "$link" ] || [ -L "$link" ]; then
+                if [ "$(readlink -f "$link" 2>/dev/null || echo "")" != "$target" ]; then
+                  echo "ERROR: $link already exists and does not point to $target" >&2
+                  exit 1
+                fi
+              else
+                sudo ln -s "$target" "$link"
+              fi
+            done
+          done
+
+      - name: Set up Python virtual environment
+        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-binutils.outputs.cache-hit != 'true'
+        run: |
+          STM32_VENV_PATH=/opt/stm32-venv
+          sudo mkdir -p "${STM32_VENV_PATH}"
+          sudo chown "$USER" "${STM32_VENV_PATH}"
+          python3 -m venv "${STM32_VENV_PATH}"
+          "${STM32_VENV_PATH}/bin/python3" -m pip install python-magic==0.4.27
+          echo "${STM32_VENV_PATH}/bin" >> "${GITHUB_PATH}"
+          echo "STM32_VENV_PATH=${STM32_VENV_PATH}" >> "${GITHUB_ENV}"
+
+      - name: Build prerequisites
+        if: steps.cache-prerequisites.outputs.cache-hit != 'true' && steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-binutils.outputs.cache-hit != 'true'
+        run: |
+          JOBS=$(nproc)
+          export JOBS
+          ./build-prerequisites.sh --skip_steps=mingw,howto,package_sources
+
+      - name: Save cache – prerequisites
+        if: steps.cache-prerequisites.outputs.cache-hit != 'true' && steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-binutils.outputs.cache-hit != 'true'
+        uses: actions/cache/save@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        with:
+          path: build-native/host-libs
+          key: ${{ steps.cache-prerequisites.outputs.cache-primary-key }}
+
       - name: Build stage – binutils
         if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-binutils.outputs.cache-hit != 'true'
         run: |
@@ -297,69 +300,6 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Free disk space
-        run: |
-          sudo apt-get remove -y \
-            '^dotnet-.*' \
-            '^llvm-.*' \
-            'php.*' \
-            azure-cli \
-            google-chrome-stable \
-            firefox \
-            powershell \
-            mono-devel \
-            || true
-          sudo apt-get autoremove -y
-          sudo apt-get clean
-          sudo rm -rf \
-            /usr/share/dotnet \
-            /usr/local/lib/android \
-            /opt/ghc \
-            /opt/hostedtoolcache/CodeQL
-          df -h
-
-      - name: Install system dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            yacc \
-            flex \
-            gcc-arm-none-eabi \
-            gdb-multiarch \
-            cmake \
-            git \
-            openocd \
-            python3 \
-            python3-pip \
-            python3-venv \
-            texi2html \
-            texinfo \
-            automake
-          for version in 1.15 1.14; do
-            for tool in aclocal automake; do
-              target="/usr/bin/${tool}-1.16"
-              link="/usr/bin/${tool}-${version}"
-              if [ -e "$link" ] || [ -L "$link" ]; then
-                if [ "$(readlink -f "$link" 2>/dev/null || echo "")" != "$target" ]; then
-                  echo "ERROR: $link already exists and does not point to $target" >&2
-                  exit 1
-                fi
-              else
-                sudo ln -s "$target" "$link"
-              fi
-            done
-          done
-
-      - name: Set up Python virtual environment
-        run: |
-          STM32_VENV_PATH=/opt/stm32-venv
-          sudo mkdir -p "${STM32_VENV_PATH}"
-          sudo chown "$USER" "${STM32_VENV_PATH}"
-          python3 -m venv "${STM32_VENV_PATH}"
-          "${STM32_VENV_PATH}/bin/python3" -m pip install python-magic==0.4.27
-          echo "${STM32_VENV_PATH}/bin" >> "${GITHUB_PATH}"
-          echo "STM32_VENV_PATH=${STM32_VENV_PATH}" >> "${GITHUB_ENV}"
-
       - name: Compute source tree hashes
         id: src-hashes
         run: |
@@ -387,14 +327,6 @@ jobs:
         with:
           path: build-native/host-libs
           key: ${{ runner.os }}-prerequisites-${{ hashFiles('build-prerequisites.sh', 'build-common.sh', 'src/gmp/**', 'src/mpfr/**', 'src/mpc/**', 'src/isl/**', 'src/expat/**', 'src/zlib*/**') }}
-
-      - name: Build prerequisites on cache miss
-        if: steps.cache-prerequisites.outputs.cache-hit != 'true'
-        run: |
-          set -euo pipefail
-          JOBS="${JOBS:-$(nproc)}"
-          export JOBS
-          ./build-prerequisites.sh --skip_steps=mingw,howto,package_sources
 
       - name: Compute stage source hashes
         id: stage-hashes
@@ -497,6 +429,80 @@ jobs:
         with:
           path: install-native
           key: ${{ runner.os }}-stage-v1-${{ steps.stage-hashes.outputs.binutils }}
+
+      - name: Free disk space
+        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-gdb.outputs.cache-hit != 'true'
+        run: |
+          sudo apt-get remove -y \
+            '^dotnet-.*' \
+            '^llvm-.*' \
+            'php.*' \
+            azure-cli \
+            google-chrome-stable \
+            firefox \
+            powershell \
+            mono-devel \
+            || true
+          sudo apt-get autoremove -y
+          sudo apt-get clean
+          sudo rm -rf \
+            /usr/share/dotnet \
+            /usr/local/lib/android \
+            /opt/ghc \
+            /opt/hostedtoolcache/CodeQL
+          df -h
+
+      - name: Install system dependencies
+        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-gdb.outputs.cache-hit != 'true'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            yacc \
+            flex \
+            gcc-arm-none-eabi \
+            gdb-multiarch \
+            cmake \
+            git \
+            openocd \
+            python3 \
+            python3-pip \
+            python3-venv \
+            texi2html \
+            texinfo \
+            automake
+          for version in 1.15 1.14; do
+            for tool in aclocal automake; do
+              target="/usr/bin/${tool}-1.16"
+              link="/usr/bin/${tool}-${version}"
+              if [ -e "$link" ] || [ -L "$link" ]; then
+                if [ "$(readlink -f "$link" 2>/dev/null || echo "")" != "$target" ]; then
+                  echo "ERROR: $link already exists and does not point to $target" >&2
+                  exit 1
+                fi
+              else
+                sudo ln -s "$target" "$link"
+              fi
+            done
+          done
+
+      - name: Set up Python virtual environment
+        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-gdb.outputs.cache-hit != 'true'
+        run: |
+          STM32_VENV_PATH=/opt/stm32-venv
+          sudo mkdir -p "${STM32_VENV_PATH}"
+          sudo chown "$USER" "${STM32_VENV_PATH}"
+          python3 -m venv "${STM32_VENV_PATH}"
+          "${STM32_VENV_PATH}/bin/python3" -m pip install python-magic==0.4.27
+          echo "${STM32_VENV_PATH}/bin" >> "${GITHUB_PATH}"
+          echo "STM32_VENV_PATH=${STM32_VENV_PATH}" >> "${GITHUB_ENV}"
+
+      - name: Build prerequisites on cache miss
+        if: steps.cache-prerequisites.outputs.cache-hit != 'true' && steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-gdb.outputs.cache-hit != 'true'
+        run: |
+          set -euo pipefail
+          JOBS="${JOBS:-$(nproc)}"
+          export JOBS
+          ./build-prerequisites.sh --skip_steps=mingw,howto,package_sources
 
       - name: Build stage – gdb
         if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-gdb.outputs.cache-hit != 'true'
