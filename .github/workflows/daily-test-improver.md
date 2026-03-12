@@ -36,6 +36,7 @@ safe-outputs:
     target: "*"
     hide-older-comments: true
   create-pull-request:
+    base-branch: "${{ github.ref_name }}"
     draft: true
     title-prefix: "[Test Improver] "
     labels: [automation, testing]
@@ -60,6 +61,7 @@ tools:
     toolsets: [all]
   repo-memory:
     max-file-size: 10240000  # 10 MiB
+    max-patch-size: 102400   # 100 KiB
 
 ---
 
@@ -102,6 +104,8 @@ Use persistent repo memory to track:
 Read memory at the **start** of every run; update it at the **end**.
 
 **Important**: Memory may not be 100% accurate. Issues may have been created, closed, or commented on; PRs may have been created, merged, commented on, or closed since the last run. Always verify memory against current repository state - reviewing recent activity since your last run is wise before acting on stale assumptions.
+
+Keep repo memory **small and summary-oriented**. Store concise notes, cursors, and structured summaries only - never copy repository source files, patches, logs, coverage reports, binaries, or other large/generated artifacts into memory. After writing memory, validate it before finishing the run and shrink the update if it would exceed the configured repo-memory limits.
 
 ## Workflow
 
