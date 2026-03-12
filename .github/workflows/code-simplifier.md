@@ -22,6 +22,7 @@ safe-outputs:
     labels: [refactoring, code-quality, automation]
     reviewers: [copilot]
     expires: 1d
+    protected-files: fallback-to-issue
 
 tools:
   github:
