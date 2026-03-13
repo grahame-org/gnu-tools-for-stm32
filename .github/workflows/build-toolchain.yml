@@ -867,7 +867,7 @@ jobs:
   # GCC final compiler (stage III-4).  Depends on build-newlib.
   # ---------------------------------------------------------------------------
   build-gcc-final:
-    needs: [check-changes, build-newlib]
+    needs: [check-changes, compute-hashes, build-newlib]
     if: needs.check-changes.outputs.should-build == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 360
@@ -942,27 +942,6 @@ jobs:
           echo "${STM32_VENV_PATH}/bin" >> "${GITHUB_PATH}"
           echo "STM32_VENV_PATH=${STM32_VENV_PATH}" >> "${GITHUB_ENV}"
 
-      - name: Compute source tree hashes
-        id: src-hashes
-        run: |
-          set -euo pipefail
-          toolchain_src_hash=$(
-            printf '%s\n' \
-              src/binutils \
-              src/gcc \
-              src/gdb \
-              src/newlib \
-              src/libiconv \
-              src/liblongpath-win32 \
-              src/specs \
-            | while read -r dir; do
-                git rev-parse "HEAD:${dir}"
-              done \
-            | sha256sum \
-            | cut -d' ' -f1
-          )
-          echo "toolchain-src=${toolchain_src_hash}" >> "${GITHUB_OUTPUT}"
-
       - name: Restore cache – prerequisites
         id: cache-prerequisites
         uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
@@ -978,67 +957,18 @@ jobs:
           export JOBS
           ./build-prerequisites.sh --skip_steps=mingw,howto,package_sources
 
-      - name: Compute stage source hashes
-        id: stage-hashes
-        run: |
-          set -euo pipefail
-          hash_dir() { git rev-parse "HEAD:$1"; }
-          binutils_scripts_hash=$(
-            printf '%s\n' \
-              "$(hash_dir build-binutils.sh)" \
-              "$(hash_dir build-toolchain-args.sh)" \
-              "$(hash_dir build-common.sh)" \
-            | sha256sum | cut -d' ' -f1
-          )
-          gcc_first_scripts_hash=$(
-            printf '%s\n' \
-              "$(hash_dir build-gcc-first.sh)" \
-              "$(hash_dir build-toolchain-args.sh)" \
-              "$(hash_dir build-common.sh)" \
-            | sha256sum | cut -d' ' -f1
-          )
-          newlib_scripts_hash=$(
-            printf '%s\n' \
-              "$(hash_dir build-newlib.sh)" \
-              "$(hash_dir build-toolchain-args.sh)" \
-              "$(hash_dir build-common.sh)" \
-            | sha256sum | cut -d' ' -f1
-          )
-          gcc_final_scripts_hash=$(
-            printf '%s\n' \
-              "$(hash_dir build-gcc-final.sh)" \
-              "$(hash_dir build-toolchain-args.sh)" \
-              "$(hash_dir build-common.sh)" \
-            | sha256sum | cut -d' ' -f1
-          )
-          prereqs_key="${{ steps.cache-prerequisites.outputs.cache-primary-key }}"
-
-          binutils_src=$(hash_dir src/binutils)
-          gcc_src=$(hash_dir src/gcc)
-          newlib_src=$(hash_dir src/newlib)
-
-          key_binutils=$(printf '%s' "${{ runner.os }}-stage-binutils-${binutils_scripts_hash}-${prereqs_key}-${binutils_src}" | sha256sum | cut -d' ' -f1)
-          key_gcc_first=$(printf '%s' "${{ runner.os }}-stage-gcc-first-${gcc_first_scripts_hash}-${key_binutils}-${gcc_src}" | sha256sum | cut -d' ' -f1)
-          key_newlib=$(printf '%s' "${{ runner.os }}-stage-newlib-${newlib_scripts_hash}-${key_gcc_first}-${newlib_src}" | sha256sum | cut -d' ' -f1)
-          key_gcc_final=$(printf '%s' "${{ runner.os }}-stage-gcc-final-${gcc_final_scripts_hash}-${key_newlib}-${gcc_src}" | sha256sum | cut -d' ' -f1)
-
-          {
-            echo "newlib=${key_newlib}"
-            echo "gcc-final=${key_gcc_final}"
-          } >> "$GITHUB_OUTPUT"
-
       - name: Restore cache – newlib
         uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           path: install-native
-          key: ${{ runner.os }}-stage-v1-${{ steps.stage-hashes.outputs.newlib }}
+          key: ${{ runner.os }}-stage-v1-${{ needs.compute-hashes.outputs.newlib }}
 
       - name: Restore cache – gcc-final
         id: cache-gcc-final
         uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           path: install-native
-          key: ${{ runner.os }}-stage-v1-${{ steps.stage-hashes.outputs['gcc-final'] }}
+          key: ${{ runner.os }}-stage-v1-${{ needs.compute-hashes.outputs['gcc-final'] }}
 
       - name: Build stage – gcc-final
         if: steps.cache-gcc-final.outputs.cache-hit != 'true'
@@ -1053,7 +983,7 @@ jobs:
         uses: actions/cache/save@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           path: install-native
-          key: ${{ runner.os }}-stage-v1-${{ steps.stage-hashes.outputs['gcc-final'] }}
+          key: ${{ runner.os }}-stage-v1-${{ needs.compute-hashes.outputs['gcc-final'] }}
 
   # ---------------------------------------------------------------------------
   # Job: build-gcc-chain
