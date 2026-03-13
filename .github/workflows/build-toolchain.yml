@@ -681,36 +681,44 @@ jobs:
           # any per-stage script must invalidate it.  Individual stage caches use
           # narrower per-stage keys computed in the Compute stage source hashes step.
           key: ${{ runner.os }}-toolchain-${{ hashFiles('build-*.sh') }}-${{ steps.src-hashes.outputs.toolchain-src }}
-      # --- Stage: gdb ---
-      - name: Restore cache – gdb
-        id: cache-gdb
+      # --- Stage: gcc-first ---
+      - name: Restore cache – gcc-first
+        id: cache-gcc-first
         if: steps.cache-toolchain.outputs.cache-hit != 'true'
         uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           path: install-native
-          key: ${{ runner.os }}-stage-v1-${{ steps.stage-hashes.outputs.gdb }}
+          key: ${{ runner.os }}-stage-v1-${{ steps.stage-hashes.outputs['gcc-first'] }}
 
-      - name: Restore cache – binutils (baseline for gdb build)
-        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-gdb.outputs.cache-hit != 'true'
+      - name: Restore cache – binutils (baseline for gcc-first build)
+        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-gcc-first.outputs.cache-hit != 'true'
         uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           path: install-native
           key: ${{ runner.os }}-stage-v1-${{ steps.stage-hashes.outputs.binutils }}
 
-      - name: Build stage – gdb
-        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-gdb.outputs.cache-hit != 'true'
+      - name: Build prerequisites on cache miss
+        if: steps.cache-prerequisites.outputs.cache-hit != 'true' && steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-gcc-first.outputs.cache-hit != 'true'
+        run: |
+          set -euo pipefail
+          JOBS="${JOBS:-$(nproc)}"
+          export JOBS
+          ./build-prerequisites.sh --skip_steps=mingw,howto,package_sources
+
+      - name: Build stage – gcc-first
+        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-gcc-first.outputs.cache-hit != 'true'
         run: |
           JOBS=$(nproc)
           export JOBS
-          ./build-gdb.sh \
+          ./build-gcc-first.sh \
             --skip_steps=mingw,mingw-gdb-with-python,gdb-with-python,manual,package_sources
 
-      - name: Save cache – gdb
-        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-gdb.outputs.cache-hit != 'true'
+      - name: Save cache – gcc-first
+        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-gcc-first.outputs.cache-hit != 'true'
         uses: actions/cache/save@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           path: install-native
-          key: ${{ runner.os }}-stage-v1-${{ steps.stage-hashes.outputs.gdb }}
+          key: ${{ runner.os }}-stage-v1-${{ steps.stage-hashes.outputs['gcc-first'] }}
 
   # ---------------------------------------------------------------------------
   # Job: build-newlib
