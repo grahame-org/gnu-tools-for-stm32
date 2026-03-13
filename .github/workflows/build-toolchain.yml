@@ -68,6 +68,7 @@ jobs:
         with:
           path: build-native/host-libs
           key: ${{ runner.os }}-prerequisites-${{ hashFiles('build-prerequisites.sh', 'build-common.sh', 'src/gmp/**', 'src/mpfr/**', 'src/mpc/**', 'src/isl/**', 'src/expat/**', 'src/zlib*/**') }}
+          lookup-only: true
 
       - name: Compute stage source hashes
         id: stage-hashes
