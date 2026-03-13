@@ -17,9 +17,12 @@ Two scenarios are covered: **cold cache** (worst case — nothing cached) and
   cache I/O.
 - **Job wall-clock time** is the total duration from job start to job end,
   including all setup overhead and cache operations.
-- **Runner overhead** denotes the fixed per-job cost that cannot be cached:
-  checkout (~37 s), free-disk-space (~45–86 s), apt install (~35 s), and
-  Python venv setup (~4 s); in practice ~2–3 min per job.
+- **Runner overhead** denotes the per-job cost for checkout and setup steps.
+  `build-binutils` and `build-gdb` skip free-disk-space (~45–86 s), apt
+  install (~35 s), and Python venv setup (~4 s) when their stage or toolchain
+  cache hits, reducing their warm-cache overhead to ~1 min (checkout +
+  hash computation + cache restore only).  All other stage jobs run setup
+  unconditionally and pay the full ~2–3 min overhead even on a warm cache.
 
 ### Source runs
 
@@ -28,6 +31,7 @@ Two scenarios are covered: **cold cache** (worst case — nothing cached) and
 | Cold cache — gcc chain | `22884303566` | merge queue (`13.3.rel1`) | 2026-03-10 |
 | Cold cache — full parallel structure | `22875928379` | `copilot/parallel-newlib-build` | 2026-03-09 |
 | Cold cache — confirmation | `22892923563` | `copilot/parallel-newlib-build` | 2026-03-10 |
+| Warm cache — skip-setup optimisation | `23029633165` | `13.3.rel1` | 2026-03-13 |
 
 ---
 
@@ -50,6 +54,11 @@ runner setup and cache I/O.
 > `build-newlib` and `build-newlib-nano` run in parallel (both depend only
 > on `build-gcc-first`).  `build-gdb` also runs in parallel with the gcc /
 > newlib chain (it depends only on `build-binutils`).
+>
+> `build-binutils` and `build-gdb` skip free-disk-space, apt install, and
+> Python venv setup when their stage or toolchain cache hits (see
+> [#296](https://github.com/grahame-org/gnu-tools-for-stm32/pull/296)).
+> All other stage jobs run setup unconditionally.
 
 ---
 
@@ -59,16 +68,19 @@ runner setup and cache I/O.
 
 The critical path through the dependency DAG is:
 
-```
-check-changes (~0 min)
-  └─ build-binutils     ~4 min total  (~1 min build + ~3 min overhead)
-       ├─ build-gdb     ~7 min total  (~4 min build + ~3 min overhead)   ← parallel
-       └─ build-gcc-first   ~11 min total  (~8 min build + ~3 min overhead)
-            ├─ build-newlib      ~19 min total  (~16 min build + ~3 min overhead)   ← parallel
-            │    └─ build-gcc-final          ~70 min total  (~67 min build + ~3 min overhead)
-            │         └─ build-gcc-size-libstdcxx  ~60 min total  (~57 min build + ~3 min overhead)
-            │                └─ build-final  ~8 min total  (~5 min assembly + ~3 min overhead)
-            └─ build-newlib-nano  ~18 min total  (~15 min build + ~3 min overhead)  ← parallel
+```mermaid
+flowchart TD
+    CC[check-changes<br/>~0 min] --> BB
+    BB[build-binutils<br/>~4 min total<br/>~1 min build + ~3 min overhead] --> GDB
+    BB --> GF
+    GDB[build-gdb<br/>~7 min total<br/>~4 min build + ~3 min overhead<br/>⚡ parallel] --> BF
+    GF[build-gcc-first<br/>~11 min total<br/>~8 min build + ~3 min overhead] --> NL
+    GF --> NLN
+    NL[build-newlib<br/>~19 min total<br/>~16 min build + ~3 min overhead<br/>⚡ parallel] --> GCCF
+    NLN[build-newlib-nano<br/>~18 min total<br/>~15 min build + ~3 min overhead<br/>⚡ parallel] --> GCCS
+    GCCF[build-gcc-final<br/>~70 min total<br/>~67 min build + ~3 min overhead] --> GCCS
+    GCCS[build-gcc-size-libstdcxx<br/>~60 min total<br/>~57 min build + ~3 min overhead] --> BF
+    BF[build-final<br/>~8 min total<br/>~5 min assembly + ~3 min overhead]
 ```
 
 **Cold cache critical-path total: ~172 min (~2 h 52 min)**
@@ -88,19 +100,22 @@ the critical path.
 
 ### Warm cache (all stage caches populated)
 
-When all per-stage caches are warm every build job skips its `Build stage`
-step entirely and only pays runner-setup overhead plus cache-restore I/O.
+When all per-stage caches are warm, `build-binutils` and `build-gdb` skip
+their setup steps entirely and complete in ~1 min (checkout + hash
+computation + cache restore only).  All other stage jobs still run setup
+unconditionally and pay ~2–3 min overhead before confirming their stage
+cache hits and skipping the build.
 
-| Job | Warm-cache job time |
-|-----|---------------------|
-| `build-binutils` | ~3 min |
-| `build-gdb` | ~3 min |
-| `build-gcc-first` | ~2–3 min |
-| `build-newlib` | ~2 min |
-| `build-newlib-nano` | ~2–3 min |
-| `build-gcc-final` | ~3 min |
-| `build-gcc-size-libstdcxx` | ~3 min |
-| `build-final` | ~3 min (overhead + cache restores + `test_project` build) |
+| Job | Warm-cache job time | Notes |
+|-----|---------------------|-------|
+| `build-binutils` | ~1 min | Setup skipped on binutils or toolchain cache hit |
+| `build-gdb` | ~1 min | Setup skipped on gdb or toolchain cache hit |
+| `build-gcc-first` | ~2–3 min | Setup runs unconditionally |
+| `build-newlib` | ~2 min | Setup runs unconditionally |
+| `build-newlib-nano` | ~2–3 min | Setup runs unconditionally |
+| `build-gcc-final` | ~4–5 min | Setup runs unconditionally; cache restore takes longer |
+| `build-gcc-size-libstdcxx` | ~3–4 min | Setup runs unconditionally |
+| `build-final` | ~3 min | overhead + cache restores + `test_project` build |
 
 The `test_project` cmake build and artifact comparison in `build-final`
 always run regardless of cache state; both complete in under 2 s.
@@ -109,7 +124,10 @@ The warm-cache wall-clock time is dominated by the sequential
 job-dependency chain — each job must wait for its predecessor before GitHub
 Actions will queue it — not by any compilation work.
 
-**Warm cache critical-path total: ~18–20 min**
+**Warm cache critical-path total: ~17–20 min**
+
+The 2 min saving versus prior estimates comes from `build-binutils` now
+completing in ~1 min instead of ~3 min when its stage cache hits.
 
 > **Full toolchain cache hit:** If the assembled `toolchain` cache key also
 > hits (written by `build-final` on `push` and `pull_request` events), the
@@ -124,7 +142,7 @@ Actions will queue it — not by any compilation work.
 | Scenario | End-to-end wall-clock time |
 |----------|----------------------------|
 | Cold cache (no prior builds) | ~172 min (~2 h 52 min) |
-| Warm cache (all stage caches hit) | ~18–20 min |
+| Warm cache (all stage caches hit) | ~17–20 min |
 
 The ~8.5× speedup from caching comes almost entirely from skipping
 `build-gcc-final` (~67 min) and `build-gcc-size-libstdcxx` (~57 min).
