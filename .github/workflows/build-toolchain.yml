@@ -318,7 +318,7 @@ jobs:
   # GDB build (1–2+ hours) off the critical path.
   # ---------------------------------------------------------------------------
   build-gdb:
-    needs: [check-changes, build-binutils]
+    needs: [check-changes, compute-hashes, build-binutils]
     if: needs.check-changes.outputs.should-build == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 180
@@ -358,85 +358,6 @@ jobs:
           path: build-native/host-libs
           key: ${{ runner.os }}-prerequisites-${{ hashFiles('build-prerequisites.sh', 'build-common.sh', 'src/gmp/**', 'src/mpfr/**', 'src/mpc/**', 'src/isl/**', 'src/expat/**', 'src/zlib*/**') }}
 
-      - name: Compute stage source hashes
-        id: stage-hashes
-        run: |
-          set -euo pipefail
-          hash_dir() { git rev-parse "HEAD:$1"; }
-          binutils_scripts_hash=$(
-            printf '%s\n' \
-              "$(hash_dir build-binutils.sh)" \
-              "$(hash_dir build-toolchain-args.sh)" \
-              "$(hash_dir build-common.sh)" \
-            | sha256sum | cut -d' ' -f1
-          )
-          gcc_first_scripts_hash=$(
-            printf '%s\n' \
-              "$(hash_dir build-gcc-first.sh)" \
-              "$(hash_dir build-toolchain-args.sh)" \
-              "$(hash_dir build-common.sh)" \
-            | sha256sum | cut -d' ' -f1
-          )
-          newlib_scripts_hash=$(
-            printf '%s\n' \
-              "$(hash_dir build-newlib.sh)" \
-              "$(hash_dir build-toolchain-args.sh)" \
-              "$(hash_dir build-common.sh)" \
-            | sha256sum | cut -d' ' -f1
-          )
-          newlib_nano_scripts_hash=$(
-            printf '%s\n' \
-              "$(hash_dir build-newlib-nano.sh)" \
-              "$(hash_dir build-toolchain-args.sh)" \
-              "$(hash_dir build-common.sh)" \
-            | sha256sum | cut -d' ' -f1
-          )
-          gcc_final_scripts_hash=$(
-            printf '%s\n' \
-              "$(hash_dir build-gcc-final.sh)" \
-              "$(hash_dir build-toolchain-args.sh)" \
-              "$(hash_dir build-common.sh)" \
-            | sha256sum | cut -d' ' -f1
-          )
-          gcc_size_libstdcxx_scripts_hash=$(
-            printf '%s\n' \
-              "$(hash_dir build-gcc-size-libstdcxx.sh)" \
-              "$(hash_dir build-toolchain-args.sh)" \
-              "$(hash_dir build-common.sh)" \
-            | sha256sum | cut -d' ' -f1
-          )
-          gdb_scripts_hash=$(
-            printf '%s\n' \
-              "$(hash_dir build-gdb.sh)" \
-              "$(hash_dir build-toolchain-args.sh)" \
-              "$(hash_dir build-common.sh)" \
-            | sha256sum | cut -d' ' -f1
-          )
-          prereqs_key="${{ steps.cache-prerequisites.outputs.cache-primary-key }}"
-
-          binutils_src=$(hash_dir src/binutils)
-          gcc_src=$(hash_dir src/gcc)
-          newlib_src=$(hash_dir src/newlib)
-          gdb_src=$(hash_dir src/gdb)
-
-          key_binutils=$(printf '%s' "${{ runner.os }}-stage-binutils-${binutils_scripts_hash}-${prereqs_key}-${binutils_src}" | sha256sum | cut -d' ' -f1)
-          key_gcc_first=$(printf '%s' "${{ runner.os }}-stage-gcc-first-${gcc_first_scripts_hash}-${key_binutils}-${gcc_src}" | sha256sum | cut -d' ' -f1)
-          key_newlib=$(printf '%s' "${{ runner.os }}-stage-newlib-${newlib_scripts_hash}-${key_gcc_first}-${newlib_src}" | sha256sum | cut -d' ' -f1)
-          key_newlib_nano=$(printf '%s' "${{ runner.os }}-stage-newlib-nano-${newlib_nano_scripts_hash}-${key_gcc_first}-${newlib_src}" | sha256sum | cut -d' ' -f1)
-          key_gcc_final=$(printf '%s' "${{ runner.os }}-stage-gcc-final-${gcc_final_scripts_hash}-${key_newlib}-${gcc_src}" | sha256sum | cut -d' ' -f1)
-          key_gcc_size=$(printf '%s' "${{ runner.os }}-stage-gcc-size-libstdcxx-${gcc_size_libstdcxx_scripts_hash}-${key_gcc_final}-${gcc_src}" | sha256sum | cut -d' ' -f1)
-          key_gdb=$(printf '%s' "${{ runner.os }}-stage-gdb-${gdb_scripts_hash}-${key_binutils}-${gdb_src}" | sha256sum | cut -d' ' -f1)
-
-          {
-            echo "binutils=${key_binutils}"
-            echo "gcc-first=${key_gcc_first}"
-            echo "newlib=${key_newlib}"
-            echo "newlib-nano=${key_newlib_nano}"
-            echo "gcc-final=${key_gcc_final}"
-            echo "gcc-size-libstdcxx=${key_gcc_size}"
-            echo "gdb=${key_gdb}"
-          } >> "$GITHUB_OUTPUT"
-
       - name: Restore cache – toolchain
         id: cache-toolchain
         uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
@@ -451,14 +372,14 @@ jobs:
         uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           path: install-native
-          key: ${{ runner.os }}-stage-v1-${{ steps.stage-hashes.outputs.gdb }}
+          key: ${{ runner.os }}-stage-v1-${{ needs.compute-hashes.outputs.gdb }}
 
       - name: Restore cache – binutils (baseline for gdb build)
         if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-gdb.outputs.cache-hit != 'true'
         uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           path: install-native
-          key: ${{ runner.os }}-stage-v1-${{ steps.stage-hashes.outputs.binutils }}
+          key: ${{ runner.os }}-stage-v1-${{ needs.compute-hashes.outputs.binutils }}
 
       - name: Free disk space
         if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-gdb.outputs.cache-hit != 'true'
@@ -547,7 +468,7 @@ jobs:
         uses: actions/cache/save@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           path: install-native
-          key: ${{ runner.os }}-stage-v1-${{ steps.stage-hashes.outputs.gdb }}
+          key: ${{ runner.os }}-stage-v1-${{ needs.compute-hashes.outputs.gdb }}
 
   # ---------------------------------------------------------------------------
   # Job: build-gcc-first
