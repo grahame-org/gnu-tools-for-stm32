@@ -59,16 +59,26 @@ runner setup and cache I/O.
 
 The critical path through the dependency DAG is:
 
-```
-check-changes (~0 min)
-  └─ build-binutils     ~4 min total  (~1 min build + ~3 min overhead)
-       ├─ build-gdb     ~7 min total  (~4 min build + ~3 min overhead)   ← parallel
-       └─ build-gcc-first   ~11 min total  (~8 min build + ~3 min overhead)
-            ├─ build-newlib      ~19 min total  (~16 min build + ~3 min overhead)   ← parallel
-            │    └─ build-gcc-final          ~70 min total  (~67 min build + ~3 min overhead)
-            │         └─ build-gcc-size-libstdcxx  ~60 min total  (~57 min build + ~3 min overhead)
-            │                └─ build-final  ~8 min total  (~5 min assembly + ~3 min overhead)
-            └─ build-newlib-nano  ~18 min total  (~15 min build + ~3 min overhead)  ← parallel
+```mermaid
+flowchart TD
+    CC["check-changes<br>~0 min"]
+    BB["build-binutils<br>~4 min total<br>(~1 min build + ~3 min overhead)"]
+    GDB["build-gdb<br>~7 min total<br>(~4 min build + ~3 min overhead)"]
+    GF["build-gcc-first<br>~11 min total<br>(~8 min build + ~3 min overhead)"]
+    NL["build-newlib<br>~19 min total<br>(~16 min build + ~3 min overhead)"]
+    NLN["build-newlib-nano<br>~18 min total<br>(~15 min build + ~3 min overhead)"]
+    GFF["build-gcc-final<br>~70 min total<br>(~67 min build + ~3 min overhead)"]
+    GSSL["build-gcc-size-libstdcxx<br>~60 min total<br>(~57 min build + ~3 min overhead)"]
+    BF["build-final<br>~8 min total<br>(~5 min assembly + ~3 min overhead)"]
+
+    CC --> BB
+    BB -- "parallel" --> GDB
+    BB --> GF
+    GF --> NL
+    GF -- "parallel" --> NLN
+    NL --> GFF
+    GFF --> GSSL
+    GSSL --> BF
 ```
 
 **Cold cache critical-path total: ~172 min (~2 h 52 min)**
