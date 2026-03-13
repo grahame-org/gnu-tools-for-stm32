@@ -763,6 +763,138 @@ jobs:
           key: ${{ runner.os }}-stage-v1-${{ needs.compute-hashes.outputs.newlib }}
 
   # ---------------------------------------------------------------------------
+  # Job: build-newlib-nano
+  # Newlib-nano size-optimised library (III-3).  Depends on build-gcc-first and
+  # runs in PARALLEL with build-newlib.  Outputs to build-native/target-libs/
+  # only; install-native/ is NOT modified by this stage.
+  # ---------------------------------------------------------------------------
+  build-newlib-nano:
+    needs: [check-changes, compute-hashes, build-gcc-first]
+    if: needs.check-changes.outputs.should-build == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      # --- Stage: newlib-nano ---
+      - name: Restore cache – newlib-nano
+        id: cache-newlib-nano
+        uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        with:
+          path: build-native/target-libs
+          key: ${{ runner.os }}-stage-v1-${{ needs.compute-hashes.outputs['newlib-nano'] }}
+
+      - name: Free disk space
+        if: steps.cache-newlib-nano.outputs.cache-hit != 'true'
+        run: |
+          sudo apt-get remove -y \
+            '^dotnet-.*' \
+            '^llvm-.*' \
+            'php.*' \
+            azure-cli \
+            google-chrome-stable \
+            firefox \
+            powershell \
+            mono-devel \
+            || true
+          sudo apt-get autoremove -y
+          sudo apt-get clean
+          sudo rm -rf \
+            /usr/share/dotnet \
+            /usr/local/lib/android \
+            /opt/ghc \
+            /opt/hostedtoolcache/CodeQL
+          df -h
+
+      - name: Install system dependencies
+        if: steps.cache-newlib-nano.outputs.cache-hit != 'true'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            yacc \
+            flex \
+            gcc-arm-none-eabi \
+            gdb-multiarch \
+            cmake \
+            git \
+            openocd \
+            python3 \
+            python3-pip \
+            python3-venv \
+            texi2html \
+            texinfo \
+            automake
+          for version in 1.15 1.14; do
+            for tool in aclocal automake; do
+              target="/usr/bin/${tool}-1.16"
+              link="/usr/bin/${tool}-${version}"
+              if [ -e "$link" ] || [ -L "$link" ]; then
+                if [ "$(readlink -f "$link" 2>/dev/null || echo "")" != "$target" ]; then
+                  echo "ERROR: $link already exists and does not point to $target" >&2
+                  exit 1
+                fi
+              else
+                sudo ln -s "$target" "$link"
+              fi
+            done
+          done
+
+      - name: Set up Python virtual environment
+        if: steps.cache-newlib-nano.outputs.cache-hit != 'true'
+        run: |
+          STM32_VENV_PATH=/opt/stm32-venv
+          sudo mkdir -p "${STM32_VENV_PATH}"
+          sudo chown "$USER" "${STM32_VENV_PATH}"
+          python3 -m venv "${STM32_VENV_PATH}"
+          "${STM32_VENV_PATH}/bin/python3" -m pip install python-magic==0.4.27
+          echo "${STM32_VENV_PATH}/bin" >> "${GITHUB_PATH}"
+          echo "STM32_VENV_PATH=${STM32_VENV_PATH}" >> "${GITHUB_ENV}"
+
+      - name: Restore cache – prerequisites
+        id: cache-prerequisites
+        if: steps.cache-newlib-nano.outputs.cache-hit != 'true'
+        uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        with:
+          path: build-native/host-libs
+          key: ${{ runner.os }}-prerequisites-${{ hashFiles('build-prerequisites.sh', 'build-common.sh', 'src/gmp/**', 'src/mpfr/**', 'src/mpc/**', 'src/isl/**', 'src/expat/**', 'src/zlib*/**') }}
+
+      - name: Build prerequisites (cache miss)
+        if: steps.cache-prerequisites.outputs.cache-hit != 'true' && steps.cache-newlib-nano.outputs.cache-hit != 'true'
+        run: |
+          set -euo pipefail
+          JOBS="${JOBS:-$(nproc)}"
+          export JOBS
+          ./build-prerequisites.sh --skip_steps=mingw,howto,package_sources
+
+      # Restore gcc-first as the compiler needed to build newlib-nano
+      - name: Restore cache – gcc-first
+        if: steps.cache-newlib-nano.outputs.cache-hit != 'true'
+        uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        with:
+          path: install-native
+          key: ${{ runner.os }}-stage-v1-${{ needs.compute-hashes.outputs['gcc-first'] }}
+
+      - name: Build stage – newlib-nano
+        if: steps.cache-newlib-nano.outputs.cache-hit != 'true'
+        run: |
+          JOBS=$(nproc)
+          export JOBS
+          ./build-newlib-nano.sh \
+            --skip_steps=mingw,mingw-gdb-with-python,gdb-with-python,manual,package_sources
+
+      - name: Save cache – newlib-nano
+        if: steps.cache-newlib-nano.outputs.cache-hit != 'true' && github.event_name != 'merge_group'
+        uses: actions/cache/save@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        with:
+          path: build-native/target-libs
+          key: ${{ runner.os }}-stage-v1-${{ needs.compute-hashes.outputs['newlib-nano'] }}
+
+  # ---------------------------------------------------------------------------
   # Job: build-gcc-final
   # GCC final compiler (stage III-4).  Depends on build-newlib.
   # ---------------------------------------------------------------------------
@@ -1391,7 +1523,7 @@ jobs:
 
   build-status:
     runs-on: ubuntu-slim
-    needs: [check-changes, compute-hashes, build-binutils, build-gdb, build-gcc-first, build-newlib, build-gcc-final, build-gcc-chain, build-final]
+    needs: [check-changes, compute-hashes, build-binutils, build-gdb, build-gcc-first, build-newlib, build-newlib-nano, build-gcc-final, build-gcc-chain, build-final]
     if: always()
     steps:
       - name: Report build status
@@ -1413,6 +1545,9 @@ jobs:
           fi
           if [[ "${{ needs.build-newlib.result }}" == "failure" || "${{ needs.build-newlib.result }}" == "cancelled" ]]; then
             echo "build-newlib failed or was cancelled" && exit 1
+          fi
+          if [[ "${{ needs.build-newlib-nano.result }}" == "failure" || "${{ needs.build-newlib-nano.result }}" == "cancelled" ]]; then
+            echo "build-newlib-nano failed or was cancelled" && exit 1
           fi
           if [[ "${{ needs.build-gcc-final.result }}" == "failure" || "${{ needs.build-gcc-final.result }}" == "cancelled" ]]; then
             echo "build-gcc-final failed or was cancelled" && exit 1
