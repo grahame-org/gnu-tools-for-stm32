@@ -781,7 +781,16 @@ jobs:
         with:
           persist-credentials: false
 
+      # --- Stage: newlib-nano ---
+      - name: Restore cache – newlib-nano
+        id: cache-newlib-nano
+        uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        with:
+          path: build-native/target-libs
+          key: ${{ runner.os }}-stage-v1-${{ needs.compute-hashes.outputs['newlib-nano'] }}
+
       - name: Free disk space
+        if: steps.cache-newlib-nano.outputs.cache-hit != 'true'
         run: |
           sudo apt-get remove -y \
             '^dotnet-.*' \
@@ -803,6 +812,7 @@ jobs:
           df -h
 
       - name: Install system dependencies
+        if: steps.cache-newlib-nano.outputs.cache-hit != 'true'
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -835,6 +845,7 @@ jobs:
           done
 
       - name: Set up Python virtual environment
+        if: steps.cache-newlib-nano.outputs.cache-hit != 'true'
         run: |
           STM32_VENV_PATH=/opt/stm32-venv
           sudo mkdir -p "${STM32_VENV_PATH}"
@@ -846,13 +857,14 @@ jobs:
 
       - name: Restore cache – prerequisites
         id: cache-prerequisites
+        if: steps.cache-newlib-nano.outputs.cache-hit != 'true'
         uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           path: build-native/host-libs
           key: ${{ runner.os }}-prerequisites-${{ hashFiles('build-prerequisites.sh', 'build-common.sh', 'src/gmp/**', 'src/mpfr/**', 'src/mpc/**', 'src/isl/**', 'src/expat/**', 'src/zlib*/**') }}
 
       - name: Build prerequisites (cache miss)
-        if: steps.cache-prerequisites.outputs.cache-hit != 'true'
+        if: steps.cache-prerequisites.outputs.cache-hit != 'true' && steps.cache-newlib-nano.outputs.cache-hit != 'true'
         run: |
           set -euo pipefail
           JOBS="${JOBS:-$(nproc)}"
@@ -861,18 +873,11 @@ jobs:
 
       # Restore gcc-first as the compiler needed to build newlib-nano
       - name: Restore cache – gcc-first
+        if: steps.cache-newlib-nano.outputs.cache-hit != 'true'
         uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           path: install-native
           key: ${{ runner.os }}-stage-v1-${{ needs.compute-hashes.outputs['gcc-first'] }}
-
-      # --- Stage: newlib-nano ---
-      - name: Restore cache – newlib-nano
-        id: cache-newlib-nano
-        uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
-        with:
-          path: build-native/target-libs
-          key: ${{ runner.os }}-stage-v1-${{ needs.compute-hashes.outputs['newlib-nano'] }}
 
       - name: Build stage – newlib-nano
         if: steps.cache-newlib-nano.outputs.cache-hit != 'true'
