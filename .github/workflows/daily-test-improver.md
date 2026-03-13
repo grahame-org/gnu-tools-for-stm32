@@ -54,6 +54,10 @@ safe-outputs:
     title-prefix: "[Test Improver] "
     max: 1
 
+checkout:
+  fetch: ["*"]      # fetch all remote branches
+  fetch-depth: 0   # fetch full history
+
 tools:
   web-fetch:
   bash: true
