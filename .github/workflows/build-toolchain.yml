@@ -1184,13 +1184,16 @@ jobs:
   # ---------------------------------------------------------------------------
   build-gdb-status:
     runs-on: ubuntu-slim
-    needs: [check-changes, build-gdb]
+    needs: [check-changes, compute-hashes, build-gdb]
     if: always()
     steps:
       - name: Report build-gdb status
         run: |
           if [[ "${{ needs.check-changes.result }}" == "failure" || "${{ needs.check-changes.result }}" == "cancelled" ]]; then
             echo "check-changes job failed or was cancelled" && exit 1
+          fi
+          if [[ "${{ needs.compute-hashes.result }}" == "failure" || "${{ needs.compute-hashes.result }}" == "cancelled" ]]; then
+            echo "compute-hashes job failed or was cancelled" && exit 1
           fi
           if [[ "${{ needs.build-gdb.result }}" == "failure" || "${{ needs.build-gdb.result }}" == "cancelled" ]]; then
             echo "build-gdb failed or was cancelled" && exit 1
