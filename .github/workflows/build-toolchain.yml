@@ -1199,13 +1199,16 @@ jobs:
 
   build-status:
     runs-on: ubuntu-slim
-    needs: [check-changes, build-binutils, build-gdb, build-gcc-first, build-gcc-chain, build-final]
+    needs: [check-changes, compute-hashes, build-binutils, build-gdb, build-gcc-first, build-gcc-chain, build-final]
     if: always()
     steps:
       - name: Report build status
         run: |
           if [[ "${{ needs.check-changes.result }}" == "failure" || "${{ needs.check-changes.result }}" == "cancelled" ]]; then
             echo "check-changes job failed or was cancelled" && exit 1
+          fi
+          if [[ "${{ needs.compute-hashes.result }}" == "failure" || "${{ needs.compute-hashes.result }}" == "cancelled" ]]; then
+            echo "compute-hashes failed or was cancelled" && exit 1
           fi
           if [[ "${{ needs.build-binutils.result }}" == "failure" || "${{ needs.build-binutils.result }}" == "cancelled" ]]; then
             echo "build-binutils failed or was cancelled" && exit 1
