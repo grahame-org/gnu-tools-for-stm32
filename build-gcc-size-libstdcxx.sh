@@ -84,6 +84,7 @@ cd $SRCDIR
 if [ "x$skip_native_build" != "xyes" ] ; then
     echo Task [III-5] /$HOST_NATIVE/gcc-size-libstdcxx/ | tee -a "$BUILDDIR_NATIVE/.stage"
     rm -f $BUILDDIR_NATIVE/target-libs/arm-none-eabi/usr
+    mkdir -p $BUILDDIR_NATIVE/target-libs/arm-none-eabi
     ln -s . $BUILDDIR_NATIVE/target-libs/arm-none-eabi/usr
 
     rm -rf $BUILDDIR_NATIVE/gcc-size-libstdcxx && mkdir -p $BUILDDIR_NATIVE/gcc-size-libstdcxx
