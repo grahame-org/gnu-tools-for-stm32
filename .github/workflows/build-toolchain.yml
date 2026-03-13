@@ -293,7 +293,6 @@ jobs:
         id: stage-hashes
         run: |
           hash_dir() { git rev-parse HEAD:"$1" 2>/dev/null || echo "missing-$1"; }
-          scripts_hash=$(echo "$(hash_dir build-toolchain.sh)$(hash_dir build-binutils.sh)$(hash_dir build-toolchain-args.sh)$(hash_dir build-common.sh)" | sha256sum | cut -d' ' -f1)
           binutils_scripts_hash=$(echo "$(hash_dir build-binutils.sh)$(hash_dir build-toolchain-args.sh)$(hash_dir build-common.sh)" | sha256sum | cut -d' ' -f1)
           gcc_first_scripts_hash=$(echo "$(hash_dir build-gcc-first.sh)$(hash_dir build-toolchain-args.sh)$(hash_dir build-common.sh)" | sha256sum | cut -d' ' -f1)
           newlib_scripts_hash=$(echo "$(hash_dir build-newlib.sh)$(hash_dir build-toolchain-args.sh)$(hash_dir build-common.sh)" | sha256sum | cut -d' ' -f1)
@@ -307,7 +306,6 @@ jobs:
           gcc_src=$(hash_dir src/gcc)
           newlib_src=$(hash_dir src/newlib)
           gdb_src=$(hash_dir src/gdb)
-          specs_src=$(hash_dir src/specs)
 
           key_binutils=$(printf '%s' "${{ runner.os }}-stage-binutils-${binutils_scripts_hash}-${prereqs_key}-${binutils_src}" | sha256sum | cut -d' ' -f1)
           key_gcc_first=$(printf '%s' "${{ runner.os }}-stage-gcc-first-${gcc_first_scripts_hash}-${key_binutils}-${gcc_src}" | sha256sum | cut -d' ' -f1)
