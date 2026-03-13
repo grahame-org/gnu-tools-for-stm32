@@ -701,7 +701,7 @@ jobs:
   # Newlib standard library (III-2).  Depends on build-gcc-first.
   # ---------------------------------------------------------------------------
   build-newlib:
-    needs: [check-changes, build-gcc-first]
+    needs: [check-changes, compute-hashes, build-gcc-first]
     if: needs.check-changes.outputs.should-build == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 360
@@ -713,7 +713,59 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Compute source tree hashes
+        id: src-hashes
+        run: |
+          set -euo pipefail
+          toolchain_src_hash=$(
+            printf '%s\n' \
+              src/binutils \
+              src/gcc \
+              src/gdb \
+              src/newlib \
+              src/libiconv \
+              src/liblongpath-win32 \
+              src/specs \
+            | while read -r dir; do
+                git rev-parse "HEAD:${dir}"
+              done \
+            | sha256sum \
+            | cut -d' ' -f1
+          )
+          echo "toolchain-src=${toolchain_src_hash}" >> "${GITHUB_OUTPUT}"
+
+      - name: Restore cache – prerequisites
+        id: cache-prerequisites
+        uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        with:
+          path: build-native/host-libs
+          key: ${{ runner.os }}-prerequisites-${{ hashFiles('build-prerequisites.sh', 'build-common.sh', 'src/gmp/**', 'src/mpfr/**', 'src/mpc/**', 'src/isl/**', 'src/expat/**', 'src/zlib*/**') }}
+
+      - name: Restore cache – toolchain
+        id: cache-toolchain
+        uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        with:
+          path: install-native
+          key: ${{ runner.os }}-toolchain-${{ hashFiles('build-*.sh') }}-${{ steps.src-hashes.outputs.toolchain-src }}
+
+      # --- Stage: newlib ---
+      - name: Restore cache – newlib
+        id: cache-newlib
+        if: steps.cache-toolchain.outputs.cache-hit != 'true'
+        uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        with:
+          path: install-native
+          key: ${{ runner.os }}-stage-v1-${{ needs.compute-hashes.outputs.newlib }}
+
+      - name: Restore cache – gcc-first (baseline for newlib build)
+        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-newlib.outputs.cache-hit != 'true'
+        uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        with:
+          path: install-native
+          key: ${{ runner.os }}-stage-v1-${{ needs.compute-hashes.outputs['gcc-first'] }}
+
       - name: Free disk space
+        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-newlib.outputs.cache-hit != 'true'
         run: |
           sudo apt-get remove -y \
             '^dotnet-.*' \
@@ -735,6 +787,7 @@ jobs:
           df -h
 
       - name: Install system dependencies
+        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-newlib.outputs.cache-hit != 'true'
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -767,6 +820,7 @@ jobs:
           done
 
       - name: Set up Python virtual environment
+        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-newlib.outputs.cache-hit != 'true'
         run: |
           STM32_VENV_PATH=/opt/stm32-venv
           sudo mkdir -p "${STM32_VENV_PATH}"
@@ -776,138 +830,16 @@ jobs:
           echo "${STM32_VENV_PATH}/bin" >> "${GITHUB_PATH}"
           echo "STM32_VENV_PATH=${STM32_VENV_PATH}" >> "${GITHUB_ENV}"
 
-      - name: Compute source tree hashes
-        id: src-hashes
-        run: |
-          set -euo pipefail
-          toolchain_src_hash=$(
-            printf '%s\n' \
-              src/binutils \
-              src/gcc \
-              src/gdb \
-              src/newlib \
-              src/libiconv \
-              src/liblongpath-win32 \
-              src/specs \
-            | while read -r dir; do
-                git rev-parse "HEAD:${dir}"
-              done \
-            | sha256sum \
-            | cut -d' ' -f1
-          )
-          echo "toolchain-src=${toolchain_src_hash}" >> "${GITHUB_OUTPUT}"
-
-      - name: Restore cache – prerequisites
-        id: cache-prerequisites
-        uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
-        with:
-          path: build-native/host-libs
-          key: ${{ runner.os }}-prerequisites-${{ hashFiles('build-prerequisites.sh', 'build-common.sh', 'src/gmp/**', 'src/mpfr/**', 'src/mpc/**', 'src/isl/**', 'src/expat/**', 'src/zlib*/**') }}
-
-      - name: Build prerequisites (cache miss)
-        if: steps.cache-prerequisites.outputs.cache-hit != 'true'
+      - name: Build prerequisites on cache miss
+        if: steps.cache-prerequisites.outputs.cache-hit != 'true' && steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-newlib.outputs.cache-hit != 'true'
         run: |
           set -euo pipefail
           JOBS="${JOBS:-$(nproc)}"
           export JOBS
           ./build-prerequisites.sh --skip_steps=mingw,howto,package_sources
 
-      - name: Compute stage source hashes
-        id: stage-hashes
-        run: |
-          set -euo pipefail
-          hash_dir() { git rev-parse "HEAD:$1"; }
-          binutils_scripts_hash=$(
-            printf '%s\n' \
-              "$(hash_dir build-binutils.sh)" \
-              "$(hash_dir build-toolchain-args.sh)" \
-              "$(hash_dir build-common.sh)" \
-            | sha256sum | cut -d' ' -f1
-          )
-          gcc_first_scripts_hash=$(
-            printf '%s\n' \
-              "$(hash_dir build-gcc-first.sh)" \
-              "$(hash_dir build-toolchain-args.sh)" \
-              "$(hash_dir build-common.sh)" \
-            | sha256sum | cut -d' ' -f1
-          )
-          newlib_scripts_hash=$(
-            printf '%s\n' \
-              "$(hash_dir build-newlib.sh)" \
-              "$(hash_dir build-toolchain-args.sh)" \
-              "$(hash_dir build-common.sh)" \
-            | sha256sum | cut -d' ' -f1
-          )
-          newlib_nano_scripts_hash=$(
-            printf '%s\n' \
-              "$(hash_dir build-newlib-nano.sh)" \
-              "$(hash_dir build-toolchain-args.sh)" \
-              "$(hash_dir build-common.sh)" \
-            | sha256sum | cut -d' ' -f1
-          )
-          gcc_final_scripts_hash=$(
-            printf '%s\n' \
-              "$(hash_dir build-gcc-final.sh)" \
-              "$(hash_dir build-toolchain-args.sh)" \
-              "$(hash_dir build-common.sh)" \
-            | sha256sum | cut -d' ' -f1
-          )
-          gcc_size_libstdcxx_scripts_hash=$(
-            printf '%s\n' \
-              "$(hash_dir build-gcc-size-libstdcxx.sh)" \
-              "$(hash_dir build-toolchain-args.sh)" \
-              "$(hash_dir build-common.sh)" \
-            | sha256sum | cut -d' ' -f1
-          )
-          gdb_scripts_hash=$(
-            printf '%s\n' \
-              "$(hash_dir build-gdb.sh)" \
-              "$(hash_dir build-toolchain-args.sh)" \
-              "$(hash_dir build-common.sh)" \
-            | sha256sum | cut -d' ' -f1
-          )
-          prereqs_key="${{ steps.cache-prerequisites.outputs.cache-primary-key }}"
-
-          binutils_src=$(hash_dir src/binutils)
-          gcc_src=$(hash_dir src/gcc)
-          newlib_src=$(hash_dir src/newlib)
-          gdb_src=$(hash_dir src/gdb)
-
-          key_binutils=$(printf '%s' "${{ runner.os }}-stage-binutils-${binutils_scripts_hash}-${prereqs_key}-${binutils_src}" | sha256sum | cut -d' ' -f1)
-          key_gcc_first=$(printf '%s' "${{ runner.os }}-stage-gcc-first-${gcc_first_scripts_hash}-${key_binutils}-${gcc_src}" | sha256sum | cut -d' ' -f1)
-          key_newlib=$(printf '%s' "${{ runner.os }}-stage-newlib-${newlib_scripts_hash}-${key_gcc_first}-${newlib_src}" | sha256sum | cut -d' ' -f1)
-          key_newlib_nano=$(printf '%s' "${{ runner.os }}-stage-newlib-nano-${newlib_nano_scripts_hash}-${key_gcc_first}-${newlib_src}" | sha256sum | cut -d' ' -f1)
-          key_gcc_final=$(printf '%s' "${{ runner.os }}-stage-gcc-final-${gcc_final_scripts_hash}-${key_newlib}-${gcc_src}" | sha256sum | cut -d' ' -f1)
-          key_gcc_size=$(printf '%s' "${{ runner.os }}-stage-gcc-size-libstdcxx-${gcc_size_libstdcxx_scripts_hash}-${key_gcc_final}-${gcc_src}" | sha256sum | cut -d' ' -f1)
-          key_gdb=$(printf '%s' "${{ runner.os }}-stage-gdb-${gdb_scripts_hash}-${key_binutils}-${gdb_src}" | sha256sum | cut -d' ' -f1)
-
-          {
-            echo "binutils=${key_binutils}"
-            echo "gcc-first=${key_gcc_first}"
-            echo "newlib=${key_newlib}"
-            echo "newlib-nano=${key_newlib_nano}"
-            echo "gcc-final=${key_gcc_final}"
-            echo "gcc-size-libstdcxx=${key_gcc_size}"
-            echo "gdb=${key_gdb}"
-          } >> "$GITHUB_OUTPUT"
-
-      # Restore gcc-first as baseline for the newlib build
-      - name: Restore cache – gcc-first
-        uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
-        with:
-          path: install-native
-          key: ${{ runner.os }}-stage-v1-${{ steps.stage-hashes.outputs['gcc-first'] }}
-
-      # --- Stage: newlib ---
-      - name: Restore cache – newlib
-        id: cache-newlib
-        uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
-        with:
-          path: install-native
-          key: ${{ runner.os }}-stage-v1-${{ steps.stage-hashes.outputs.newlib }}
-
       - name: Build stage – newlib
-        if: steps.cache-newlib.outputs.cache-hit != 'true'
+        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-newlib.outputs.cache-hit != 'true'
         run: |
           JOBS=$(nproc)
           export JOBS
@@ -915,11 +847,11 @@ jobs:
             --skip_steps=mingw,mingw-gdb-with-python,gdb-with-python,manual,package_sources
 
       - name: Save cache – newlib
-        if: steps.cache-newlib.outputs.cache-hit != 'true' && github.event_name != 'merge_group'
+        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-newlib.outputs.cache-hit != 'true' && github.event_name != 'merge_group'
         uses: actions/cache/save@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           path: install-native
-          key: ${{ runner.os }}-stage-v1-${{ steps.stage-hashes.outputs.newlib }}
+          key: ${{ runner.os }}-stage-v1-${{ needs.compute-hashes.outputs.newlib }}
 
   # ---------------------------------------------------------------------------
   # Job: build-gcc-chain
