@@ -734,19 +734,21 @@ jobs:
           )
           echo "toolchain-src=${toolchain_src_hash}" >> "${GITHUB_OUTPUT}"
 
-      - name: Restore cache – prerequisites
-        id: cache-prerequisites
-        uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
-        with:
-          path: build-native/host-libs
-          key: ${{ runner.os }}-prerequisites-${{ hashFiles('build-prerequisites.sh', 'build-common.sh', 'src/gmp/**', 'src/mpfr/**', 'src/mpc/**', 'src/isl/**', 'src/expat/**', 'src/zlib*/**') }}
-
       - name: Restore cache – toolchain
         id: cache-toolchain
         uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           path: install-native
           key: ${{ runner.os }}-toolchain-${{ hashFiles('build-*.sh') }}-${{ steps.src-hashes.outputs.toolchain-src }}
+          lookup-only: true
+
+      - name: Restore cache – prerequisites
+        id: cache-prerequisites
+        if: steps.cache-toolchain.outputs.cache-hit != 'true'
+        uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        with:
+          path: build-native/host-libs
+          key: ${{ runner.os }}-prerequisites-${{ hashFiles('build-prerequisites.sh', 'build-common.sh', 'src/gmp/**', 'src/mpfr/**', 'src/mpc/**', 'src/isl/**', 'src/expat/**', 'src/zlib*/**') }}
 
       # --- Stage: newlib ---
       - name: Restore cache – newlib
