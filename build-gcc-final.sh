@@ -33,10 +33,16 @@
 #
 # Usage:
 #   ./build-gcc-final.sh [--build_type=...] [--skip_steps=...]
+#                        [--with-multilib-list=<profiles>]
 #
-# The script accepts the same --build_type and --skip_steps flags as
-# build-toolchain.sh.  The --skip_stages flag is accepted but ignored (this
-# script always builds the gcc-final stage).
+# The script accepts the same flags as build-toolchain.sh.  The --skip_stages
+# flag is accepted but ignored (this script always builds the gcc-final stage).
+#
+# The --with-multilib-list flag restricts the multilib variants built.  When
+# omitted the default is rmprofile,aprofile (all profiles).  In CI the flag is
+# used to split the build into two parallel jobs — one for rmprofile and one
+# for aprofile — whose install-native/ output trees are disjoint and are merged
+# before the downstream gcc-size-libstdcxx stage runs.
 #
 # The newlib-nano stage (III-3) output must already be present in
 # install-native/ before calling this script.
