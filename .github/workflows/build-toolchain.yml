@@ -1639,7 +1639,7 @@ jobs:
   # ---------------------------------------------------------------------------
   build-status:
     runs-on: ubuntu-slim
-    needs: [check-changes, compute-hashes, build-binutils, build-gdb, build-gcc-first, build-newlib, build-newlib-nano, build-gcc-final, build-gcc-size-libstdcxx, build-gcc-chain, build-final]
+    needs: [check-changes, compute-hashes, build-binutils, build-gdb, build-gcc-first, build-newlib, build-newlib-nano, build-gcc-final, build-gcc-size-libstdcxx, build-final]
     if: always()
     steps:
       - name: Report build status
@@ -1670,9 +1670,6 @@ jobs:
           fi
           if [[ "${{ needs.build-gcc-size-libstdcxx.result }}" == "failure" || "${{ needs.build-gcc-size-libstdcxx.result }}" == "cancelled" ]]; then
             echo "build-gcc-size-libstdcxx failed or was cancelled" && exit 1
-          fi
-          if [[ "${{ needs.build-gcc-chain.result }}" == "failure" || "${{ needs.build-gcc-chain.result }}" == "cancelled" ]]; then
-            echo "build-gcc-chain failed or was cancelled" && exit 1
           fi
           if [[ "${{ needs.build-final.result }}" == "failure" || "${{ needs.build-final.result }}" == "cancelled" ]]; then
             echo "build-final failed or was cancelled" && exit 1
