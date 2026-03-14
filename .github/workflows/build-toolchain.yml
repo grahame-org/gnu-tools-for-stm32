@@ -755,7 +755,7 @@ jobs:
           echo "build-time-seconds=$(( $(date +%s) - _start ))" >> "$GITHUB_OUTPUT"
 
       - name: Save cache – newlib
-        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.pre-restore.outputs.cache-hit != 'true' && github.event_name != 'merge_group'
+        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.pre-restore.outputs.cache-hit != 'true'
         uses: actions/cache/save@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           path: install-native
