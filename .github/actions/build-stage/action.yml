@@ -42,6 +42,9 @@ outputs:
   cache-hit:
     description: Whether a cache hit occurred for this stage
     value: "${{ steps.set-output.outputs.cache-hit }}"
+  build-time-seconds:
+    description: Wall-clock seconds elapsed during the build stage (empty on cache hit)
+    value: "${{ steps.build.outputs.build-time-seconds }}"
 
 runs:
   using: composite
@@ -70,6 +73,7 @@ runs:
       run: "${GITHUB_ACTION_PATH}/set-cache-hit-output.sh"
 
     - name: Build stage – ${{ inputs.stage-name }}
+      id: build
       if: steps.check.outputs.cache-miss == 'true'
       shell: bash
       env:
