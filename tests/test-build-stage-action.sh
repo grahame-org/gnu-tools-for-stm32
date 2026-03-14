@@ -5,7 +5,7 @@
 # (required inputs, outputs, composite type) with Python's yaml.safe_load.
 #
 # Run with: bash tests/test-build-stage-action.sh
-# Requires:  yamllint (pip3 install yamllint) – also installs PyYAML
+# Requires:  yamllint – install via: python3 -m pip install -r tests/requirements.txt
 
 set -e
 

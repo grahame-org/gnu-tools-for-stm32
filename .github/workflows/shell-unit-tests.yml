@@ -52,8 +52,12 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Install yamllint
-        run: python3 -m pip install yamllint==1.38.0
+      - name: Install test dependencies
+        run: |
+          TEST_VENV_PATH=/opt/test-venv
+          python3 -m venv "${TEST_VENV_PATH}"
+          "${TEST_VENV_PATH}/bin/python3" -m pip install -r tests/requirements.txt
+          echo "${TEST_VENV_PATH}/bin" >> "${GITHUB_PATH}"
 
       - name: Run shell unit tests
         run: |
