@@ -28,6 +28,15 @@ inputs:
       action perform the restore itself.
     required: false
     default: ''
+  save-in-merge-group:
+    description: >
+      When 'true', save the cache even during merge_group runs. Set this for
+      stages whose cached output is consumed by downstream jobs in the same
+      workflow run (e.g. binutils, which feeds build-gcc-first and build-gdb).
+      Defaults to 'false' to preserve the default behaviour of skipping cache
+      saves in merge_group events.
+    required: false
+    default: 'false'
 
 outputs:
   cache-hit:
@@ -69,7 +78,7 @@ runs:
       run: "${GITHUB_ACTION_PATH}/run-build-stage.sh"
 
     - name: Save cache – ${{ inputs.stage-name }}
-      if: steps.check.outputs.cache-miss == 'true' && github.event_name != 'merge_group'
+      if: steps.check.outputs.cache-miss == 'true' && (github.event_name != 'merge_group' || inputs.save-in-merge-group == 'true')
       uses: actions/cache/save@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
       with:
         path: ${{ inputs.cache-paths }}

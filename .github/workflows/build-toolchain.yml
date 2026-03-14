@@ -210,7 +210,7 @@ jobs:
 
       # --- Stage: binutils ---
       - name: Restore cache – binutils
-        id: cache-binutils
+        id: pre-restore
         if: steps.cache-toolchain.outputs.cache-hit != 'true'
         uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
@@ -218,7 +218,7 @@ jobs:
           key: ${{ runner.os }}-stage-v1-${{ needs.compute-hashes.outputs.binutils }}
 
       - name: Free disk space
-        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-binutils.outputs.cache-hit != 'true'
+        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.pre-restore.outputs.cache-hit != 'true'
         run: |
           sudo apt-get remove -y \
             '^dotnet-.*' \
@@ -240,7 +240,7 @@ jobs:
           df -h
 
       - name: Install system dependencies
-        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-binutils.outputs.cache-hit != 'true'
+        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.pre-restore.outputs.cache-hit != 'true'
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -273,7 +273,7 @@ jobs:
           done
 
       - name: Set up Python virtual environment
-        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-binutils.outputs.cache-hit != 'true'
+        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.pre-restore.outputs.cache-hit != 'true'
         run: |
           STM32_VENV_PATH=/opt/stm32-venv
           sudo mkdir -p "${STM32_VENV_PATH}"
@@ -284,33 +284,29 @@ jobs:
           echo "STM32_VENV_PATH=${STM32_VENV_PATH}" >> "${GITHUB_ENV}"
 
       - name: Build prerequisites
-        if: steps.cache-prerequisites.outputs.cache-hit != 'true' && steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-binutils.outputs.cache-hit != 'true'
+        if: steps.cache-prerequisites.outputs.cache-hit != 'true' && steps.cache-toolchain.outputs.cache-hit != 'true' && steps.pre-restore.outputs.cache-hit != 'true'
         run: |
           JOBS=$(nproc)
           export JOBS
           ./build-prerequisites.sh --skip_steps=mingw,howto,package_sources
 
       - name: Save cache – prerequisites
-        if: steps.cache-prerequisites.outputs.cache-hit != 'true' && steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-binutils.outputs.cache-hit != 'true'
+        if: steps.cache-prerequisites.outputs.cache-hit != 'true' && steps.cache-toolchain.outputs.cache-hit != 'true' && steps.pre-restore.outputs.cache-hit != 'true'
         uses: actions/cache/save@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           path: build-native/host-libs
           key: ${{ steps.cache-prerequisites.outputs.cache-primary-key }}
 
-      - name: Build stage – binutils
-        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-binutils.outputs.cache-hit != 'true'
-        run: |
-          JOBS=$(nproc)
-          export JOBS
-          ./build-binutils.sh \
-            --skip_steps=mingw,mingw-gdb-with-python,gdb-with-python,manual,package_sources
-
-      - name: Save cache – binutils
-        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-binutils.outputs.cache-hit != 'true'
-        uses: actions/cache/save@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+      - name: Build and cache stage – binutils
+        if: steps.cache-toolchain.outputs.cache-hit != 'true'
+        uses: ./.github/actions/build-stage
         with:
-          path: install-native
-          key: ${{ runner.os }}-stage-v1-${{ needs.compute-hashes.outputs.binutils }}
+          stage-name: binutils
+          cache-paths: install-native
+          cache-key: ${{ runner.os }}-stage-v1-${{ needs.compute-hashes.outputs.binutils }}
+          build-script: ./build-binutils.sh
+          pre-cache-hit: ${{ steps.pre-restore.outputs.cache-hit == 'true' }}
+          save-in-merge-group: 'true'
 
   # ---------------------------------------------------------------------------
   # Job: build-gdb
@@ -368,7 +364,7 @@ jobs:
 
       # --- Stage: gdb ---
       - name: Restore cache – gdb
-        id: cache-gdb
+        id: pre-restore
         if: steps.cache-toolchain.outputs.cache-hit != 'true'
         uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
@@ -376,14 +372,14 @@ jobs:
           key: ${{ runner.os }}-stage-v1-${{ needs.compute-hashes.outputs.gdb }}
 
       - name: Restore cache – binutils (baseline for gdb build)
-        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-gdb.outputs.cache-hit != 'true'
+        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.pre-restore.outputs.cache-hit != 'true'
         uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           path: install-native
           key: ${{ runner.os }}-stage-v1-${{ needs.compute-hashes.outputs.binutils }}
 
       - name: Free disk space
-        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-gdb.outputs.cache-hit != 'true'
+        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.pre-restore.outputs.cache-hit != 'true'
         run: |
           sudo apt-get remove -y \
             '^dotnet-.*' \
@@ -405,7 +401,7 @@ jobs:
           df -h
 
       - name: Install system dependencies
-        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-gdb.outputs.cache-hit != 'true'
+        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.pre-restore.outputs.cache-hit != 'true'
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -438,7 +434,7 @@ jobs:
           done
 
       - name: Set up Python virtual environment
-        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-gdb.outputs.cache-hit != 'true'
+        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.pre-restore.outputs.cache-hit != 'true'
         run: |
           STM32_VENV_PATH=/opt/stm32-venv
           sudo mkdir -p "${STM32_VENV_PATH}"
@@ -449,27 +445,23 @@ jobs:
           echo "STM32_VENV_PATH=${STM32_VENV_PATH}" >> "${GITHUB_ENV}"
 
       - name: Build prerequisites on cache miss
-        if: steps.cache-prerequisites.outputs.cache-hit != 'true' && steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-gdb.outputs.cache-hit != 'true'
+        if: steps.cache-prerequisites.outputs.cache-hit != 'true' && steps.cache-toolchain.outputs.cache-hit != 'true' && steps.pre-restore.outputs.cache-hit != 'true'
         run: |
           set -euo pipefail
           JOBS="${JOBS:-$(nproc)}"
           export JOBS
           ./build-prerequisites.sh --skip_steps=mingw,howto,package_sources
 
-      - name: Build stage – gdb
-        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-gdb.outputs.cache-hit != 'true'
-        run: |
-          JOBS=$(nproc)
-          export JOBS
-          ./build-gdb.sh \
-            --skip_steps=mingw,mingw-gdb-with-python,gdb-with-python,manual,package_sources
-
-      - name: Save cache – gdb
-        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-gdb.outputs.cache-hit != 'true'
-        uses: actions/cache/save@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+      - name: Build and cache stage – gdb
+        if: steps.cache-toolchain.outputs.cache-hit != 'true'
+        uses: ./.github/actions/build-stage
         with:
-          path: install-native
-          key: ${{ runner.os }}-stage-v1-${{ needs.compute-hashes.outputs.gdb }}
+          stage-name: gdb
+          cache-paths: install-native
+          cache-key: ${{ runner.os }}-stage-v1-${{ needs.compute-hashes.outputs.gdb }}
+          build-script: ./build-gdb.sh
+          pre-cache-hit: ${{ steps.pre-restore.outputs.cache-hit == 'true' }}
+          save-in-merge-group: 'true'
 
   # ---------------------------------------------------------------------------
   # Job: build-gcc-first
