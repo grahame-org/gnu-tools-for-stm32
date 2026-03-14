@@ -51,7 +51,7 @@ runs:
       env:
         PRE_CACHE_HIT: ${{ inputs.pre-cache-hit }}
         RESTORE_CACHE_HIT: ${{ steps.restore.outputs.cache-hit }}
-      run: ${GITHUB_ACTION_PATH}/compute-cache-miss.sh
+      run: "${GITHUB_ACTION_PATH}/compute-cache-miss.sh"
 
     - name: Build stage – ${{ inputs.stage-name }}
       if: steps.check.outputs.cache-miss == 'true'
