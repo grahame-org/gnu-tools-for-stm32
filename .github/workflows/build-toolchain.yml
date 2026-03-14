@@ -655,14 +655,14 @@ jobs:
           key: ${{ runner.os }}-stage-v1-${{ needs.compute-hashes.outputs.newlib }}
 
       - name: Restore cache – gcc-first (baseline for newlib build)
-        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-newlib.outputs.cache-hit != 'true'
+        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.pre-restore.outputs.cache-hit != 'true'
         uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           path: install-native
           key: ${{ runner.os }}-stage-v1-${{ needs.compute-hashes.outputs['gcc-first'] }}
 
       - name: Free disk space
-        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-newlib.outputs.cache-hit != 'true'
+        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.pre-restore.outputs.cache-hit != 'true'
         run: |
           sudo apt-get remove -y \
             '^dotnet-.*' \
@@ -684,7 +684,7 @@ jobs:
           df -h
 
       - name: Install system dependencies
-        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-newlib.outputs.cache-hit != 'true'
+        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.pre-restore.outputs.cache-hit != 'true'
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -717,7 +717,7 @@ jobs:
           done
 
       - name: Set up Python virtual environment
-        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-newlib.outputs.cache-hit != 'true'
+        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.pre-restore.outputs.cache-hit != 'true'
         run: |
           STM32_VENV_PATH=/opt/stm32-venv
           sudo mkdir -p "${STM32_VENV_PATH}"
@@ -728,7 +728,7 @@ jobs:
           echo "STM32_VENV_PATH=${STM32_VENV_PATH}" >> "${GITHUB_ENV}"
 
       - name: Build prerequisites on cache miss
-        if: steps.cache-prerequisites.outputs.cache-hit != 'true' && steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-newlib.outputs.cache-hit != 'true'
+        if: steps.cache-prerequisites.outputs.cache-hit != 'true' && steps.cache-toolchain.outputs.cache-hit != 'true' && steps.pre-restore.outputs.cache-hit != 'true'
         run: |
           set -euo pipefail
           JOBS="${JOBS:-$(nproc)}"
@@ -736,7 +736,7 @@ jobs:
           ./build-prerequisites.sh --skip_steps=mingw,howto,package_sources
 
       - name: Save cache – prerequisites
-        if: steps.cache-prerequisites.outputs.cache-hit != 'true' && steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-newlib.outputs.cache-hit != 'true'
+        if: steps.cache-prerequisites.outputs.cache-hit != 'true' && steps.cache-toolchain.outputs.cache-hit != 'true' && steps.pre-restore.outputs.cache-hit != 'true'
         uses: actions/cache/save@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           path: build-native/host-libs
@@ -744,7 +744,7 @@ jobs:
 
       - name: Build stage – newlib
         id: build-newlib
-        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-newlib.outputs.cache-hit != 'true'
+        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.pre-restore.outputs.cache-hit != 'true'
         run: |
           _start=$(date +%s)
           JOBS=$(nproc)
@@ -754,7 +754,7 @@ jobs:
           echo "build-time-seconds=$(( $(date +%s) - _start ))" >> "$GITHUB_OUTPUT"
 
       - name: Save cache – newlib
-        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.cache-newlib.outputs.cache-hit != 'true' && github.event_name != 'merge_group'
+        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.pre-restore.outputs.cache-hit != 'true' && github.event_name != 'merge_group'
         uses: actions/cache/save@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           path: install-native
