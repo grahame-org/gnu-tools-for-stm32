@@ -18,24 +18,39 @@ inputs:
     description: Additional arguments to pass to the build script
     required: false
     default: '--skip_steps=mingw,mingw-gdb-with-python,gdb-with-python,manual,package_sources'
+  pre-cache-hit:
+    description: >
+      Cache-hit result from a preceding inline restore step in the caller.
+      When provided, the action skips its internal restore step and uses this
+      value to gate the build and save steps. This preserves the warm-cache
+      optimisation where expensive runner setup is gated on an early cache
+      check before calling this action. Omit (or leave empty) to have the
+      action perform the restore itself.
+    required: false
+    default: ''
 
 outputs:
   cache-hit:
     description: Whether a cache hit occurred for this stage
-    value: ${{ steps.restore.outputs.cache-hit }}
+    value: >-
+      ${{ inputs.pre-cache-hit != '' && inputs.pre-cache-hit
+          || steps.restore.outputs.cache-hit }}
 
 runs:
   using: composite
   steps:
     - name: Restore cache – ${{ inputs.stage-name }}
       id: restore
+      if: inputs.pre-cache-hit == ''
       uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
       with:
         path: ${{ inputs.cache-paths }}
         key: ${{ inputs.cache-key }}
 
     - name: Build stage – ${{ inputs.stage-name }}
-      if: steps.restore.outputs.cache-hit != 'true'
+      if: >-
+        (inputs.pre-cache-hit == '' && steps.restore.outputs.cache-hit != 'true') ||
+        (inputs.pre-cache-hit != '' && inputs.pre-cache-hit != 'true')
       shell: bash
       run: |
         JOBS=$(nproc)
@@ -43,7 +58,10 @@ runs:
         ${{ inputs.build-script }} ${{ inputs.build-args }}
 
     - name: Save cache – ${{ inputs.stage-name }}
-      if: steps.restore.outputs.cache-hit != 'true' && github.event_name != 'merge_group'
+      if: >-
+        github.event_name != 'merge_group' &&
+        ((inputs.pre-cache-hit == '' && steps.restore.outputs.cache-hit != 'true') ||
+        (inputs.pre-cache-hit != '' && inputs.pre-cache-hit != 'true'))
       uses: actions/cache/save@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
       with:
         path: ${{ inputs.cache-paths }}
