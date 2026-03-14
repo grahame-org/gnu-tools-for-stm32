@@ -39,6 +39,7 @@ jobs:
               - 'build-toolchain.sh'
               - 'build-toolchain-args.sh'
               - '.github/workflows/build-toolchain.yml'
+              - '.github/actions/build-stage/**'
               - 'test_project/**'
 
   compute-hashes:
