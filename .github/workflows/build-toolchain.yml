@@ -743,23 +743,15 @@ jobs:
           path: build-native/host-libs
           key: ${{ steps.cache-prerequisites.outputs.cache-primary-key }}
 
-      - name: Build stage – newlib
-        id: build-newlib
-        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.pre-restore.outputs.cache-hit != 'true'
-        run: |
-          _start=$(date +%s)
-          JOBS=$(nproc)
-          export JOBS
-          ./build-newlib.sh \
-            --skip_steps=mingw,mingw-gdb-with-python,gdb-with-python,manual,package_sources
-          echo "build-time-seconds=$(( $(date +%s) - _start ))" >> "$GITHUB_OUTPUT"
-
-      - name: Save cache – newlib
-        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.pre-restore.outputs.cache-hit != 'true' && github.event_name != 'merge_group'
-        uses: actions/cache/save@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+      - name: Build and cache stage – newlib
+        if: steps.cache-toolchain.outputs.cache-hit != 'true'
+        uses: ./.github/actions/build-stage
         with:
-          path: install-native
-          key: ${{ runner.os }}-stage-v1-${{ needs.compute-hashes.outputs.newlib }}
+          stage-name: newlib
+          cache-paths: install-native
+          cache-key: ${{ runner.os }}-stage-v1-${{ needs.compute-hashes.outputs.newlib }}
+          build-script: ./build-newlib.sh
+          pre-cache-hit: ${{ steps.pre-restore.outputs.cache-hit == 'true' }}
 
   # ---------------------------------------------------------------------------
   # Job: build-newlib-nano
