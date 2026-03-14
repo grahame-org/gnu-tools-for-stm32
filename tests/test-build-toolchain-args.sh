@@ -223,6 +223,70 @@ assert_nonzero_exit "unknown --skip_steps value exits non-zero" \
     bash -c '. "$1/build-toolchain-args.sh"; parse_toolchain_args --skip_steps=nosuchstep' _ "$REPO_ROOT"
 
 # ---------------------------------------------------------------------------
+# Test group 8: variables reset on each call
+# ---------------------------------------------------------------------------
+# Each call to parse_toolchain_args must reset all state, so that calling it
+# twice in the same process doesn't accumulate flags from previous calls.
+
+echo ""
+echo "=== Group 8: Reset behaviour (each call is idempotent) ==="
+
+parse_toolchain_args --build_type=ppa,debug --skip_steps=manual,strip \
+    --skip_stages=binutils --with-multilib-list=rmprofile
+# Now call again with no args — everything should revert to defaults
+parse_toolchain_args
+assert_eq "reset: skip_steps is empty"              "" "$skip_steps"
+assert_eq "reset: skip_stages is empty"             "" "$skip_stages"
+assert_eq "reset: build_type is empty"              "" "$build_type"
+assert_eq "reset: is_native_build=yes"              "yes" "$is_native_build"
+assert_eq "reset: is_ppa_release=no"                "no" "$is_ppa_release"
+assert_eq "reset: is_debug_build=no"                "no" "$is_debug_build"
+assert_eq "reset: BUILD_OPTIONS=-g -O2"             "-g -O2" "$BUILD_OPTIONS"
+assert_eq "reset: skip_manual=no"                   "no" "$skip_manual"
+assert_eq "reset: skip_strip_target_libraries=no"   "no" "$skip_strip_target_libraries"
+assert_eq "reset: skip_package_sources=no"          "no" "$skip_package_sources"
+assert_eq "reset: skip_gdb_with_python=yes"         "yes" "$skip_gdb_with_python"
+assert_eq "reset: skip_mingw32_gdb_with_python=yes" "yes" "$skip_mingw32_gdb_with_python"
+assert_eq "reset: MULTILIB_LIST is default" \
+    "--with-multilib-list=rmprofile,aprofile" "$MULTILIB_LIST"
+
+# ---------------------------------------------------------------------------
+# Test group 9: additional build_type combinations
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "=== Group 9: Additional --build_type combinations ==="
+
+# debug alone (no explicit native/ppa): sets debug flags but is_native_build stays yes
+parse_toolchain_args --build_type=debug
+assert_eq "--build_type=debug sets is_debug_build=yes"    "yes" "$is_debug_build"
+assert_eq "--build_type=debug sets BUILD_OPTIONS=-g -O0"  "-g -O0" "$BUILD_OPTIONS"
+assert_eq "--build_type=debug keeps is_native_build=yes"  "yes" "$is_native_build"
+assert_eq "--build_type=debug keeps is_ppa_release=no"    "no"  "$is_ppa_release"
+
+# ppa,debug: should also produce debug build options
+parse_toolchain_args --build_type=ppa,debug
+assert_eq "--build_type=ppa,debug sets is_ppa_release=yes"  "yes" "$is_ppa_release"
+assert_eq "--build_type=ppa,debug sets is_debug_build=yes"  "yes" "$is_debug_build"
+assert_eq "--build_type=ppa,debug sets BUILD_OPTIONS=-g -O0" "-g -O0" "$BUILD_OPTIONS"
+
+# ---------------------------------------------------------------------------
+# Test group 10: default skip_mingw32_gdb_with_python is yes
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "=== Group 10: Default skip_mingw32_gdb_with_python ==="
+
+parse_toolchain_args
+assert_eq "default skip_mingw32_gdb_with_python=yes" "yes" "$skip_mingw32_gdb_with_python"
+
+parse_toolchain_args --build_type=native
+assert_eq "native build keeps skip_mingw32_gdb_with_python=yes" "yes" "$skip_mingw32_gdb_with_python"
+
+parse_toolchain_args --build_type=ppa
+assert_eq "ppa build keeps skip_mingw32_gdb_with_python=yes" "yes" "$skip_mingw32_gdb_with_python"
+
+# ---------------------------------------------------------------------------
 # Summary
 # ---------------------------------------------------------------------------
 
