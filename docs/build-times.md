@@ -2,11 +2,19 @@
 
 ## Overview
 
-Build times are automatically recorded in every CI run of
-[`build-toolchain.yml`](../.github/workflows/build-toolchain.yml) and appear
-in the **GitHub Actions Job Summary** for each run.  Each build stage is timed
-independently; the elapsed wall-clock time for each stage is reported at the
-end of the workflow run so you can track how long individual stages take.
+Each build stage in
+[`build-toolchain.yml`](../.github/workflows/build-toolchain.yml) runs as a
+separate CI job.  The wall-clock duration of every job is visible in the
+GitHub Actions UI at the job level.  In addition, the
+[`build-stage`](../.github/actions/build-stage/action.yml) composite action
+emits a `build-time-seconds` output that records the actual compile time
+(excluding runner setup overhead) for each stage that performs a build.
+
+> **Planned**: A consolidated **Build Stage Timings** table written to the
+> workflow Job Summary is tracked in
+> [issue #287](https://github.com/grahame-org/gnu-tools-for-stm32/issues/287)
+> and has not yet been implemented.  The per-job duration indicators in the
+> Actions UI are the current way to inspect stage timings.
 
 ---
 
@@ -36,38 +44,37 @@ version, and the size of the source trees.
 
 ---
 
-## Automated Timing in CI
+## Reading Per-Stage Timings in CI
 
-Every `build-toolchain.yml` run emits a timing table in its **Job Summary**
-under the heading **Build Stage Timings**.
-
-To find the Job Summary:
+Each build stage runs as its own CI job.  To see how long each stage took:
 
 1. Open the [Actions tab](https://github.com/grahame-org/gnu-tools-for-stm32/actions)
    of the repository.
-2. Click the `Build toolchain` workflow run you are interested in.
-3. The **Job Summary** panel is displayed at the top of the workflow run page,
-   above the individual job list.  Scroll to the **Build Stage Timings** table
-   to see per-stage elapsed times for that run.
+2. Click the `Build STM32 Toolchain` workflow run you are interested in.
+3. The job list shows each stage as a separate entry
+   (`build-binutils`, `build-gdb`, `build-gcc-first`, etc.) with its elapsed
+   duration displayed next to the job name.
 
 ---
 
 ## Cache Hit Behaviour
 
-When the toolchain cache for a stage is still valid (the source tree and build
-inputs have not changed since the last run), the stage is skipped and its
-build time shows as `—` in the summary table.  Only stages that actually ran a
-build contribute a timing value.
+When the cache for a stage is still valid (the source tree and build inputs
+have not changed since the last run), the build step is skipped and the job
+completes in under a minute.  In this case the job duration shown in the
+Actions UI reflects only runner setup overhead, not any real build work.
 
 ---
 
 ## Using Timings for Optimisation
 
-To compare the impact of a source change on build time:
+To compare the build-time impact of a source change:
 
 1. Identify the workflow run **before** your change and the run **after**.
-2. Open the Job Summary for each run (see [Automated Timing in CI](#automated-timing-in-ci)).
-3. Compare the per-stage elapsed times in the **Build Stage Timings** table.
+2. Open each run in the Actions UI (see
+   [Reading Per-Stage Timings in CI](#reading-per-stage-timings-in-ci)).
+3. Compare the per-job durations in the job list.
 
-Stages unaffected by your change will appear as `—` (cache hit) in both runs,
-so you can quickly focus on the stages that actually rebuilt.
+Jobs unaffected by your change will show a very short duration (< 1 min,
+indicating a cache hit), so you can quickly focus on the stages that actually
+rebuilt.
