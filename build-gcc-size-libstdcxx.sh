@@ -61,6 +61,22 @@ cd "$script_path"
 . "$script_path/build-toolchain-args.sh"
 parse_toolchain_args "$@"
 
+# gcc-size-libstdcxx builds the size-optimised (_nano) variants of libstdc++
+# and newlib, which are consumed only via nano.specs and are intended for
+# Cortex-M (rmprofile) targets.  Default to rmprofile-only to avoid building
+# unused aprofile variants.  An explicit --with-multilib-list argument passed
+# to this script overrides this default.
+_saw_multilib_flag=no
+for _arg in "$@"; do
+    case $_arg in
+        --with-multilib-list=*) _saw_multilib_flag=yes ;;
+    esac
+done
+if [ "$_saw_multilib_flag" = "no" ]; then
+    MULTILIB_LIST="--with-multilib-list=rmprofile"
+fi
+unset _saw_multilib_flag _arg
+
 if [ "x$BUILD" == "xx86_64-apple-darwin10" ] || [ "x$is_ppa_release" == "xyes" ]; then
     BUILD_OPTIONS="$BUILD_OPTIONS -fbracket-depth=512"
 fi
@@ -114,7 +130,7 @@ if [ "x$skip_native_build" != "xyes" ] ; then
         $GCC_CONFIG_OPTS \
         "${GCC_CONFIG_OPTS_LCPP}"                              \
         "--with-pkgversion=$PKGVERSION" \
-        --with-multilib-list=rmprofile
+        ${MULTILIB_LIST}
 
     make -j$JOBS CCXXFLAGS="$BUILD_OPTIONS" \
             LDFLAGS_FOR_TARGET="--specs=nosys.specs" \
