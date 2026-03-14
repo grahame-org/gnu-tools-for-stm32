@@ -7,10 +7,13 @@
 
 set -euo pipefail
 
+_start=$(date +%s)
+
 JOBS=$(nproc)
 export JOBS
 
 # Read BUILD_STAGE_ARGS into an array so each whitespace-separated token
 # becomes a distinct argument rather than a single quoted string.
 read -ra build_args <<< "${BUILD_STAGE_ARGS}"
-exec "${BUILD_STAGE_SCRIPT}" "${build_args[@]}"
+"${BUILD_STAGE_SCRIPT}" "${build_args[@]}"
+echo "build-time-seconds=$(( $(date +%s) - _start ))" >> "${GITHUB_OUTPUT}"
