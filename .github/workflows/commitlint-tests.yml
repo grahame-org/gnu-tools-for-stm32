@@ -47,7 +47,8 @@ jobs:
         run: npm ci --ignore-scripts
 
       - name: Validate known-good conventional commit message
-        run: printf '%s\n' "feat: add support for ARMv9" | npx --no-install commitlint --verbose
+        run: |
+          printf '%s\n' "feat: add support for ARMv9" | npx --no-install commitlint --verbose
 
       - name: Validate known-bad commit message is rejected
         run: |
