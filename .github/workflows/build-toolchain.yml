@@ -943,7 +943,8 @@ jobs:
             python3-venv \
             texi2html \
             texinfo \
-            automake
+            automake \
+            ccache
           for version in 1.15 1.14; do
             for tool in aclocal automake; do
               target="/usr/bin/${tool}-1.16"
@@ -1068,7 +1069,8 @@ jobs:
             python3-venv \
             texi2html \
             texinfo \
-            automake
+            automake \
+            ccache
           for version in 1.15 1.14; do
             for tool in aclocal automake; do
               target="/usr/bin/${tool}-1.16"
