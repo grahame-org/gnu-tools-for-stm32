@@ -744,6 +744,7 @@ jobs:
           key: ${{ steps.cache-prerequisites.outputs.cache-primary-key }}
 
       - name: Build and cache stage – newlib
+        id: build-newlib
         if: steps.cache-toolchain.outputs.cache-hit != 'true'
         uses: ./.github/actions/build-stage
         with:
