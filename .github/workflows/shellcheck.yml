@@ -22,7 +22,7 @@ jobs:
       - name: Check for test-relevant file changes
         if: github.event_name == 'pull_request'
         id: filter
-        uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
+        uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
         with:
           filters: |
             test:
@@ -58,7 +58,8 @@ jobs:
           build-toolchain-args.sh \
           build-toolchain.sh \
           .github/actions/build-stage/compute-cache-miss.sh \
-          .github/actions/build-stage/run-build-stage.sh
+          .github/actions/build-stage/run-build-stage.sh \
+          .github/actions/build-stage/set-cache-hit-output.sh
 
   shellcheck-status:
     runs-on: ubuntu-latest
