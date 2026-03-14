@@ -231,7 +231,8 @@ assert_nonzero_exit "unknown --skip_steps value exits non-zero" \
 echo ""
 echo "=== Group 8: Reset behaviour (each call is idempotent) ==="
 
-parse_toolchain_args --build_type=ppa,debug --skip_steps=manual,strip \
+parse_toolchain_args --build_type=ppa,debug \
+    --skip_steps=manual,strip,package_bins,md5_checksum,mingw32,native \
     --skip_stages=binutils --with-multilib-list=rmprofile
 # Now call again with no args — everything should revert to defaults
 parse_toolchain_args
@@ -245,6 +246,10 @@ assert_eq "reset: BUILD_OPTIONS=-g -O2"             "-g -O2" "$BUILD_OPTIONS"
 assert_eq "reset: skip_manual=no"                   "no" "$skip_manual"
 assert_eq "reset: skip_strip_target_libraries=no"   "no" "$skip_strip_target_libraries"
 assert_eq "reset: skip_package_sources=no"          "no" "$skip_package_sources"
+assert_eq "reset: skip_package_bins=no"             "no" "$skip_package_bins"
+assert_eq "reset: skip_md5_checksum=no"             "no" "$skip_md5_checksum"
+assert_eq "reset: skip_mingw32=no"                  "no" "$skip_mingw32"
+assert_eq "reset: skip_native_build=no"             "no" "$skip_native_build"
 assert_eq "reset: skip_gdb_with_python=yes"         "yes" "$skip_gdb_with_python"
 assert_eq "reset: skip_mingw32_gdb_with_python=yes" "yes" "$skip_mingw32_gdb_with_python"
 assert_eq "reset: MULTILIB_LIST is default" \
