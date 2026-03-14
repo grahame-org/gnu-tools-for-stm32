@@ -114,7 +114,7 @@ if [ "x$skip_native_build" != "xyes" ] ; then
         $GCC_CONFIG_OPTS \
         "${GCC_CONFIG_OPTS_LCPP}"                              \
         "--with-pkgversion=$PKGVERSION" \
-        ${MULTILIB_LIST}
+        --with-multilib-list=rmprofile
 
     make -j$JOBS CCXXFLAGS="$BUILD_OPTIONS" \
             LDFLAGS_FOR_TARGET="--specs=nosys.specs" \

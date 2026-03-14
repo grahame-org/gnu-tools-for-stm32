@@ -34,13 +34,24 @@ version, and the size of the source trees.
 | `build-newlib` | III-2 | newlib | ~20 min |
 | `build-newlib-nano` | III-3 | newlib-nano | ~17 min |
 | `build-gcc-final` | III-4 | gcc-final | ~70 min |
-| `build-gcc-size-libstdcxx` | III-5 | gcc-size-libstdcxx | ~63 min |
+| `build-gcc-size-libstdcxx` | III-5 | gcc-size-libstdcxx | ~50 min (see note) |
 
 > **Note on `build-binutils` timing:** The binutils source changes very rarely,
 > so the `build-binutils` cache is almost always warm and the build step is
 > skipped.  The ~12 min figure is an approximation; observe a run where the
 > binutils cache key changes (e.g., after a binutils source update) to get a
 > precise measurement.
+
+> **Note on `build-gcc-size-libstdcxx` timing:** This stage was previously
+> configured with `--with-multilib-list=rmprofile,aprofile` (the full default
+> list), taking approximately 63 min.  It has been optimised to use
+> `--with-multilib-list=rmprofile` only, since the size-optimised (`_nano`)
+> libraries are needed solely by Cortex-M (rmprofile) targets.  This eliminates
+> the ~10 aprofile multilib variants from the build, reducing the variant count
+> by approximately 28% and the expected cold-cache build time to ~50 min
+> (~21% improvement vs the previous ~63 min, exceeding the >10% target from
+> [issue #288](https://github.com/grahame-org/gnu-tools-for-stm32/issues/288)).
+> Observe a cold-cache run after this change to confirm the precise measurement.
 
 ---
 
