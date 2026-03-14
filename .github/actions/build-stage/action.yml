@@ -32,7 +32,7 @@ inputs:
 outputs:
   cache-hit:
     description: Whether a cache hit occurred for this stage
-    value: "${{ inputs.pre-cache-hit != '' ? inputs.pre-cache-hit : steps.restore.outputs.cache-hit }}"
+    value: "${{ steps.set-output.outputs.cache-hit }}"
 
 runs:
   using: composite
@@ -52,6 +52,18 @@ runs:
         PRE_CACHE_HIT: ${{ inputs.pre-cache-hit }}
         RESTORE_CACHE_HIT: ${{ steps.restore.outputs.cache-hit }}
       run: "${GITHUB_ACTION_PATH}/compute-cache-miss.sh"
+
+    - name: Set cache-hit output – ${{ inputs.stage-name }}
+      id: set-output
+      shell: bash
+      env:
+        CACHE_MISS: ${{ steps.check.outputs.cache-miss }}
+      run: |
+        if [[ "${CACHE_MISS}" != "true" ]]; then
+          echo "cache-hit=true" >> "${GITHUB_OUTPUT}"
+        else
+          echo "cache-hit=" >> "${GITHUB_OUTPUT}"
+        fi
 
     - name: Build stage – ${{ inputs.stage-name }}
       if: steps.check.outputs.cache-miss == 'true'

@@ -594,7 +594,7 @@ jobs:
           cache-paths: install-native
           cache-key: ${{ runner.os }}-stage-v1-${{ needs.compute-hashes.outputs['gcc-first'] }}
           build-script: ./build-gcc-first.sh
-          pre-cache-hit: ${{ steps.pre-restore.outputs.cache-hit }}
+          pre-cache-hit: ${{ steps.pre-restore.outputs.cache-hit == 'true' }}
 
   # ---------------------------------------------------------------------------
   # Job: build-newlib
