@@ -55,8 +55,20 @@ jobs:
             "update stuff without type"
           )
           for msg in "${invalid_messages[@]}"; do
-            if printf '%s\n' "$msg" | npx --no-install commitlint --verbose 2>/dev/null; then
+            # Capture combined stdout+stderr so we can distinguish a clean lint failure
+            # (e.g. type-empty/type-enum) from a tool crash or configuration error.
+            output=$(printf '%s\n' "$msg" | npx --no-install commitlint --verbose 2>&1)
+            status=$?
+            if [ "$status" -eq 0 ]; then
               echo "FAIL: expected invalid message was accepted: ${msg}"
+              echo "commitlint output:"
+              printf '%s\n' "$output"
+              exit 1
+            fi
+            if ! printf '%s\n' "$output" | grep -Eq 'type-(enum|empty)'; then
+              echo "FAIL: invalid message did not fail due to expected type rule: ${msg}"
+              echo "commitlint output:"
+              printf '%s\n' "$output"
               exit 1
             fi
           done
