@@ -53,7 +53,7 @@ jobs:
           persist-credentials: false
 
       - name: Install yamllint
-        run: pip3 install yamllint
+        run: python3 -m pip install yamllint==1.38.0
 
       - name: Run shell unit tests
         run: |

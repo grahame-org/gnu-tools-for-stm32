@@ -50,14 +50,19 @@ assert_eq() {
 }
 
 # Run a Python one-liner against ACTION_YML; pass on exit 0, fail on non-zero.
+# Stderr is captured and printed on failure to help diagnose assertion errors
+# (e.g. AssertionError details or import failures).
 py_assert() {
-    local desc="$1" code="$2"
-    if python3 -c "$code" "${ACTION_YML}" 2>/dev/null; then
+    local desc="$1" code="$2" py_stderr
+    if py_stderr=$(python3 -c "$code" "${ACTION_YML}" 2>&1); then
         _PASS=$((_PASS + 1))
         echo "  PASS: $desc"
     else
         _FAIL=$((_FAIL + 1))
         echo "  FAIL: $desc"
+        if [ -n "$py_stderr" ]; then
+            echo "        $py_stderr"
+        fi
     fi
 }
 
