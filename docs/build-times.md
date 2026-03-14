@@ -12,19 +12,27 @@ end of the workflow run so you can track how long individual stages take.
 
 ## Reference Timing Table
 
-The table below shows baseline timings measured on a standard GitHub-hosted
-`ubuntu-latest` runner.  Actual times will vary with runner load, compiler
+The table below shows cold-cache build times measured on a standard
+GitHub-hosted `ubuntu-latest` runner.  Times include runner setup overhead
+(checkout, disk cleanup, and dependency installation, typically 2–3 min) as
+well as the actual build.  Actual times will vary with runner load, compiler
 version, and the size of the source trees.
 
-| CI job | Stage | Description | Typical build time |
-|--------|-------|-------------|-------------------|
-| `build-binutils` | III-0 | binutils | ~12 min |
-| `build-gdb` | III-6 | gdb | ~8 min |
-| `build-gcc-first` | III-1 | gcc-first | ~5 min |
-| `build-newlib` | III-2 | newlib | ~3 min |
-| `build-newlib-nano` | III-3 | newlib-nano | ~3 min |
-| `build-gcc-final` | III-4 | gcc-final | ~67 min |
-| `build-gcc-size-libstdcxx` | III-5 | gcc-size-libstdcxx | ~10 min |
+| CI job | Stage | Description | Typical cold-cache build time |
+|--------|-------|-------------|-------------------------------|
+| `build-binutils` | III-0 | binutils | ~12 min (estimated; see note) |
+| `build-gdb` | III-6 | gdb | ~7 min |
+| `build-gcc-first` | III-1 | gcc-first | ~11 min |
+| `build-newlib` | III-2 | newlib | ~20 min |
+| `build-newlib-nano` | III-3 | newlib-nano | ~17 min |
+| `build-gcc-final` | III-4 | gcc-final | ~70 min |
+| `build-gcc-size-libstdcxx` | III-5 | gcc-size-libstdcxx | ~63 min |
+
+> **Note on `build-binutils` timing:** The binutils source changes very rarely,
+> so the `build-binutils` cache is almost always warm and the build step is
+> skipped.  The ~12 min figure is an approximation; observe a run where the
+> binutils cache key changes (e.g., after a binutils source update) to get a
+> precise measurement.
 
 ---
 
