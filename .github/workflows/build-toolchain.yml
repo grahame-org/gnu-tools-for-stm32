@@ -1635,26 +1635,8 @@ jobs:
           echo "All artifacts match reference binaries."
 
   # ---------------------------------------------------------------------------
-  # Status jobs – keep required checks green when jobs are skipped.
+  # Status job – keep required checks green when jobs are skipped.
   # ---------------------------------------------------------------------------
-  build-gdb-status:
-    runs-on: ubuntu-slim
-    needs: [check-changes, compute-hashes, build-gdb]
-    if: always()
-    steps:
-      - name: Report build-gdb status
-        run: |
-          if [[ "${{ needs.check-changes.result }}" == "failure" || "${{ needs.check-changes.result }}" == "cancelled" ]]; then
-            echo "check-changes job failed or was cancelled" && exit 1
-          fi
-          if [[ "${{ needs.compute-hashes.result }}" == "failure" || "${{ needs.compute-hashes.result }}" == "cancelled" ]]; then
-            echo "compute-hashes job failed or was cancelled" && exit 1
-          fi
-          if [[ "${{ needs.build-gdb.result }}" == "failure" || "${{ needs.build-gdb.result }}" == "cancelled" ]]; then
-            echo "build-gdb failed or was cancelled" && exit 1
-          fi
-          echo "build-gdb skipped or succeeded"
-
   build-status:
     runs-on: ubuntu-slim
     needs: [check-changes, compute-hashes, build-binutils, build-gdb, build-gcc-first, build-newlib, build-newlib-nano, build-gcc-final, build-gcc-size-libstdcxx, build-gcc-chain, build-final]
