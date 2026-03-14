@@ -1,0 +1,97 @@
+name: Avo Generator Check
+
+on:
+  push:
+    branches:
+      - 13.3.rel1
+  pull_request:
+  merge_group:
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  check-changes:
+    runs-on: ubuntu-slim
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      should-test: ${{ steps.filter.outputs.test || 'true' }}
+    steps:
+      - name: Check for test-relevant file changes
+        if: github.event_name == 'pull_request'
+        id: filter
+        uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
+        with:
+          filters: |
+            test:
+              - 'src/gcc/libgo/go/crypto/ed25519/internal/edwards25519/field/_asm/**'
+              - '.github/workflows/avo-generator-check.yml'
+
+  avo-generator-check:
+    needs: check-changes
+    if: needs.check-changes.outputs.should-test == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Set up Go
+        uses: actions/setup-go@4b73464bb391d4059bd26b0524d20df3927bd417 # v6.3.0
+        with:
+          go-version: stable
+          # go.sum is not committed for this generator-only module; disable
+          # setup-go's built-in cache to avoid a cache-key lookup failure.
+          cache: false
+
+      - name: Download avo dependencies
+        # go.sum is not committed; go mod download creates it on first run.
+        working-directory: src/gcc/libgo/go/crypto/ed25519/internal/edwards25519/field/_asm
+        run: go mod download
+
+      - name: Verify avo generator compiles
+        working-directory: src/gcc/libgo/go/crypto/ed25519/internal/edwards25519/field/_asm
+        run: go build .
+
+      - name: Run avo generator and verify output is stable
+        working-directory: src/gcc/libgo/go/crypto/ed25519/internal/edwards25519/field/_asm
+        run: |
+          go run . \
+            -out ../fe_amd64_new.s \
+            -stubs ../fe_amd64_new.go \
+            -pkg field
+          # Verify the generated Go stubs match the committed stubs.
+          if ! diff -u ../fe_amd64.go ../fe_amd64_new.go; then
+            echo "ERROR: avo generated different Go stubs than those committed."
+            echo "The committed fe_amd64.go may need to be regenerated with:"
+            echo "  cd src/gcc/libgo/go/crypto/ed25519/internal/edwards25519/field/_asm"
+            echo "  go generate"
+            rm -f ../fe_amd64_new.s ../fe_amd64_new.go
+            exit 1
+          fi
+          # fe_amd64.s is not committed in this repository so it cannot be
+          # compared; any assembly regression would surface as a build failure
+          # when libgo is compiled. The stubs check above is sufficient to
+          # detect avo API changes that alter the public interface.
+          rm -f ../fe_amd64_new.s ../fe_amd64_new.go
+
+  avo-generator-check-status:
+    runs-on: ubuntu-slim
+    needs: [check-changes, avo-generator-check]
+    if: always()
+    steps:
+      - name: Report check status
+        run: |
+          if [[ "${{ needs.check-changes.result }}" == "failure" || "${{ needs.check-changes.result }}" == "cancelled" ]]; then
+            echo "check-changes job failed or was cancelled" && exit 1
+          fi
+          if [[ "${{ needs.avo-generator-check.result }}" == "failure" || "${{ needs.avo-generator-check.result }}" == "cancelled" ]]; then
+            echo "Avo generator check failed or was cancelled" && exit 1
+          fi
+          echo "Avo generator check skipped or succeeded"
