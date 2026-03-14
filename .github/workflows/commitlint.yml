@@ -23,6 +23,44 @@ jobs:
       - name: Install dependencies
         run: npm ci --ignore-scripts
 
+      - name: Smoke test commitlint configuration
+        run: |
+          # Verify that all conventional commit types used in this repository are accepted.
+          # This acts as a regression test when @commitlint/config-conventional is updated.
+          valid_messages=(
+            "feat: add new feature"
+            "fix: correct a bug"
+            "docs: update documentation"
+            "style: reformat code"
+            "refactor: restructure code"
+            "test: add unit tests"
+            "chore: maintenance task"
+            "ci: update workflow"
+            "build: upgrade dependency"
+            "perf: improve performance"
+            "revert: revert a commit"
+            "feat(scope): add scoped feature"
+            "fix!: breaking bug fix"
+          )
+          for msg in "${valid_messages[@]}"; do
+            if ! printf '%s\n' "$msg" | npx --no-install commitlint --verbose; then
+              echo "FAIL: expected valid message was rejected: ${msg}"
+              exit 1
+            fi
+          done
+
+          # Verify that messages without a valid conventional-commits type are rejected.
+          invalid_messages=(
+            "WIP: work in progress"
+            "update stuff without type"
+          )
+          for msg in "${invalid_messages[@]}"; do
+            if printf '%s\n' "$msg" | npx --no-install commitlint --verbose 2>/dev/null; then
+              echo "FAIL: expected invalid message was accepted: ${msg}"
+              exit 1
+            fi
+          done
+
       - name: Validate PR title
         if: github.event_name == 'pull_request'
         env:
