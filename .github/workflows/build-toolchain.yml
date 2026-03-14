@@ -488,7 +488,16 @@ jobs:
         with:
           persist-credentials: false
 
+      # --- Stage: gcc-first ---
+      - name: Restore cache – gcc-first
+        id: cache-gcc-first
+        uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        with:
+          path: install-native
+          key: ${{ runner.os }}-stage-v1-${{ needs.compute-hashes.outputs['gcc-first'] }}
+
       - name: Free disk space
+        if: steps.cache-gcc-first.outputs.cache-hit != 'true'
         run: |
           sudo apt-get remove -y \
             '^dotnet-.*' \
@@ -510,6 +519,7 @@ jobs:
           df -h
 
       - name: Install system dependencies
+        if: steps.cache-gcc-first.outputs.cache-hit != 'true'
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -542,6 +552,7 @@ jobs:
           done
 
       - name: Set up Python virtual environment
+        if: steps.cache-gcc-first.outputs.cache-hit != 'true'
         run: |
           STM32_VENV_PATH=/opt/stm32-venv
           sudo mkdir -p "${STM32_VENV_PATH}"
@@ -553,13 +564,14 @@ jobs:
 
       - name: Restore cache – prerequisites
         id: cache-prerequisites
+        if: steps.cache-gcc-first.outputs.cache-hit != 'true'
         uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           path: build-native/host-libs
           key: ${{ runner.os }}-prerequisites-${{ hashFiles('build-prerequisites.sh', 'build-common.sh', 'src/gmp/**', 'src/mpfr/**', 'src/mpc/**', 'src/isl/**', 'src/expat/**', 'src/zlib*/**') }}
 
       - name: Build prerequisites (cache miss)
-        if: steps.cache-prerequisites.outputs.cache-hit != 'true'
+        if: steps.cache-prerequisites.outputs.cache-hit != 'true' && steps.cache-gcc-first.outputs.cache-hit != 'true'
         run: |
           set -euo pipefail
           JOBS="${JOBS:-$(nproc)}"
@@ -568,18 +580,11 @@ jobs:
 
       # Restore binutils as baseline for the gcc-first build
       - name: Restore cache – binutils (baseline)
+        if: steps.cache-gcc-first.outputs.cache-hit != 'true'
         uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           path: install-native
           key: ${{ runner.os }}-stage-v1-${{ needs.compute-hashes.outputs.binutils }}
-
-      # --- Stage: gcc-first ---
-      - name: Restore cache – gcc-first
-        id: cache-gcc-first
-        uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
-        with:
-          path: install-native
-          key: ${{ runner.os }}-stage-v1-${{ needs.compute-hashes.outputs['gcc-first'] }}
 
       - name: Build stage – gcc-first
         if: steps.cache-gcc-first.outputs.cache-hit != 'true'
