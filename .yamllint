@@ -1,0 +1,17 @@
+# yamllint configuration for this project.
+# Extends the default ruleset with adjustments for GitHub Actions YAML style:
+#   - No document-start marker ("---") required
+#   - Extended line length to accommodate GitHub Actions expression syntax
+#   - Single-space inline comments allowed (e.g. uses: actions/cache@sha # v5)
+#   - Keys such as "on:" (GitHub event trigger) excluded from truthy checks
+extends: default
+
+rules:
+  document-start: disable
+  line-length:
+    max: 200
+  comments:
+    min-spaces-from-content: 1
+  truthy:
+    allowed-values: ['true', 'false']
+    check-keys: false
