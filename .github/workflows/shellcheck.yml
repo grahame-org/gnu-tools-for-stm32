@@ -57,6 +57,7 @@ jobs:
           build-prerequisites.sh \
           build-toolchain-args.sh \
           build-toolchain.sh \
+          .github/actions/build-stage/compute-cache-miss.sh \
           .github/actions/build-stage/run-build-stage.sh
 
   shellcheck-status:

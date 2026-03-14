@@ -32,9 +32,7 @@ inputs:
 outputs:
   cache-hit:
     description: Whether a cache hit occurred for this stage
-    value: >-
-      ${{ inputs.pre-cache-hit != '' && inputs.pre-cache-hit
-          || steps.restore.outputs.cache-hit }}
+    value: "${{ inputs.pre-cache-hit != '' ? inputs.pre-cache-hit : steps.restore.outputs.cache-hit }}"
 
 runs:
   using: composite
@@ -47,10 +45,16 @@ runs:
         path: ${{ inputs.cache-paths }}
         key: ${{ inputs.cache-key }}
 
+    - name: Compute cache-miss – ${{ inputs.stage-name }}
+      id: check
+      shell: bash
+      env:
+        PRE_CACHE_HIT: ${{ inputs.pre-cache-hit }}
+        RESTORE_CACHE_HIT: ${{ steps.restore.outputs.cache-hit }}
+      run: ${GITHUB_ACTION_PATH}/compute-cache-miss.sh
+
     - name: Build stage – ${{ inputs.stage-name }}
-      if: >-
-        (inputs.pre-cache-hit == '' && steps.restore.outputs.cache-hit != 'true') ||
-        (inputs.pre-cache-hit != '' && inputs.pre-cache-hit != 'true')
+      if: steps.check.outputs.cache-miss == 'true'
       shell: bash
       env:
         BUILD_STAGE_SCRIPT: ${{ inputs.build-script }}
@@ -58,10 +62,7 @@ runs:
       run: "${GITHUB_ACTION_PATH}/run-build-stage.sh"
 
     - name: Save cache – ${{ inputs.stage-name }}
-      if: >-
-        github.event_name != 'merge_group' &&
-        ((inputs.pre-cache-hit == '' && steps.restore.outputs.cache-hit != 'true') ||
-        (inputs.pre-cache-hit != '' && inputs.pre-cache-hit != 'true'))
+      if: steps.check.outputs.cache-miss == 'true' && github.event_name != 'merge_group'
       uses: actions/cache/save@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
       with:
         path: ${{ inputs.cache-paths }}
