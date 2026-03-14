@@ -12,13 +12,15 @@ of `install-native/` it creates or modifies.
 | `gcc-first` | III-1 | `src/gcc/` | `binutils` |
 | `newlib` | III-2 | `src/newlib/` | `gcc-first` |
 | `newlib-nano` | III-3 | `src/newlib/` | `gcc-first` |
-| `gcc-final` | III-4 | `src/gcc/` | `binutils`, `newlib` |
-| `gcc-size-libstdcxx` | III-5 | `src/gcc/` | `binutils`, `newlib`, `newlib-nano` |
+| `gcc-final-rmprofile` | III-4a | `src/gcc/` | `binutils`, `newlib` |
+| `gcc-final-aprofile` | III-4b | `src/gcc/` | `binutils`, `newlib` |
+| `gcc-final-merge` | III-4-merge | — | `gcc-final-rmprofile`, `gcc-final-aprofile` |
+| `gcc-size-libstdcxx` | III-5 | `src/gcc/` | `binutils`, `newlib`, `newlib-nano`, `gcc-final-merge` |
 | `gdb` | III-6 | `src/gdb/` | `binutils` |
 | `pretidy` | III-8 | — | `gdb` |
 | `strip_host_objects` | III-9 | — | `pretidy` |
 | `strip_target_objects` | III-10 | — | `strip_host_objects` |
-| `specs` | III-11 | `src/specs/` | `gcc-final` |
+| `specs` | III-11 | `src/specs/` | `gcc-final-merge` |
 | `package_tbz2` | III-12 | `license.txt` | `strip_target_objects`, `specs` |
 | `package_bins` | III-13 | — | `package_tbz2` |
 | `validate_tool_deps` | III-14 | — | `package_tbz2` (macOS only) |
@@ -149,13 +151,20 @@ intermediate staging directory `build-native/target-libs/` so that the later
 
 ---
 
-### III-4 — `gcc-final`
+### III-4a — `gcc-final-rmprofile`
 
 **Source directory:** `src/gcc/`
 
 **Description:** Builds the full C and C++ cross-compiler, including all
 target-side runtime libraries (`libgcc`, `libstdc++`, `libsupc++`, etc.) for
-all multilibs. This supersedes the minimal compiler installed by `gcc-first`.
+the `rmprofile` multilib group (Cortex-M and related cores). This stage is
+run in parallel with III-4b (`gcc-final-aprofile`) in CI builds to reduce the
+cold-cache critical path. Invoked as `build-gcc-final.sh
+--with-multilib-list=rmprofile`.
+
+In local sequential builds (via `build-toolchain.sh`) both multilib groups
+are built together in a single `build-gcc-final.sh` invocation using the
+default `--with-multilib-list=rmprofile,aprofile`.
 
 **Depends on:**
 - `binutils` — cross tools (`as`, `ld`, …) must be in `install-native/bin/`.
@@ -163,7 +172,7 @@ all multilibs. This supersedes the minimal compiler installed by `gcc-first`.
   `install-native/arm-none-eabi/` (referenced via
   `--with-sysroot=$INSTALLDIR_NATIVE/arm-none-eabi`).
 
-**Artifacts written to `install-native/`:**
+**Artifacts written to staging directory (CI) / `install-native/` (local):**
 
 | Path | Contents |
 | --- | --- |
@@ -173,12 +182,12 @@ all multilibs. This supersedes the minimal compiler installed by `gcc-first`.
 | `bin/arm-none-eabi-gcov-dump` | Coverage dump tool |
 | `bin/arm-none-eabi-gcov-tool` | Coverage merge tool |
 | `bin/arm-none-eabi-lto-dump` | LTO dump tool |
-| `lib/gcc/arm-none-eabi/<ver>/` | Updated compiler support files plus `libgcc.a`, multilib-specific archives and `*.o` |
-| `arm-none-eabi/lib/` | `libstdc++.a`, `libsupc++.a`, per-multilib variants |
+| `lib/gcc/arm-none-eabi/<ver>/` | Updated compiler support files plus `libgcc.a`, rmprofile multilib-specific archives and `*.o` |
+| `arm-none-eabi/lib/` | `libstdc++.a`, `libsupc++.a`, rmprofile per-multilib variants |
 | `arm-none-eabi/include/c++/` | C++ standard-library headers |
 | `share/doc/gcc-arm-none-eabi/` | GCC HTML/PDF documentation (unless `--skip_steps=manual`) |
 
-**Artifacts deleted from `install-native/`:**
+**Artifacts deleted from staging / `install-native/`:**
 
 | Action | Path |
 | --- | --- |
@@ -187,6 +196,51 @@ all multilibs. This supersedes the minimal compiler installed by `gcc-first`.
 | Deleted | `lib/libiberty.a` |
 | Deleted | `include/` (top-level GCC host include tree) |
 | Removed | `arm-none-eabi/usr` symlink (temporary symlink created at stage start) |
+
+---
+
+### III-4b — `gcc-final-aprofile`
+
+**Source directory:** `src/gcc/`
+
+**Description:** Builds the full C and C++ cross-compiler runtime libraries
+for the `aprofile` multilib group (Cortex-A and related cores). This stage
+runs in parallel with III-4a (`gcc-final-rmprofile`) in CI. Invoked as
+`build-gcc-final.sh --with-multilib-list=aprofile`.
+
+The `rmprofile` and `aprofile` output trees are disjoint — they write to
+distinct multilib subdirectories under `arm-none-eabi/lib/` — so the two
+builds can run independently and their outputs can be safely merged.
+
+**Depends on:** same as III-4a.
+
+**Artifacts written to staging directory (CI) / `install-native/` (local):**
+Same as III-4a but for `aprofile` multilib subdirectories.
+
+---
+
+### III-4-merge — `gcc-final-merge`
+
+**Source directory:** none (CI merge step only)
+
+**Description:** Combines the outputs of III-4a (`gcc-final-rmprofile`) and
+III-4b (`gcc-final-aprofile`) into a single unified `install-native/` tree.
+Because the two profile output trees are disjoint, the merge is performed by
+layering the aprofile cache on top of the rmprofile cache and saving the
+result under the shared `gcc-final` cache key used by downstream stages.
+
+This is a CI-only convergence step. In local sequential builds via
+`build-toolchain.sh`, both profiles are built together in a single
+`build-gcc-final.sh` invocation (no merge step is needed).
+
+**Depends on:**
+- `gcc-final-rmprofile` (III-4a)
+- `gcc-final-aprofile` (III-4b)
+
+**Artifacts written to `install-native/`:**
+
+Combined superset of III-4a and III-4b artifacts (see those sections for the
+full artifact list).
 
 ---
 
@@ -211,6 +265,9 @@ nano-specific `newlib.h` header is copied to
   per-multilib subdirectories.
 - `newlib-nano` — `build-native/target-libs/arm-none-eabi/` must contain the nano
   newlib headers and libraries (the sysroot for the build).
+- `gcc-final-merge` (III-4-merge) — the merged output from III-4a and III-4b
+  containing the full GCC compiler and runtime libraries must be present in
+  `install-native/` before this stage runs.
 
 **Artifacts written to `install-native/`:**
 
@@ -318,7 +375,7 @@ broken so they cannot be modified via aliasing. Skipped when
 **Description:** Copies the two extra GCC spec files that enable mixed
 newlib/nano linking into every multilib subdirectory of the sysroot.
 
-**Depends on:** `gcc-final` — the `arm-none-eabi-gcc -print-multi-lib` command
+**Depends on:** `gcc-final-merge` (III-4-merge) — the `arm-none-eabi-gcc -print-multi-lib` command
 is used to enumerate the target multilib directories, so GCC must be fully
 installed.
 
@@ -398,7 +455,9 @@ flowchart TD
     B["gcc-first (III-1)"]
     C["newlib (III-2)"]
     D["newlib-nano (III-3)"]
-    E["gcc-final (III-4)"]
+    E1["gcc-final-rmprofile (III-4a)"]
+    E2["gcc-final-aprofile (III-4b)"]
+    EM["gcc-final-merge (III-4-merge)"]
     F["gcc-size-libstdcxx (III-5)"]
     G["gdb (III-6)"]
     H["pretidy (III-8)"]
@@ -410,15 +469,20 @@ flowchart TD
     N["validate_tool_deps (III-14, macOS only)"]
 
     A --> B
-    A --> E
+    A --> E1
+    A --> E2
     A --> F
     A --> G
     B --> C
     B --> D
-    C --> E
+    C --> E1
+    C --> E2
     C --> F
     D --> F
-    E --> K
+    E1 --> EM
+    E2 --> EM
+    EM --> F
+    EM --> K
     G --> H
     H --> I
     I --> J

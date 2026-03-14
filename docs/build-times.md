@@ -33,7 +33,9 @@ version, and the size of the source trees.
 | `build-gcc-first` | III-1 | gcc-first | ~11 min |
 | `build-newlib` | III-2 | newlib | ~20 min |
 | `build-newlib-nano` | III-3 | newlib-nano | ~17 min |
-| `build-gcc-final` | III-4 | gcc-final | ~70 min |
+| `build-gcc-final-rmprofile` | III-4a | gcc-final (rmprofile) | ~35 min (parallel with III-4b) |
+| `build-gcc-final-aprofile` | III-4b | gcc-final (aprofile) | ~35 min (parallel with III-4a) |
+| `merge-gcc-final` | III-4-merge | gcc-final merge | ~1 min |
 | `build-gcc-size-libstdcxx` | III-5 | gcc-size-libstdcxx | ~63 min |
 
 > **Note on `build-binutils` timing:** The binutils source changes very rarely,
