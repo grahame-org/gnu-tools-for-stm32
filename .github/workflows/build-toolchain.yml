@@ -886,7 +886,7 @@ jobs:
           cache-paths: build-native/target-libs
           cache-key: ${{ runner.os }}-stage-v1-${{ needs.compute-hashes.outputs['newlib-nano'] }}
           build-script: ./build-newlib-nano.sh
-          pre-cache-hit: ${{ steps.pre-restore.outputs.cache-hit }}
+          pre-cache-hit: ${{ steps.pre-restore.outputs.cache-hit == 'true' }}
 
   # ---------------------------------------------------------------------------
   # Job: build-gcc-final
