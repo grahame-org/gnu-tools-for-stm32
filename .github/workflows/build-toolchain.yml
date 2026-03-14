@@ -1417,13 +1417,13 @@ jobs:
 
   # ---------------------------------------------------------------------------
   # Job: build-final
-  # Converges the parallel gcc-chain and gdb builds.  Restores the
+  # Converges build-gcc-size-libstdcxx and build-gdb.  Restores the
   # gcc-size-libstdcxx snapshot, layers the gdb snapshot on top, then runs
   # the remaining post-build stages (pretidy / strip / specs) and the
   # test_project validation.
   # ---------------------------------------------------------------------------
   build-final:
-    needs: [check-changes, compute-hashes, build-gdb, build-gcc-chain]
+    needs: [check-changes, compute-hashes, build-gdb, build-gcc-size-libstdcxx]
     if: needs.check-changes.outputs.should-build == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 120

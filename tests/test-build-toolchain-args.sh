@@ -233,6 +233,7 @@ echo "=== Group 8: Reset behaviour (each call is idempotent) ==="
 
 parse_toolchain_args --build_type=ppa,debug \
     --skip_steps=manual,strip,package_bins,md5_checksum,mingw32,native \
+parse_toolchain_args --build_type=ppa,debug --skip_steps=manual,strip \
     --skip_stages=binutils --with-multilib-list=rmprofile
 # Now call again with no args — everything should revert to defaults
 parse_toolchain_args
