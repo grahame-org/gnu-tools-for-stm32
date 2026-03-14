@@ -157,14 +157,18 @@ intermediate staging directory `build-native/target-libs/` so that the later
 
 **Description:** Builds the full C and C++ cross-compiler, including all
 target-side runtime libraries (`libgcc`, `libstdc++`, `libsupc++`, etc.) for
-the `rmprofile` multilib group (Cortex-M and related cores). This stage is
-run in parallel with III-4b (`gcc-final-aprofile`) in CI builds to reduce the
-cold-cache critical path. Invoked as `build-gcc-final.sh
---with-multilib-list=rmprofile`.
+the `rmprofile` multilib group (M-profile Cortex-M cores: `v6-m`, `v7-m`,
+`v7e-m`, `v8-m.base`, `v8-m.main`, `v8.1-m.main` with fp/dp/mve/pacbti
+variants — 20 variants) plus the 8 base variants shared with all profiles. This stage is run in parallel with
+III-4b (`gcc-final-aprofile`) in CI builds to reduce the cold-cache critical
+path. Invoked as `build-gcc-final.sh --with-multilib-list=rmprofile`.
 
 In local sequential builds (via `build-toolchain.sh`) both multilib groups
 are built together in a single `build-gcc-final.sh` invocation using the
 default `--with-multilib-list=rmprofile,aprofile`.
+
+> See [`docs/multilib-variants.md`](multilib-variants.md) for the complete
+> catalog of all rmprofile library paths and their make-variable forms.
 
 **Depends on:**
 - `binutils` — cross tools (`as`, `ld`, …) must be in `install-native/bin/`.
@@ -182,8 +186,8 @@ default `--with-multilib-list=rmprofile,aprofile`.
 | `bin/arm-none-eabi-gcov-dump` | Coverage dump tool |
 | `bin/arm-none-eabi-gcov-tool` | Coverage merge tool |
 | `bin/arm-none-eabi-lto-dump` | LTO dump tool |
-| `lib/gcc/arm-none-eabi/<ver>/` | Updated compiler support files plus `libgcc.a`, rmprofile multilib-specific archives and `*.o` |
-| `arm-none-eabi/lib/` | `libstdc++.a`, `libsupc++.a`, rmprofile per-multilib variants |
+| `lib/gcc/arm-none-eabi/<ver>/` | Updated compiler support files plus `libgcc.a`, rmprofile + base multilib-specific archives and `*.o` |
+| `arm-none-eabi/lib/` | `libstdc++.a`, `libsupc++.a`, rmprofile + base per-multilib variants |
 | `arm-none-eabi/include/c++/` | C++ standard-library headers |
 | `share/doc/gcc-arm-none-eabi/` | GCC HTML/PDF documentation (unless `--skip_steps=manual`) |
 
@@ -204,18 +208,23 @@ default `--with-multilib-list=rmprofile,aprofile`.
 **Source directory:** `src/gcc/`
 
 **Description:** Builds the full C and C++ cross-compiler runtime libraries
-for the `aprofile` multilib group (Cortex-A and related cores). This stage
-runs in parallel with III-4a (`gcc-final-rmprofile`) in CI. Invoked as
-`build-gcc-final.sh --with-multilib-list=aprofile`.
+for the `aprofile` multilib group (A-profile Cortex-A cores: `v7-a`,
+`v7ve+simd`, `v8-a` with fp/simd variants — 10 variants) plus the 8 base
+variants shared with all profiles. This stage runs in parallel with III-4a (`gcc-final-rmprofile`) in
+CI builds. Invoked as `build-gcc-final.sh --with-multilib-list=aprofile`.
 
-The `rmprofile` and `aprofile` output trees are disjoint — they write to
-distinct multilib subdirectories under `arm-none-eabi/lib/` — so the two
-builds can run independently and their outputs can be safely merged.
+The `rmprofile` and `aprofile` output trees are disjoint — rmprofile covers
+M-profile architectures (`v6-m`…`v8.1-m.main+pacbti+mve`) while aprofile
+covers A-profile architectures (`v7-a`…`v8-a+simd`). No library path appears
+in both sets, so the two builds can run independently and be safely merged.
+
+> See [`docs/multilib-variants.md`](multilib-variants.md) for the complete
+> catalog of all aprofile library paths and disjointness confirmation.
 
 **Depends on:** same as III-4a.
 
 **Artifacts written to staging directory (CI) / `install-native/` (local):**
-Same as III-4a but for `aprofile` multilib subdirectories.
+Same as III-4a but for `aprofile` + base multilib subdirectories.
 
 ---
 
