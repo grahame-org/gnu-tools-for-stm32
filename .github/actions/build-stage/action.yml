@@ -52,10 +52,10 @@ runs:
         (inputs.pre-cache-hit == '' && steps.restore.outputs.cache-hit != 'true') ||
         (inputs.pre-cache-hit != '' && inputs.pre-cache-hit != 'true')
       shell: bash
-      run: |
-        JOBS=$(nproc)
-        export JOBS
-        ${{ inputs.build-script }} ${{ inputs.build-args }}
+      env:
+        BUILD_STAGE_SCRIPT: ${{ inputs.build-script }}
+        BUILD_STAGE_ARGS: ${{ inputs.build-args }}
+      run: ${GITHUB_ACTION_PATH}/run-build-stage.sh
 
     - name: Save cache – ${{ inputs.stage-name }}
       if: >-

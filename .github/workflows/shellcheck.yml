@@ -32,6 +32,7 @@ jobs:
               - 'build-prerequisites.sh'
               - 'build-toolchain-args.sh'
               - 'build-toolchain.sh'
+              - '.github/actions/build-stage/*.sh'
               - '.shellcheckrc'
               - '.github/workflows/shellcheck.yml'
 
@@ -55,7 +56,8 @@ jobs:
           build-gcc-first.sh \
           build-prerequisites.sh \
           build-toolchain-args.sh \
-          build-toolchain.sh
+          build-toolchain.sh \
+          .github/actions/build-stage/run-build-stage.sh
 
   shellcheck-status:
     runs-on: ubuntu-latest
