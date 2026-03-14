@@ -58,12 +58,7 @@ runs:
       shell: bash
       env:
         CACHE_MISS: ${{ steps.check.outputs.cache-miss }}
-      run: |
-        if [[ "${CACHE_MISS}" != "true" ]]; then
-          echo "cache-hit=true" >> "${GITHUB_OUTPUT}"
-        else
-          echo "cache-hit=" >> "${GITHUB_OUTPUT}"
-        fi
+      run: "${GITHUB_ACTION_PATH}/set-cache-hit-output.sh"
 
     - name: Build stage – ${{ inputs.stage-name }}
       if: steps.check.outputs.cache-miss == 'true'
