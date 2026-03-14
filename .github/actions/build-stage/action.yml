@@ -1,0 +1,50 @@
+name: Build Stage
+description: Restore cache, conditionally build, and conditionally save cache for a toolchain build stage.
+
+inputs:
+  stage-name:
+    description: Human-readable display name for the build stage (e.g. binutils)
+    required: true
+  cache-paths:
+    description: Multiline string of paths to cache (passed to actions/cache path:)
+    required: true
+  cache-key:
+    description: Fully-resolved cache key string (caller computes the key)
+    required: true
+  build-script:
+    description: Build script path (e.g. ./build-binutils.sh)
+    required: true
+  build-args:
+    description: Additional arguments to pass to the build script
+    required: false
+    default: '--skip_steps=mingw,mingw-gdb-with-python,gdb-with-python,manual,package_sources'
+
+outputs:
+  cache-hit:
+    description: Whether a cache hit occurred for this stage
+    value: ${{ steps.restore.outputs.cache-hit }}
+
+runs:
+  using: composite
+  steps:
+    - name: Restore cache – ${{ inputs.stage-name }}
+      id: restore
+      uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+      with:
+        path: ${{ inputs.cache-paths }}
+        key: ${{ inputs.cache-key }}
+
+    - name: Build stage – ${{ inputs.stage-name }}
+      if: steps.restore.outputs.cache-hit != 'true'
+      shell: bash
+      run: |
+        JOBS=$(nproc)
+        export JOBS
+        ${{ inputs.build-script }} ${{ inputs.build-args }}
+
+    - name: Save cache – ${{ inputs.stage-name }}
+      if: steps.restore.outputs.cache-hit != 'true' && github.event_name != 'merge_group'
+      uses: actions/cache/save@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+      with:
+        path: ${{ inputs.cache-paths }}
+        key: ${{ inputs.cache-key }}
