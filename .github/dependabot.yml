@@ -17,3 +17,15 @@ updates:
       commitlint:
         patterns:
           - "@commitlint/*"
+  - package-ecosystem: "gomod"
+    directory: "/src/gcc/libgo/go"
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "gomod"
+    directory: "/src/gcc/libgo/go/cmd"
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "gomod"
+    directory: "/src/gcc/libgo/go/crypto/ed25519/internal/edwards25519/field/_asm"
+    schedule:
+      interval: "weekly"
