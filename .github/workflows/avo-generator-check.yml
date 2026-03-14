@@ -45,7 +45,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@4b73464bb391d4059bd26b0524d20df3927bd417 # v6.3.0
         with:
-          go-version: stable
+          go-version-file: src/gcc/libgo/go/go.mod
           # go.sum is not committed for this generator-only module; disable
           # setup-go's built-in cache to avoid a cache-key lookup failure.
           cache: false
