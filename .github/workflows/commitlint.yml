@@ -57,8 +57,12 @@ jobs:
           for msg in "${invalid_messages[@]}"; do
             # Capture combined stdout+stderr so we can distinguish a clean lint failure
             # (e.g. type-empty/type-enum) from a tool crash or configuration error.
+            # Disable errexit while running the command substitution so the expected
+            # non-zero exit from commitlint does not abort the script before we inspect it.
+            set +e
             output=$(printf '%s\n' "$msg" | npx --no-install commitlint --verbose 2>&1)
             status=$?
+            set -e
             if [ "$status" -eq 0 ]; then
               echo "FAIL: expected invalid message was accepted: ${msg}"
               echo "commitlint output:"
