@@ -55,7 +55,7 @@ runs:
       env:
         BUILD_STAGE_SCRIPT: ${{ inputs.build-script }}
         BUILD_STAGE_ARGS: ${{ inputs.build-args }}
-      run: ${GITHUB_ACTION_PATH}/run-build-stage.sh
+      run: "${GITHUB_ACTION_PATH}/run-build-stage.sh"
 
     - name: Save cache – ${{ inputs.stage-name }}
       if: >-
