@@ -37,6 +37,8 @@ jobs:
               - 'build-toolchain-args.sh'
               - 'tests/**'
               - '.github/workflows/shell-unit-tests.yml'
+              - '.github/actions/build-stage/action.yml'
+              - '.yamllint'
 
   shell-unit-tests:
     needs: check-changes
@@ -50,11 +52,15 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Install yamllint
+        run: pip3 install yamllint
+
       - name: Run shell unit tests
         run: |
           bash tests/test-build-common.sh
           bash tests/test-build-toolchain-args.sh
           bash tests/test-strip-binary.sh
+          bash tests/test-build-stage-action.sh
 
   shell-unit-tests-status:
     runs-on: ubuntu-slim
