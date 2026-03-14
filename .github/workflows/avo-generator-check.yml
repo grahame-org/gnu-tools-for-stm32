@@ -51,9 +51,11 @@ jobs:
           cache: false
 
       - name: Download avo dependencies
-        # go.sum is not committed; go mod download creates it on first run.
+        # go.sum is not committed; go mod tidy downloads dependencies and
+        # creates go.sum so that subsequent go build / go run commands work
+        # under Go 1.16+ module sum verification.
         working-directory: src/gcc/libgo/go/crypto/ed25519/internal/edwards25519/field/_asm
-        run: go mod download
+        run: go mod tidy
 
       - name: Verify avo generator compiles
         working-directory: src/gcc/libgo/go/crypto/ed25519/internal/edwards25519/field/_asm
