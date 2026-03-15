@@ -1011,6 +1011,7 @@ jobs:
           cache-key: ${{ runner.os }}-stage-v1-${{ needs.compute-hashes.outputs['gcc-final'] }}
           build-script: ./build-gcc-final.sh
           pre-cache-hit: ${{ steps.pre-restore.outputs.cache-hit == 'true' }}
+          save-in-merge-group: 'true'
 
   # ---------------------------------------------------------------------------
   # Job: build-gcc-size-libstdcxx
