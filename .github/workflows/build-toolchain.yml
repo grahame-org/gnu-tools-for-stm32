@@ -750,7 +750,7 @@ jobs:
         with:
           stage-name: newlib
           cache-paths: install-native
-          cache-key: ${{ runner.os }}-stage-v1-${{ needs.compute-hashes.outputs.newlib }}
+          cache-key: ${{ runner.os }}-stage-v2-${{ needs.compute-hashes.outputs.newlib }}
           build-script: ./build-newlib.sh
           pre-cache-hit: ${{ steps.pre-restore.outputs.cache-hit == 'true' }}
           save-in-merge-group: 'true'
