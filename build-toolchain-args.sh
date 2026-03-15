@@ -65,24 +65,38 @@ EOF
 #   skip_gdb_with_python, skip_mingw32, skip_mingw32_gdb_with_python,
 #   skip_native_build, skip_strip_target_libraries
 parse_toolchain_args() {
-    export skip_mingw32=no
-    export BUILD_OPTIONS="-g -O2"
-    export is_ppa_release=no
-    export is_native_build=yes
-    export is_debug_build=no
-    export skip_manual=no
-    export skip_package_bins=no
-    export skip_package_sources=no
-    export skip_md5_checksum=no
+    skip_mingw32=no
+    export skip_mingw32
+    BUILD_OPTIONS="-g -O2"
+    export BUILD_OPTIONS
+    is_ppa_release=no
+    export is_ppa_release
+    is_native_build=yes
+    export is_native_build
+    is_debug_build=no
+    export is_debug_build
+    skip_manual=no
+    export skip_manual
+    skip_package_bins=no
+    export skip_package_bins
+    skip_package_sources=no
+    export skip_package_sources
+    skip_md5_checksum=no
+    export skip_md5_checksum
     skip_steps=
     skip_stages=
-    export skip_gdb_with_python=yes
-    export skip_mingw32_gdb_with_python=yes
-    export skip_native_build=no
-    export skip_strip_target_libraries=no
+    skip_gdb_with_python=yes
+    export skip_gdb_with_python
+    skip_mingw32_gdb_with_python=yes
+    export skip_mingw32_gdb_with_python
+    skip_native_build=no
+    export skip_native_build
+    skip_strip_target_libraries=no
+    export skip_strip_target_libraries
     build_type=
 
-    export MULTILIB_LIST="--with-multilib-list=rmprofile,aprofile"
+    MULTILIB_LIST="--with-multilib-list=rmprofile,aprofile"
+    export MULTILIB_LIST
 
     for ac_arg in "$@"; do
         case $ac_arg in
