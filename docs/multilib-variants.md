@@ -340,9 +340,11 @@ All steps together take seconds. They do **not** require recompiling the GCC
 middle-end, back-end, or any runtime libraries.
 
 **Mechanical combination of two separately-built `multilib.h` files is not
-viable.** The output of `genmultilib` is a single C translation unit with
-uniquely-named static arrays. Concatenating the outputs of an `rmprofile`-only
-build and an `aprofile`-only build would produce duplicate symbol definitions.
+viable.** The output of `genmultilib` is a header fragment (included directly
+into `gcc.cc` via `#include "multilib.h"`) containing uniquely-named static
+arrays. Concatenating the outputs of an `rmprofile`-only build and an
+`aprofile`-only build would produce duplicate symbol definitions in the
+`gcc.cc` translation unit.
 The script must be invoked **once** with the combined `MULTILIB_*` variable
 values so that it can emit a single self-consistent header.
 
@@ -386,6 +388,9 @@ make install-driver
 
 # 6. Install the C++ driver (arm-none-eabi-g++, arm-none-eabi-c++ and symlinks):
 make c++.install-common
+
+# 7. Install the cpp preprocessor driver:
+make install-cpp
 ```
 
 > **Prerequisite:** `srcdir` in the `gcc/Makefile` must point to the
