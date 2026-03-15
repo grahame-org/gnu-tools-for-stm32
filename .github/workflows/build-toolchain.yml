@@ -1418,8 +1418,10 @@ jobs:
             local cache_hit="${2:-}"
             if [ -z "${seconds}" ]; then
               echo "Yes"
+            elif [ "${cache_hit}" = "true" ]; then
+              echo "Yes"
             else
-              echo "${cache_hit:-No}"
+              echo "No"
             fi
           }
           {
