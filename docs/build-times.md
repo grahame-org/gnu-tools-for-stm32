@@ -28,7 +28,7 @@ version, and the size of the source trees.
 
 | CI job | Stage | Description | Typical cold-cache build time |
 |--------|-------|-------------|-------------------------------|
-| `build-binutils` | III-0 | binutils | ~12 min (estimated; see note) |
+| `build-binutils` | III-0 | binutils | ~3 min (see note) |
 | `build-gdb` | III-6 | gdb | ~7 min |
 | `build-gcc-first` | III-1 | gcc-first | ~11 min |
 | `build-newlib` | III-2 | newlib | ~20 min |
@@ -40,9 +40,8 @@ version, and the size of the source trees.
 
 > **Note on `build-binutils` timing:** The binutils source changes very rarely,
 > so the `build-binutils` cache is almost always warm and the build step is
-> skipped.  The ~12 min figure is an approximation; observe a run where the
-> binutils cache key changes (e.g., after a binutils source update) to get a
-> precise measurement.
+> skipped.  The ~3 min figure is measured from the cold-cache build triggered
+> by the v2 cache key bump in PR #516.
 
 ---
 
