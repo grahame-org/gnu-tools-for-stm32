@@ -80,9 +80,9 @@ Order the tasks logically:
 - Follow with implementation tasks
 - End with validation and documentation
 - Consider dependencies between tasks
-- Append all issues in the same sequence with (xx / yy) where
-  - xx is the position of a task with a sequence
-  - yy is the number of issues in the sequence
+- Append a sequence marker `(xx / yy)` to each related issue title, where
+  - xx is the position of the task within the sequence
+  - yy is the total number of issues in that sequence
 
 ### 3. Right Level of Granularity
 Each task should:
