@@ -288,12 +288,17 @@ INSTALLDIR_MINGW_DOC=$ROOT/install-mingw/share/doc/gcc-arm-none-eabi
 
 PACKAGEDIR=$ROOT/pkg
 
-export GMP_VER=6.2.1
-export MPFR_VER=3.1.6
-export MPC_VER=1.0.3
-export ISL_VER=0.18
+GMP_VER=6.2.1
+export GMP_VER
+MPFR_VER=3.1.6
+export MPFR_VER
+MPC_VER=1.0.3
+export MPC_VER
+ISL_VER=0.18
+export ISL_VER
 EXPAT_VER=2.2.6
-export LIBICONV_VER=1.15
+LIBICONV_VER=1.15
+export LIBICONV_VER
 ZLIB_VER=1.2.12
 PYTHON_WIN_VER=2.7.13
 
@@ -320,14 +325,22 @@ LIBICONV_PACK=$LIBICONV.tar.gz
 ZLIB_PACK=$ZLIB.tar.gz
 PYTHON_WIN_PACK=$PYTHON_WIN.msi
 
-export GMP_URL=https://gmplib.org/download/gmp/$GMP_PACK
-export MPFR_URL=https://www.mpfr.org/$MPFR/$MPFR_PACK
-export MPC_URL=https://ftp.gnu.org/gnu/mpc/$MPC_PACK
-export ISL_URL=https://libisl.sourceforge.io/$ISL_PACK
-export EXPAT_URL=https://downloads.sourceforge.net/project/expat/expat/$EXPAT_VER/$EXPAT_PACK
-export LIBICONV_URL=https://ftp.gnu.org/pub/gnu/libiconv/$LIBICONV_PACK
-export ZLIB_URL=https://www.zlib.net/fossils/$ZLIB_PACK
-export PYTHON_WIN_URL=https://www.python.org/ftp/python/$PYTHON_WIN_VER/$PYTHON_WIN_PACK
+GMP_URL=https://gmplib.org/download/gmp/$GMP_PACK
+export GMP_URL
+MPFR_URL=https://www.mpfr.org/$MPFR/$MPFR_PACK
+export MPFR_URL
+MPC_URL=https://ftp.gnu.org/gnu/mpc/$MPC_PACK
+export MPC_URL
+ISL_URL=https://libisl.sourceforge.io/$ISL_PACK
+export ISL_URL
+EXPAT_URL=https://downloads.sourceforge.net/project/expat/expat/$EXPAT_VER/$EXPAT_PACK
+export EXPAT_URL
+LIBICONV_URL=https://ftp.gnu.org/pub/gnu/libiconv/$LIBICONV_PACK
+export LIBICONV_URL
+ZLIB_URL=https://www.zlib.net/fossils/$ZLIB_PACK
+export ZLIB_URL
+PYTHON_WIN_URL=https://www.python.org/ftp/python/$PYTHON_WIN_VER/$PYTHON_WIN_PACK
+export PYTHON_WIN_URL
 
 TAR=tar
 # Set variables according to real environment to make this script can run
