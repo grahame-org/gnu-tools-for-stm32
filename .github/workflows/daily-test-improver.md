@@ -55,7 +55,6 @@ safe-outputs:
     max: 1
 
 checkout:
-  fetch: ["*"]      # fetch all remote branches
   fetch-depth: 0   # fetch full history
 
 tools:
