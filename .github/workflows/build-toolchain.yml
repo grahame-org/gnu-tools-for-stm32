@@ -1149,6 +1149,8 @@ jobs:
           cache-key: ${{ runner.os }}-stage-v1-${{ needs.compute-hashes.outputs['gcc-size-libstdcxx'] }}
           build-script: ./build-gcc-size-libstdcxx.sh
           pre-cache-hit: ${{ steps.pre-restore.outputs.cache-hit == 'true' }}
+          save-in-merge-group: 'true'
+
   # ---------------------------------------------------------------------------
   # Job: build-final
   # Converges build-gcc-size-libstdcxx and build-gdb.  Restores the
