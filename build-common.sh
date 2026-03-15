@@ -279,21 +279,21 @@ clean_env
 ROOT=$(pwd)
 SRCDIR=$ROOT/src
 
-# shellcheck disable=SC2034  # set here, consumed by sourcing scripts (build-toolchain.sh, build-prerequisites.sh)
 BUILDDIR_NATIVE=$ROOT/build-native
-# shellcheck disable=SC2034  # set here, consumed by sourcing scripts (build-toolchain.sh, build-prerequisites.sh)
+export BUILDDIR_NATIVE
 BUILDDIR_MINGW=$ROOT/build-mingw
-# shellcheck disable=SC2034  # set here, consumed by sourcing scripts (build-toolchain.sh, build-prerequisites.sh)
+export BUILDDIR_MINGW
 INSTALLDIR_NATIVE=$ROOT/install-native
-# shellcheck disable=SC2034  # set here, consumed by sourcing scripts (build-toolchain.sh, build-prerequisites.sh)
+export INSTALLDIR_NATIVE
 INSTALLDIR_NATIVE_DOC=$ROOT/install-native/share/doc/gcc-arm-none-eabi
-# shellcheck disable=SC2034  # set here, consumed by sourcing scripts (build-toolchain.sh, build-prerequisites.sh)
+export INSTALLDIR_NATIVE_DOC
 INSTALLDIR_MINGW=$ROOT/install-mingw
-# shellcheck disable=SC2034  # set here, consumed by sourcing scripts (build-toolchain.sh, build-prerequisites.sh)
+export INSTALLDIR_MINGW
 INSTALLDIR_MINGW_DOC=$ROOT/install-mingw/share/doc/gcc-arm-none-eabi
+export INSTALLDIR_MINGW_DOC
 
-# shellcheck disable=SC2034  # set here, consumed by sourcing scripts (build-toolchain.sh, build-prerequisites.sh)
 PACKAGEDIR=$ROOT/pkg
+export PACKAGEDIR
 
 GMP_VER=6.2.1
 MPFR_VER=3.1.6
@@ -304,15 +304,15 @@ LIBICONV_VER=1.15
 ZLIB_VER=1.2.12
 PYTHON_WIN_VER=2.7.13
 
-# shellcheck disable=SC2034  # set here, consumed by sourcing scripts (build-toolchain.sh, build-prerequisites.sh)
 BINUTILS=binutils
+export BINUTILS
 GCC=gcc
-# shellcheck disable=SC2034  # set here, consumed by sourcing scripts (build-toolchain.sh, build-prerequisites.sh)
 NEWLIB=newlib
-# shellcheck disable=SC2034  # set here, consumed by sourcing scripts (build-toolchain.sh, build-prerequisites.sh)
+export NEWLIB
 NEWLIB_NANO=newlib
-# shellcheck disable=SC2034  # set here, consumed by sourcing scripts (build-toolchain.sh, build-prerequisites.sh)
+export NEWLIB_NANO
 GDB=gdb
+export GDB
 GMP=gmp
 MPFR=mpfr
 MPC=mpc
