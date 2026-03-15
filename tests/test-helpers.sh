@@ -3,8 +3,8 @@
 # This file is sourced (not executed directly), so it has no shebang line.
 # Callers are responsible for setting their own shell options (e.g. set -e).
 
-_PASS=0
-_FAIL=0
+_PASS=${_PASS:-0}
+_FAIL=${_FAIL:-0}
 
 assert_eq() {
     local desc="$1" expected="$2" actual="$3"
@@ -22,6 +22,11 @@ assert_eq() {
 assert_nonzero_exit() {
     local desc="$1"
     shift
+    if [ $# -eq 0 ]; then
+        _FAIL=$((_FAIL + 1))
+        echo "  FAIL: $desc (no command provided to assert_nonzero_exit)"
+        return
+    fi
     if "$@" 2>/dev/null; then
         _FAIL=$((_FAIL + 1))
         echo "  FAIL: $desc (expected non-zero exit)"
@@ -34,6 +39,11 @@ assert_nonzero_exit() {
 assert_zero_exit() {
     local desc="$1"
     shift
+    if [ $# -eq 0 ]; then
+        _FAIL=$((_FAIL + 1))
+        echo "  FAIL: $desc (no command provided to assert_zero_exit)"
+        return
+    fi
     if "$@" 2>/dev/null; then
         _PASS=$((_PASS + 1))
         echo "  PASS: $desc"
@@ -45,7 +55,7 @@ assert_zero_exit() {
 
 assert_unset() {
     local desc="$1" varname="$2"
-    if eval "[ \"\${${varname}+set}\" != \"set\" ]"; then
+    if ! declare -p "$varname" >/dev/null 2>&1; then
         _PASS=$((_PASS + 1))
         echo "  PASS: $desc"
     else
