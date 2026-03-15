@@ -1,8 +1,7 @@
-#!/usr/bin/env bash
 # shellcheck shell=bash
 # Shared test helper functions sourced by the tests/*.sh unit test scripts.
-# This file is sourced (not executed directly); callers are responsible for
-# setting their own shell options (e.g. set -e).
+# This file is sourced (not executed directly), so it has no shebang line.
+# Callers are responsible for setting their own shell options (e.g. set -e).
 
 _PASS=0
 _FAIL=0
