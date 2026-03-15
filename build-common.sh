@@ -288,17 +288,12 @@ INSTALLDIR_MINGW_DOC=$ROOT/install-mingw/share/doc/gcc-arm-none-eabi
 
 PACKAGEDIR=$ROOT/pkg
 
-# shellcheck disable=SC2034  # upstream source version reference; sources are vendored in src/
-GMP_VER=6.2.1
-# shellcheck disable=SC2034  # upstream source version reference; sources are vendored in src/
-MPFR_VER=3.1.6
-# shellcheck disable=SC2034  # upstream source version reference; sources are vendored in src/
-MPC_VER=1.0.3
-# shellcheck disable=SC2034  # upstream source version reference; sources are vendored in src/
-ISL_VER=0.18
+export GMP_VER=6.2.1
+export MPFR_VER=3.1.6
+export MPC_VER=1.0.3
+export ISL_VER=0.18
 EXPAT_VER=2.2.6
-# shellcheck disable=SC2034  # upstream source version reference; sources are vendored in src/
-LIBICONV_VER=1.15
+export LIBICONV_VER=1.15
 ZLIB_VER=1.2.12
 PYTHON_WIN_VER=2.7.13
 
@@ -325,22 +320,14 @@ LIBICONV_PACK=$LIBICONV.tar.gz
 ZLIB_PACK=$ZLIB.tar.gz
 PYTHON_WIN_PACK=$PYTHON_WIN.msi
 
-# shellcheck disable=SC2034  # upstream source URL reference; not consumed in build (sources vendored in src/)
-GMP_URL=https://gmplib.org/download/gmp/$GMP_PACK
-# shellcheck disable=SC2034  # upstream source URL reference; not consumed in build (sources vendored in src/)
-MPFR_URL=http://www.mpfr.org/$MPFR/$MPFR_PACK
-# shellcheck disable=SC2034  # upstream source URL reference; not consumed in build (sources vendored in src/)
-MPC_URL=ftp://ftp.gnu.org/gnu/mpc/$MPC_PACK
-# shellcheck disable=SC2034  # upstream source URL reference; not consumed in build (sources vendored in src/)
-ISL_URL=http://isl.gforge.inria.fr/$ISL_PACK
-# shellcheck disable=SC2034  # upstream source URL reference; not consumed in build (sources vendored in src/)
-EXPAT_URL=https://downloads.sourceforge.net/project/expat/expat/$EXPAT_VER/$EXPAT_PACK
-# shellcheck disable=SC2034  # upstream source URL reference; not consumed in build (sources vendored in src/)
-LIBICONV_URL=https://ftp.gnu.org/pub/gnu/libiconv/$LIBICONV_PACK
-# shellcheck disable=SC2034  # upstream source URL reference; not consumed in build (sources vendored in src/)
-ZLIB_URL=http://www.zlib.net/fossils/$ZLIB_PACK
-# shellcheck disable=SC2034  # upstream source URL reference; not consumed in build (sources vendored in src/)
-PYTHON_WIN_URL=https://www.python.org/ftp/python/$PYTHON_WIN_VER/$PYTHON_WIN_PACK
+export GMP_URL=https://gmplib.org/download/gmp/$GMP_PACK
+export MPFR_URL=https://www.mpfr.org/$MPFR/$MPFR_PACK
+export MPC_URL=https://ftp.gnu.org/gnu/mpc/$MPC_PACK
+export ISL_URL=https://libisl.sourceforge.io/$ISL_PACK
+export EXPAT_URL=https://downloads.sourceforge.net/project/expat/expat/$EXPAT_VER/$EXPAT_PACK
+export LIBICONV_URL=https://ftp.gnu.org/pub/gnu/libiconv/$LIBICONV_PACK
+export ZLIB_URL=https://www.zlib.net/fossils/$ZLIB_PACK
+export PYTHON_WIN_URL=https://www.python.org/ftp/python/$PYTHON_WIN_VER/$PYTHON_WIN_PACK
 
 TAR=tar
 # Set variables according to real environment to make this script can run
