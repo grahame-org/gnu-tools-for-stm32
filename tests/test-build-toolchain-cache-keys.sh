@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Unit tests for the build-final cache key computation logic.
 #
-# Verifies that key_final correctly depends on key_gcc_size and
-# final_scripts_hash, matching the logic in
-# .github/workflows/build-toolchain.yml (compute-hashes job).
+# Verifies that key_final correctly depends on all four of its inputs —
+# final_scripts_hash, key_gcc_size, key_gdb, and specs_src — matching the
+# logic in .github/workflows/build-toolchain.yml (compute-hashes job).
 #
 # Run with: bash tests/test-build-toolchain-cache-keys.sh
 
@@ -71,6 +71,8 @@ BASE_SPECS_SRC="dddd4444dddd4444dddd4444dddd4444dddd4444dddd4444dddd4444dddd4444
 
 ALT_KEY_GCC_SIZE="eeee5555eeee5555eeee5555eeee5555eeee5555eeee5555eeee5555eeee5555"
 ALT_FINAL_SCRIPTS_HASH="ffff6666ffff6666ffff6666ffff6666ffff6666ffff6666ffff6666ffff6666"
+ALT_KEY_GDB="88881111888811118888111188881111888811118888111188881111aaaa1111"
+ALT_SPECS_SRC="77772222777722227777222277772222777722227777222277772222bbbb2222"
 UNRELATED_SCRIPTS_HASH="99997777999977779999777799997777999977779999777799997777aaaa7777"
 
 key_final_base=$(compute_key_final \
@@ -108,7 +110,33 @@ assert_ne "key_final differs when final_scripts_hash changes" \
     "$key_final_base" "$key_final_alt_scripts"
 
 # ---------------------------------------------------------------------------
-# Test group 3: key_final uses final_scripts_hash, not an unrelated scripts hash
+# Test group 3: key_final changes when key_gdb changes
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "=== Group 3: key_final changes when key_gdb changes ==="
+
+key_final_alt_gdb=$(compute_key_final \
+    "$BASE_FINAL_SCRIPTS_HASH" "$BASE_KEY_GCC_SIZE" "$ALT_KEY_GDB" "$BASE_SPECS_SRC")
+
+assert_ne "key_final differs when key_gdb changes" \
+    "$key_final_base" "$key_final_alt_gdb"
+
+# ---------------------------------------------------------------------------
+# Test group 4: key_final changes when specs_src changes
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "=== Group 4: key_final changes when specs_src changes ==="
+
+key_final_alt_specs=$(compute_key_final \
+    "$BASE_FINAL_SCRIPTS_HASH" "$BASE_KEY_GCC_SIZE" "$BASE_KEY_GDB" "$ALT_SPECS_SRC")
+
+assert_ne "key_final differs when specs_src changes" \
+    "$key_final_base" "$key_final_alt_specs"
+
+# ---------------------------------------------------------------------------
+# Test group 5: key_final uses final_scripts_hash, not an unrelated scripts hash
 #
 # A monolithic scripts_hash bug would make key_final sensitive to every stage's
 # scripts hash, not just the final stage's.  Here we confirm that only
@@ -134,7 +162,7 @@ compute_key_final_ignoring_unrelated() {
 }
 
 echo ""
-echo "=== Group 3: key_final depends on final_scripts_hash, not an unrelated scripts hash ==="
+echo "=== Group 5: key_final depends on final_scripts_hash, not an unrelated scripts hash ==="
 
 # Same final_scripts_hash but different unrelated hash (e.g. binutils changed) →
 # key_final must be identical, proving it ignores the unrelated hash.
