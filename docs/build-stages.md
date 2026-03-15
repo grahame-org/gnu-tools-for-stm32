@@ -157,11 +157,13 @@ intermediate staging directory `build-native/target-libs/` so that the later
 
 **Description:** Builds the full C and C++ cross-compiler, including all
 target-side runtime libraries (`libgcc`, `libstdc++`, `libsupc++`, etc.) for
-the `rmprofile` multilib group (M-profile Cortex-M cores: `v6-m`, `v7-m`,
-`v7e-m`, `v8-m.base`, `v8-m.main`, `v8.1-m.main` with fp/dp/mve/pacbti
-variants — 20 variants) plus the 8 base variants shared with all profiles. This stage is run in parallel with
-III-4b (`gcc-final-aprofile`) in CI builds to reduce the cold-cache critical
-path. Invoked as `build-gcc-final.sh --with-multilib-list=rmprofile`.
+the `rmprofile` multilib group: 20 M-profile Cortex-M variants covering
+`v6-m`, `v7-m`, `v7e-m`, `v8-m.base`, `v8-m.main`, and `v8.1-m.main` (with
+fp/dp/mve/pacbti sub-variants) plus 8 base variants shared with all profiles.
+
+This stage is run in parallel with III-4b (`gcc-final-aprofile`) in CI builds
+to reduce the cold-cache critical path. Invoked as
+`build-gcc-final.sh --with-multilib-list=rmprofile`.
 
 In local sequential builds (via `build-toolchain.sh`) both multilib groups
 are built together in a single `build-gcc-final.sh` invocation using the
@@ -177,6 +179,15 @@ default `--with-multilib-list=rmprofile,aprofile`.
   `--with-sysroot=$INSTALLDIR_NATIVE/arm-none-eabi`).
 
 **Artifacts written to staging directory (CI) / `install-native/` (local):**
+
+> **CI staging:** In CI, each parallel build job writes its output to
+> `install-native/` on the runner, then saves that directory as a
+> profile-specific GitHub Actions cache (key:
+> `stage-v1-<gcc-final-rmprofile-hash>`).  The III-4-merge (`gcc-final-merge`)
+> step later restores both profile caches and re-saves them merged under the
+> shared `stage-v1-<gcc-final-hash>` key used by downstream stages.  In local
+> sequential builds both profiles write directly to `install-native/` with no
+> separate cache or merge step.
 
 | Path | Contents |
 | --- | --- |
@@ -208,10 +219,12 @@ default `--with-multilib-list=rmprofile,aprofile`.
 **Source directory:** `src/gcc/`
 
 **Description:** Builds the full C and C++ cross-compiler runtime libraries
-for the `aprofile` multilib group (A-profile Cortex-A cores: `v7-a`,
-`v7ve+simd`, `v8-a` with fp/simd variants — 10 variants) plus the 8 base
-variants shared with all profiles. This stage runs in parallel with III-4a (`gcc-final-rmprofile`) in
-CI builds. Invoked as `build-gcc-final.sh --with-multilib-list=aprofile`.
+for the `aprofile` multilib group: 10 A-profile Cortex-A variants covering
+`v7-a`, `v7ve+simd`, and `v8-a` (with fp/simd sub-variants) plus 8 base
+variants shared with all profiles.
+
+This stage runs in parallel with III-4a (`gcc-final-rmprofile`) in CI builds.
+Invoked as `build-gcc-final.sh --with-multilib-list=aprofile`.
 
 The `rmprofile` and `aprofile` output trees are disjoint — rmprofile covers
 M-profile architectures (`v6-m`…`v8.1-m.main+pacbti+mve`) while aprofile
@@ -224,7 +237,8 @@ in both sets, so the two builds can run independently and be safely merged.
 **Depends on:** same as III-4a.
 
 **Artifacts written to staging directory (CI) / `install-native/` (local):**
-Same as III-4a but for `aprofile` + base multilib subdirectories.
+Same as III-4a (see CI staging note above) but for `aprofile` + base multilib
+subdirectories; saved under a separate `stage-v1-<gcc-final-aprofile-hash>` cache key.
 
 ---
 
