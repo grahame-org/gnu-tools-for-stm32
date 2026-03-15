@@ -201,12 +201,10 @@ approach for producing a merged `multilib.h` that covers both `rmprofile` and
 ### Additional prerequisites declared in `t-multilib`
 
 `src/gcc/gcc/config/arm/t-multilib` (line 27) adds these extra dependencies to
-the `s-mlib` stamp target:
+the `s-mlib` stamp target (shown here as a single source line):
 
 ```makefile
-s-mlib: $(srcdir)/config/arm/t-multilib \
-        $(srcdir)/config/arm/t-aprofile \
-        $(srcdir)/config/arm/t-rmprofile
+s-mlib: $(srcdir)/config/arm/t-multilib $(srcdir)/config/arm/t-aprofile $(srcdir)/config/arm/t-rmprofile
 ```
 
 This ensures the stamp is invalidated whenever any of the ARM profile makefiles
@@ -275,13 +273,18 @@ s-mlib: $(srcdir)/genmultilib Makefile
 	$(STAMP) s-mlib
 ```
 
-No C/C++ compiler is invoked by this recipe. The only tools used are the POSIX
-shell and the `genmultilib` script itself.
+No C/C++ compiler is invoked by this recipe. The tools used are the POSIX
+shell, the `genmultilib` script, `move-if-change` (which atomically replaces
+`multilib.h` only when the content changes), and `$(STAMP)` (which writes the
+`s-mlib` stamp file so Make knows the target is up to date).
 
 ### `genmultilib` script
 
-`src/gcc/gcc/genmultilib` is a POSIX shell script (~560 lines). It receives the
-11 `MULTILIB_*` variables as positional arguments and emits a C header containing:
+`src/gcc/gcc/genmultilib` is a POSIX shell script (~560 lines). It receives
+11 positional arguments: 9 `MULTILIB_*` make variables (`OPTIONS`, `DIRNAMES`,
+`MATCHES`, `EXCEPTIONS`, `EXTRA_OPTS`, `EXCLUSIONS`, `OSDIRNAMES`, `REQUIRED`,
+`REUSE`), the `MULTIARCH_DIRNAME` value (or empty string), and the
+`@enable_multilib@` flag. It emits a C header containing:
 
 ```c
 static const char *const multilib_raw[] = { /* one entry per required variant */ NULL };
@@ -339,7 +342,11 @@ combined into `install-native/`, do the following inside one of the GCC build
 directories (either the rmprofile or aprofile build dir works):
 
 ```bash
-# 1. Override TM_MULTILIB_CONFIG in the build Makefile:
+# The TM_MULTILIB_CONFIG variable and the s-mlib/gcc.o/xgcc targets all live
+# in the gcc/ subdirectory of the GCC build tree:
+cd "$BUILDDIR_NATIVE/gcc-final/gcc"
+
+# 1. Override TM_MULTILIB_CONFIG in the gcc/ Makefile:
 sed -i 's|^TM_MULTILIB_CONFIG=.*|TM_MULTILIB_CONFIG=rmprofile,aprofile|' Makefile
 
 # 2. Regenerate multilib.h for the combined profile list
@@ -353,12 +360,14 @@ make gcc.o
 make xgcc
 
 # 5. Install the updated driver binary:
-cp xgcc "${INSTALL_NATIVE}/bin/arm-none-eabi-gcc"
+cp xgcc "$INSTALLDIR_NATIVE/bin/arm-none-eabi-gcc"
 ```
 
-> **Prerequisite:** `srcdir` in the build `Makefile` must point to the
+> **Prerequisite:** `srcdir` in the `gcc/Makefile` must point to the
 > checked-out GCC source tree, and the source tree must be present. Verify
-> with `grep '^srcdir' Makefile` before running the steps above.
+> with `grep '^srcdir' gcc/Makefile` from the build root before running the
+> steps above. `BUILDDIR_NATIVE` and `INSTALLDIR_NATIVE` are defined by the
+> repo's `build-common.sh`.
 
 This approach is safe because:
 - `genmultilib` is deterministic and stateless — given the same input variables
