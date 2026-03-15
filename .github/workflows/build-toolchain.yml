@@ -206,7 +206,7 @@ jobs:
           # cache represents the assembled output of every stage, so a change to
           # any per-stage script must invalidate it.  Individual stage caches use
           # narrower per-stage keys computed in the Compute stage source hashes step.
-          key: ${{ runner.os }}-toolchain-${{ hashFiles('build-*.sh') }}-${{ steps.src-hashes.outputs.toolchain-src }}
+          key: ${{ runner.os }}-toolchain-v2-${{ hashFiles('build-*.sh') }}-${{ steps.src-hashes.outputs.toolchain-src }}
 
       # --- Stage: binutils ---
       - name: Restore cache – binutils
