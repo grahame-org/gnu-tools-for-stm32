@@ -43,6 +43,7 @@ script_path=$(cd $(dirname $0) && pwd -P)
 
 # This file contains the sequence of commands used to build the
 # GNU Tools Arm Embedded toolchain.
+# shellcheck source=build-toolchain-args.sh
 . "$script_path/build-toolchain-args.sh"
 parse_toolchain_args "$@"
 
@@ -77,6 +78,7 @@ if dpkg-query -W lbzip2 > /dev/null 2>&1; then
     TAR_FLAGS="--use-compress-program=lbzip2"
 fi
 
+# shellcheck disable=SC2154  # set by parse_toolchain_args() in build-toolchain-args.sh
 if [ "$BUILD" == "x86_64-apple-darwin10" ] || [ "$is_ppa_release" == "yes" ]; then
     skip_mingw32=yes
     skip_mingw32_gdb_with_python=yes
@@ -113,6 +115,7 @@ if [ "$is_ppa_release" != "yes" ]; then
                     --with-libexpat-prefix=$BUILDDIR_NATIVE/host-libs/usr "
 fi
 
+# shellcheck disable=SC2154  # set by parse_toolchain_args() in build-toolchain-args.sh
 if [ "$skip_native_build" != "yes" ] ; then
     mkdir -p $BUILDDIR_NATIVE
     if [ -z "$skip_stages" ]; then
@@ -178,6 +181,7 @@ if [ "$skip_native_build" != "yes" ] ; then
     find $INSTALLDIR_NATIVE -name '*.la' -exec rm '{}' ';'
 
     echo "Task [III-9] /$HOST_NATIVE/strip_host_objects/" | tee -a "$BUILDDIR_NATIVE/.stage"
+    # shellcheck disable=SC2154  # set by parse_toolchain_args() in build-toolchain-args.sh
     if [ "$is_debug_build" == "no" ] ; then
         STRIP_BINARIES=$(find $INSTALLDIR_NATIVE/bin/ -name arm-none-eabi-\*)
         for bin in $STRIP_BINARIES ; do
@@ -205,6 +209,7 @@ if [ "$skip_native_build" != "yes" ] ; then
     saveenv
     prepend_path PATH $INSTALLDIR_NATIVE/bin
 
+    # shellcheck disable=SC2154  # set by parse_toolchain_args() in build-toolchain-args.sh
     if [ "$skip_strip_target_libraries" == "no" ] ; then
         TARGET_LIBRARIES=$(find $INSTALLDIR_NATIVE/arm-none-eabi/lib -name libg.a -or -name libg_nano.a)
         for target_lib in $TARGET_LIBRARIES ; do
@@ -280,6 +285,7 @@ if [ "$skip_native_build" != "yes" ] ; then
     rm -f $INSTALL_PACKAGE_NAME
     popd
 
+    # shellcheck disable=SC2154  # set by parse_toolchain_args() in build-toolchain-args.sh
     if [ "$skip_package_bins" != "yes" ]; then
         echo "Task [III-13] /Package toolchain in ST version/"
         pushd $ROOT
@@ -356,6 +362,7 @@ if [ "$skip_mingw32" != "yes" ] ; then
 
     make install
 
+    # shellcheck disable=SC2154  # set by parse_toolchain_args() in build-toolchain-args.sh
     if [ "$skip_manual" != "yes" ]; then
         make install-html install-pdf
     fi
@@ -569,6 +576,7 @@ if [ "$skip_mingw32" != "yes" ] ; then
     fi
 fi #end of if [ "$skip_mingw32" != "yes" ] ;
 
+# shellcheck disable=SC2154  # set by parse_toolchain_args() in build-toolchain-args.sh
 if [ "$skip_package_sources" != "yes" ]; then
     echo "Task [V-0] /package_sources/"
     pushd "$PACKAGEDIR"
@@ -609,6 +617,7 @@ if [ "$skip_package_sources" != "yes" ]; then
     popd
 fi
 
+# shellcheck disable=SC2154  # set by parse_toolchain_args() in build-toolchain-args.sh
 if [ "$skip_md5_checksum" != "yes" ]; then
     echo "Task [V-1] /md5_checksum/"
     pushd "$PACKAGEDIR"
