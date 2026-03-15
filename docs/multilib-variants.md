@@ -237,10 +237,22 @@ include $(srcdir)/config/arm/t-rmprofile
 endif
 ```
 
-Each included profile file appends to `MULTILIB_REQUIRED`, `MULTILIB_OPTIONS`,
-`MULTILIB_DIRNAMES`, `MULTILIB_MATCHES`, and `MULTILIB_REUSE`. When only
-`rmprofile` is configured, only the 20 M-profile entries are present; when both
-profiles are configured the combined 30-entry set is present.
+Each included profile file defines `MULTI_ARCH_OPTS_*` / `MULTI_ARCH_DIRS_*`
+intermediaries and appends directly to `MULTILIB_REQUIRED` (and `MULTILIB_REUSE`
+for A-profile). `t-multilib` then expands those intermediaries into
+`MULTILIB_OPTIONS` and `MULTILIB_DIRNAMES` (lines 95–96):
+
+```makefile
+MULTILIB_OPTIONS += march=armv5te+fp/march=armv7/…/$(MULTI_ARCH_OPTS_A)$(SEP)$(MULTI_ARCH_OPTS_RM)
+MULTILIB_DIRNAMES += v5te v7 … $(MULTI_ARCH_DIRS_A) $(MULTI_ARCH_DIRS_RM)
+```
+
+(The `…` represents additional fixed dimensions added by `t-multilib` itself,
+not by the profile fragments.)
+
+When only `rmprofile` is configured, `MULTI_ARCH_OPTS_A` and `MULTI_ARCH_DIRS_A`
+are empty so only the M-profile entries appear; when both profiles are configured
+the combined set is present.
 
 ### `s-mlib` recipe (`Makefile.in` lines 2218–2241)
 
@@ -313,14 +325,18 @@ The `s-mlib` recipe itself performs no compilation. Running `make s-mlib` in an
 existing build directory after editing `TM_MULTILIB_CONFIG` in the build
 `Makefile` will regenerate `multilib.h` without touching any GCC source.
 
-However, `gcc.cc` hard-codes `#include "multilib.h"`. For the updated header to
-take effect in the installed driver, two extra steps are required after
-`make s-mlib`:
+However, `gcc.cc` hard-codes `#include "multilib.h"`. Because `gcc.o` is linked
+into **multiple** driver executables — `xgcc` (the C driver, `Makefile.in:2163`),
+`xg++` (the C++ driver, whose `GXX_OBJS` includes all of `GCC_OBJS`,
+`cp/Make-lang.in:80`), and `cpp` (`Makefile.in:2173`) — **all** of those must be
+relinked. For the updated header to take effect in the installed toolchain, three
+extra steps are required after `make s-mlib`:
 
 1. Recompile `gcc.cc` → `gcc.o` (a **single-file recompile**).
-2. Relink the driver executable (`xgcc`/`arm-none-eabi-gcc`).
+2. Relink all affected driver executables: `xgcc`, `xg++`, and `cpp`.
+3. Install the updated binaries via the GCC make install targets.
 
-Both steps together take seconds. They do **not** require recompiling the GCC
+All steps together take seconds. They do **not** require recompiling the GCC
 middle-end, back-end, or any runtime libraries.
 
 **Mechanical combination of two separately-built `multilib.h` files is not
@@ -359,11 +375,17 @@ make s-mlib
 # 3. Recompile only the driver translation unit:
 make gcc.o
 
-# 4. Relink the gcc driver:
-make xgcc
+# 4. Relink all driver executables that include gcc.o
+#    (xgcc/C driver, xg++/C++ driver, and cpp all link GCC_OBJS):
+make xgcc xg++ cpp
 
-# 5. Install the updated driver binary:
-cp xgcc "$INSTALLDIR_NATIVE/bin/arm-none-eabi-gcc"
+# 5. Install the C driver (arm-none-eabi-gcc and versioned/target symlinks).
+#    The build Makefile's --prefix was set to $INSTALLDIR_NATIVE at configure
+#    time, so no DESTDIR override is needed:
+make install-driver
+
+# 6. Install the C++ driver (arm-none-eabi-g++, arm-none-eabi-c++ and symlinks):
+make c++.install-common
 ```
 
 > **Prerequisite:** `srcdir` in the `gcc/Makefile` must point to the
@@ -375,7 +397,8 @@ cp xgcc "$INSTALLDIR_NATIVE/bin/arm-none-eabi-gcc"
 This approach is safe because:
 - `genmultilib` is deterministic and stateless — given the same input variables
   it always produces the same output.
-- Only `gcc.o` and the driver binary change; all other compiled objects and
-  installed libraries remain untouched.
-- The resulting `arm-none-eabi-gcc` driver will correctly route both M-profile
-  and A-profile flag combinations to their respective library subdirectories.
+- Only `gcc.o` and the driver binaries (`xgcc`, `xg++`, `cpp`) change; all
+  other compiled objects and installed libraries remain untouched.
+- The resulting `arm-none-eabi-gcc` and `arm-none-eabi-g++` drivers will
+  correctly route both M-profile and A-profile flag combinations to their
+  respective library subdirectories.
