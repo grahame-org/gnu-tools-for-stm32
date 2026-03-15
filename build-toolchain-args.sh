@@ -58,30 +58,31 @@ EOF
 }
 
 # parse_toolchain_args: parse command-line arguments for build-toolchain.sh.
-# Sets global variables: skip_steps, skip_stages, build_type, MULTILIB_LIST,
-# is_ppa_release, is_native_build, is_debug_build, skip_manual,
-# skip_package_bins, skip_package_sources, skip_md5_checksum,
-# skip_gdb_with_python, skip_mingw32_gdb_with_python, skip_native_build,
-# skip_strip_target_libraries, skip_mingw32, BUILD_OPTIONS
+# Exports the following variables for use by callers:
+#   MULTILIB_LIST, BUILD_OPTIONS,
+#   is_ppa_release, is_native_build, is_debug_build,
+#   skip_manual, skip_package_bins, skip_package_sources, skip_md5_checksum,
+#   skip_gdb_with_python, skip_mingw32, skip_mingw32_gdb_with_python,
+#   skip_native_build, skip_strip_target_libraries
 parse_toolchain_args() {
-    skip_mingw32=no
-    BUILD_OPTIONS="-g -O2"
-    is_ppa_release=no
-    is_native_build=yes
-    is_debug_build=no
-    skip_manual=no
-    skip_package_bins=no
-    skip_package_sources=no
-    skip_md5_checksum=no
+    export skip_mingw32=no
+    export BUILD_OPTIONS="-g -O2"
+    export is_ppa_release=no
+    export is_native_build=yes
+    export is_debug_build=no
+    export skip_manual=no
+    export skip_package_bins=no
+    export skip_package_sources=no
+    export skip_md5_checksum=no
     skip_steps=
     skip_stages=
-    skip_gdb_with_python=yes
-    skip_mingw32_gdb_with_python=yes
-    skip_native_build=no
-    skip_strip_target_libraries=no
+    export skip_gdb_with_python=yes
+    export skip_mingw32_gdb_with_python=yes
+    export skip_native_build=no
+    export skip_strip_target_libraries=no
     build_type=
 
-    MULTILIB_LIST="--with-multilib-list=rmprofile,aprofile"
+    export MULTILIB_LIST="--with-multilib-list=rmprofile,aprofile"
 
     for ac_arg in "$@"; do
         case $ac_arg in
@@ -98,7 +99,6 @@ parse_toolchain_args() {
                 build_type=${build_type//,/ }
                 ;;
             --with-multilib-list=*)
-                # shellcheck disable=SC2034  # output variable; read by callers after parse_toolchain_args()
                 MULTILIB_LIST="--with-multilib-list=${ac_arg##*=}"
                 ;;
             *)
@@ -116,15 +116,11 @@ parse_toolchain_args() {
                 skip_gdb_with_python=yes
                 ;;
             native)
-                # shellcheck disable=SC2034  # output variable; read by callers after parse_toolchain_args()
                 is_native_build=yes
-                # shellcheck disable=SC2034  # output variable; read by callers after parse_toolchain_args()
                 is_ppa_release=no
                 ;;
             debug)
-                # shellcheck disable=SC2034  # output variable; read by callers after parse_toolchain_args()
                 BUILD_OPTIONS="-g -O0"
-                # shellcheck disable=SC2034  # output variable; read by callers after parse_toolchain_args()
                 is_debug_build=yes
                 ;;
             *)
@@ -138,40 +134,31 @@ parse_toolchain_args() {
     for ss in $skip_steps; do
         case $ss in
             manual)
-                # shellcheck disable=SC2034  # output variable; read by callers after parse_toolchain_args()
                 skip_manual=yes
                 ;;
             package_bins)
-                # shellcheck disable=SC2034  # output variable; read by callers after parse_toolchain_args()
                 skip_package_bins=yes
                 ;;
             package_sources)
-                # shellcheck disable=SC2034  # output variable; read by callers after parse_toolchain_args()
                 skip_package_sources=yes
                 ;;
             md5_checksum)
-                # shellcheck disable=SC2034  # output variable; read by callers after parse_toolchain_args()
                 skip_md5_checksum=yes
                 ;;
             gdb-with-python)
-                # shellcheck disable=SC2034  # output variable; read by callers after parse_toolchain_args()
                 skip_gdb_with_python=yes
                 ;;
             mingw|mingw32)
-                # shellcheck disable=SC2034  # output variable; read by callers after parse_toolchain_args()
                 skip_mingw32=yes
                 skip_mingw32_gdb_with_python=yes
                 ;;
             mingw-gdb-with-python|mingw32-gdb-with-python)
-                # shellcheck disable=SC2034  # output variable; read by callers after parse_toolchain_args()
                 skip_mingw32_gdb_with_python=yes
                 ;;
             native)
-                # shellcheck disable=SC2034  # output variable; read by callers after parse_toolchain_args()
                 skip_native_build=yes
                 ;;
             strip)
-                # shellcheck disable=SC2034  # output variable; read by callers after parse_toolchain_args()
                 skip_strip_target_libraries=yes
                 ;;
             *)
