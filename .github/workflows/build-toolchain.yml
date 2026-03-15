@@ -173,6 +173,9 @@ jobs:
     timeout-minutes: 360
     permissions:
       contents: read
+    outputs:
+      binutils-build-time: ${{ steps.build-binutils.outputs.build-time-seconds }}
+      binutils-cache-hit: ${{ steps.build-binutils.outputs.cache-hit }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -333,6 +336,9 @@ jobs:
     timeout-minutes: 180
     permissions:
       contents: read
+    outputs:
+      gdb-build-time: ${{ steps.build-gdb.outputs.build-time-seconds }}
+      gdb-cache-hit: ${{ steps.build-gdb.outputs.cache-hit }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -488,6 +494,9 @@ jobs:
     timeout-minutes: 360
     permissions:
       contents: read
+    outputs:
+      gcc-first-build-time: ${{ steps.build-gcc-first.outputs.build-time-seconds }}
+      gcc-first-cache-hit: ${{ steps.build-gcc-first.outputs.cache-hit }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -614,6 +623,9 @@ jobs:
     timeout-minutes: 360
     permissions:
       contents: read
+    outputs:
+      newlib-build-time: ${{ steps.build-newlib.outputs.build-time-seconds }}
+      newlib-cache-hit: ${{ steps.pre-restore.outputs.cache-hit }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -779,6 +791,9 @@ jobs:
     timeout-minutes: 360
     permissions:
       contents: read
+    outputs:
+      newlib-nano-build-time: ${{ steps.build-newlib-nano.outputs.build-time-seconds }}
+      newlib-nano-cache-hit: ${{ steps.build-newlib-nano.outputs.cache-hit }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -905,6 +920,9 @@ jobs:
     timeout-minutes: 360
     permissions:
       contents: read
+    outputs:
+      gcc-final-build-time: ${{ steps.build-gcc-final.outputs.build-time-seconds }}
+      gcc-final-cache-hit: ${{ steps.build-gcc-final.outputs.cache-hit }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -1008,6 +1026,16 @@ jobs:
           path: install-native
           key: ${{ runner.os }}-stage-v2-${{ needs.compute-hashes.outputs.newlib }}
 
+      - name: Restore ccache – gcc-final
+        id: cache-gcc-final
+        if: steps.pre-restore.outputs.cache-hit != 'true'
+        uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        with:
+          path: ~/.ccache
+          key: ${{ runner.os }}-ccache-gcc-final-${{ needs.compute-hashes.outputs['gcc-final'] }}
+          restore-keys: |
+            ${{ runner.os }}-ccache-gcc-final-
+
       - name: Build and cache stage – gcc-final
         id: build-gcc-final
         uses: ./.github/actions/build-stage
@@ -1018,6 +1046,23 @@ jobs:
           build-script: ./build-gcc-final.sh
           pre-cache-hit: ${{ steps.pre-restore.outputs.cache-hit == 'true' }}
           save-in-merge-group: 'true'
+
+      - name: Check ccache directory – gcc-final
+        id: check-ccache-gcc-final
+        if: steps.pre-restore.outputs.cache-hit != 'true' && steps.cache-gcc-final.outputs.cache-hit != 'true' && github.event_name != 'merge_group'
+        run: |
+          if [ -d ~/.ccache ] && [ -n "$(ls -A ~/.ccache 2>/dev/null)" ]; then
+            echo "non-empty=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "non-empty=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Save ccache – gcc-final
+        if: steps.check-ccache-gcc-final.outputs.non-empty == 'true'
+        uses: actions/cache/save@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        with:
+          path: ~/.ccache
+          key: ${{ runner.os }}-ccache-gcc-final-${{ needs.compute-hashes.outputs['gcc-final'] }}
 
   # ---------------------------------------------------------------------------
   # Job: build-gcc-size-libstdcxx
@@ -1031,6 +1076,9 @@ jobs:
     timeout-minutes: 360
     permissions:
       contents: read
+    outputs:
+      gcc-size-libstdcxx-build-time: ${{ steps.build-gcc-size-libstdcxx.outputs.build-time-seconds }}
+      gcc-size-libstdcxx-cache-hit: ${{ steps.build-gcc-size-libstdcxx.outputs.cache-hit }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -1143,6 +1191,16 @@ jobs:
           path: build-native/target-libs
           key: ${{ runner.os }}-stage-v2-${{ needs.compute-hashes.outputs['newlib-nano'] }}
 
+      - name: Restore ccache – gcc-size-libstdcxx
+        id: cache-gcc-size-libstdcxx
+        if: steps.pre-restore.outputs.cache-hit != 'true'
+        uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        with:
+          path: ~/.ccache
+          key: ${{ runner.os }}-ccache-gcc-size-libstdcxx-${{ needs.compute-hashes.outputs['gcc-size-libstdcxx'] }}
+          restore-keys: |
+            ${{ runner.os }}-ccache-gcc-size-libstdcxx-
+
       - name: Build and cache stage – gcc-size-libstdcxx
         id: build-gcc-size-libstdcxx
         uses: ./.github/actions/build-stage
@@ -1156,6 +1214,22 @@ jobs:
           pre-cache-hit: ${{ steps.pre-restore.outputs.cache-hit == 'true' }}
           save-in-merge-group: 'true'
 
+      - name: Check ccache directory – gcc-size-libstdcxx
+        id: check-ccache-gcc-size-libstdcxx
+        if: steps.pre-restore.outputs.cache-hit != 'true' && steps.cache-gcc-size-libstdcxx.outputs.cache-hit != 'true' && github.event_name != 'merge_group'
+        run: |
+          if [ -d ~/.ccache ] && [ -n "$(ls -A ~/.ccache 2>/dev/null)" ]; then
+            echo "non-empty=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "non-empty=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Save ccache – gcc-size-libstdcxx
+        if: steps.check-ccache-gcc-size-libstdcxx.outputs.non-empty == 'true'
+        uses: actions/cache/save@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        with:
+          path: ~/.ccache
+          key: ${{ runner.os }}-ccache-gcc-size-libstdcxx-${{ needs.compute-hashes.outputs['gcc-size-libstdcxx'] }}
   # ---------------------------------------------------------------------------
   # Job: build-final
   # Converges build-gcc-size-libstdcxx and build-gdb.  Restores the
@@ -1164,7 +1238,7 @@ jobs:
   # test_project validation.
   # ---------------------------------------------------------------------------
   build-final:
-    needs: [check-changes, compute-hashes, build-gdb, build-gcc-size-libstdcxx]
+    needs: [check-changes, compute-hashes, build-binutils, build-gdb, build-gcc-first, build-newlib, build-newlib-nano, build-gcc-final, build-gcc-size-libstdcxx]
     if: needs.check-changes.outputs.should-build == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 120
@@ -1390,6 +1464,57 @@ jobs:
             exit 1
           fi
           echo "All artifacts match reference binaries."
+
+      - name: Report build times
+        if: always()
+        env:
+          BINUTILS_SECONDS: ${{ needs.build-binutils.outputs.binutils-build-time }}
+          BINUTILS_CACHE_HIT: ${{ needs.build-binutils.outputs.binutils-cache-hit }}
+          GDB_SECONDS: ${{ needs.build-gdb.outputs.gdb-build-time }}
+          GDB_CACHE_HIT: ${{ needs.build-gdb.outputs.gdb-cache-hit }}
+          GCC_FIRST_SECONDS: ${{ needs.build-gcc-first.outputs.gcc-first-build-time }}
+          GCC_FIRST_CACHE_HIT: ${{ needs.build-gcc-first.outputs.gcc-first-cache-hit }}
+          NEWLIB_SECONDS: ${{ needs.build-newlib.outputs.newlib-build-time }}
+          NEWLIB_CACHE_HIT: ${{ needs.build-newlib.outputs.newlib-cache-hit }}
+          NEWLIB_NANO_SECONDS: ${{ needs.build-newlib-nano.outputs.newlib-nano-build-time }}
+          NEWLIB_NANO_CACHE_HIT: ${{ needs.build-newlib-nano.outputs.newlib-nano-cache-hit }}
+          GCC_FINAL_SECONDS: ${{ needs.build-gcc-final.outputs.gcc-final-build-time }}
+          GCC_FINAL_CACHE_HIT: ${{ needs.build-gcc-final.outputs.gcc-final-cache-hit }}
+          GCC_SIZE_LIBSTDCXX_SECONDS: ${{ needs.build-gcc-size-libstdcxx.outputs.gcc-size-libstdcxx-build-time }}
+          GCC_SIZE_LIBSTDCXX_CACHE_HIT: ${{ needs.build-gcc-size-libstdcxx.outputs.gcc-size-libstdcxx-cache-hit }}
+        run: |
+          format_minutes() {
+            local seconds="${1:-}"
+            if [ -z "${seconds}" ]; then
+              echo "—"
+            else
+              echo "$(( (seconds + 59) / 60 )) min"
+            fi
+          }
+          format_cache_hit() {
+            local seconds="${1:-}"
+            local cache_hit="${2:-}"
+            if [ -z "${seconds}" ]; then
+              echo "Yes"
+            elif [ "${cache_hit}" = "true" ]; then
+              echo "Yes"
+            else
+              echo "No"
+            fi
+          }
+          {
+            echo "## Build Stage Timings"
+            echo ""
+            echo "| Job | Stage | Build time | Cache hit? |"
+            echo "|-----|-------|-----------|-----------|"
+            echo "| \`build-binutils\` | III-0 binutils | $(format_minutes "${BINUTILS_SECONDS}") | $(format_cache_hit "${BINUTILS_SECONDS}" "${BINUTILS_CACHE_HIT}") |"
+            echo "| \`build-gdb\` | III-6 gdb | $(format_minutes "${GDB_SECONDS}") | $(format_cache_hit "${GDB_SECONDS}" "${GDB_CACHE_HIT}") |"
+            echo "| \`build-gcc-first\` | III-1 gcc-first | $(format_minutes "${GCC_FIRST_SECONDS}") | $(format_cache_hit "${GCC_FIRST_SECONDS}" "${GCC_FIRST_CACHE_HIT}") |"
+            echo "| \`build-newlib\` | III-2 newlib | $(format_minutes "${NEWLIB_SECONDS}") | $(format_cache_hit "${NEWLIB_SECONDS}" "${NEWLIB_CACHE_HIT}") |"
+            echo "| \`build-newlib-nano\` | III-3 newlib-nano | $(format_minutes "${NEWLIB_NANO_SECONDS}") | $(format_cache_hit "${NEWLIB_NANO_SECONDS}" "${NEWLIB_NANO_CACHE_HIT}") |"
+            echo "| \`build-gcc-final\` | III-4 gcc-final | $(format_minutes "${GCC_FINAL_SECONDS}") | $(format_cache_hit "${GCC_FINAL_SECONDS}" "${GCC_FINAL_CACHE_HIT}") |"
+            echo "| \`build-gcc-size-libstdcxx\` | III-5 gcc-size-libstdcxx | $(format_minutes "${GCC_SIZE_LIBSTDCXX_SECONDS}") | $(format_cache_hit "${GCC_SIZE_LIBSTDCXX_SECONDS}" "${GCC_SIZE_LIBSTDCXX_CACHE_HIT}") |"
+          } >> "${GITHUB_STEP_SUMMARY}"
 
   # ---------------------------------------------------------------------------
   # Status job – keep required checks green when jobs are skipped.
