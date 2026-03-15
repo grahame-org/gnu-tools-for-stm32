@@ -342,6 +342,9 @@ combined into `install-native/`, do the following inside one of the GCC build
 directories (either the rmprofile or aprofile build dir works):
 
 ```bash
+# Load BUILDDIR_NATIVE and INSTALLDIR_NATIVE (and other shared variables)
+source ./build-common.sh
+
 # The TM_MULTILIB_CONFIG variable and the s-mlib/gcc.o/xgcc targets all live
 # in the gcc/ subdirectory of the GCC build tree:
 cd "$BUILDDIR_NATIVE/gcc-final/gcc"
