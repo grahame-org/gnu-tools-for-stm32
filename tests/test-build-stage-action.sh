@@ -125,6 +125,12 @@ py_assert "optional input 'pre-cache-hit' exists" \
 py_assert "pre-cache-hit has required: false" \
     "import yaml, sys; f=open(sys.argv[1]); d=yaml.safe_load(f); f.close(); assert d['inputs']['pre-cache-hit'].get('required') is False"
 
+py_assert "optional input 'save-in-merge-group' exists" \
+    "import yaml, sys; f=open(sys.argv[1]); d=yaml.safe_load(f); f.close(); assert 'save-in-merge-group' in d['inputs']"
+
+py_assert "save-in-merge-group has required: false" \
+    "import yaml, sys; f=open(sys.argv[1]); d=yaml.safe_load(f); f.close(); assert d['inputs']['save-in-merge-group'].get('required') is False"
+
 # ---------------------------------------------------------------------------
 # Test group 5: Outputs
 # ---------------------------------------------------------------------------
@@ -134,6 +140,9 @@ echo "=== Group 5: Outputs ==="
 
 py_assert "output 'cache-hit' exists" \
     "import yaml, sys; f=open(sys.argv[1]); d=yaml.safe_load(f); f.close(); assert 'cache-hit' in d['outputs']"
+
+py_assert "output 'build-time-seconds' exists" \
+    "import yaml, sys; f=open(sys.argv[1]); d=yaml.safe_load(f); f.close(); assert 'build-time-seconds' in d['outputs']"
 
 # ---------------------------------------------------------------------------
 # Summary
