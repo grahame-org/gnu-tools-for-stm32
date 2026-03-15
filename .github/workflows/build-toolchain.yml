@@ -215,7 +215,7 @@ jobs:
         uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           path: install-native
-          key: ${{ runner.os }}-stage-v1-${{ needs.compute-hashes.outputs.binutils }}
+          key: ${{ runner.os }}-stage-v2-${{ needs.compute-hashes.outputs.binutils }}
 
       - name: Free disk space
         if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.pre-restore.outputs.cache-hit != 'true'
@@ -304,7 +304,7 @@ jobs:
         with:
           stage-name: binutils
           cache-paths: install-native
-          cache-key: ${{ runner.os }}-stage-v1-${{ needs.compute-hashes.outputs.binutils }}
+          cache-key: ${{ runner.os }}-stage-v2-${{ needs.compute-hashes.outputs.binutils }}
           build-script: ./build-binutils.sh
           pre-cache-hit: ${{ steps.pre-restore.outputs.cache-hit == 'true' }}
           save-in-merge-group: 'true'
@@ -370,14 +370,14 @@ jobs:
         uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           path: install-native
-          key: ${{ runner.os }}-stage-v1-${{ needs.compute-hashes.outputs.gdb }}
+          key: ${{ runner.os }}-stage-v2-${{ needs.compute-hashes.outputs.gdb }}
 
       - name: Restore cache – binutils (baseline for gdb build)
         if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.pre-restore.outputs.cache-hit != 'true'
         uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           path: install-native
-          key: ${{ runner.os }}-stage-v1-${{ needs.compute-hashes.outputs.binutils }}
+          key: ${{ runner.os }}-stage-v2-${{ needs.compute-hashes.outputs.binutils }}
 
       - name: Free disk space
         if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.pre-restore.outputs.cache-hit != 'true'
@@ -460,7 +460,7 @@ jobs:
         with:
           stage-name: gdb
           cache-paths: install-native
-          cache-key: ${{ runner.os }}-stage-v1-${{ needs.compute-hashes.outputs.gdb }}
+          cache-key: ${{ runner.os }}-stage-v2-${{ needs.compute-hashes.outputs.gdb }}
           build-script: ./build-gdb.sh
           pre-cache-hit: ${{ steps.pre-restore.outputs.cache-hit == 'true' }}
           save-in-merge-group: 'true'
@@ -489,7 +489,7 @@ jobs:
         uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           path: install-native
-          key: ${{ runner.os }}-stage-v1-${{ needs.compute-hashes.outputs['gcc-first'] }}
+          key: ${{ runner.os }}-stage-v2-${{ needs.compute-hashes.outputs['gcc-first'] }}
 
       - name: Free disk space
         if: steps.pre-restore.outputs.cache-hit != 'true'
@@ -579,7 +579,7 @@ jobs:
         uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           path: install-native
-          key: ${{ runner.os }}-stage-v1-${{ needs.compute-hashes.outputs.binutils }}
+          key: ${{ runner.os }}-stage-v2-${{ needs.compute-hashes.outputs.binutils }}
 
       - name: Build and cache stage – gcc-first
         id: build-gcc-first
@@ -587,7 +587,7 @@ jobs:
         with:
           stage-name: gcc-first
           cache-paths: install-native
-          cache-key: ${{ runner.os }}-stage-v1-${{ needs.compute-hashes.outputs['gcc-first'] }}
+          cache-key: ${{ runner.os }}-stage-v2-${{ needs.compute-hashes.outputs['gcc-first'] }}
           build-script: ./build-gcc-first.sh
           pre-cache-hit: ${{ steps.pre-restore.outputs.cache-hit == 'true' }}
           save-in-merge-group: 'true'
@@ -653,14 +653,14 @@ jobs:
         uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           path: install-native
-          key: ${{ runner.os }}-stage-v1-${{ needs.compute-hashes.outputs.newlib }}
+          key: ${{ runner.os }}-stage-v2-${{ needs.compute-hashes.outputs.newlib }}
 
       - name: Restore cache – gcc-first (baseline for newlib build)
         if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.pre-restore.outputs.cache-hit != 'true'
         uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           path: install-native
-          key: ${{ runner.os }}-stage-v1-${{ needs.compute-hashes.outputs['gcc-first'] }}
+          key: ${{ runner.os }}-stage-v2-${{ needs.compute-hashes.outputs['gcc-first'] }}
 
       - name: Free disk space
         if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.pre-restore.outputs.cache-hit != 'true'
@@ -759,7 +759,7 @@ jobs:
         uses: actions/cache/save@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           path: install-native
-          key: ${{ runner.os }}-stage-v1-${{ needs.compute-hashes.outputs.newlib }}
+          key: ${{ runner.os }}-stage-v2-${{ needs.compute-hashes.outputs.newlib }}
 
   # ---------------------------------------------------------------------------
   # Job: build-newlib-nano
@@ -786,7 +786,7 @@ jobs:
         uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           path: build-native/target-libs
-          key: ${{ runner.os }}-stage-v1-${{ needs.compute-hashes.outputs['newlib-nano'] }}
+          key: ${{ runner.os }}-stage-v2-${{ needs.compute-hashes.outputs['newlib-nano'] }}
 
       - name: Free disk space
         if: steps.pre-restore.outputs.cache-hit != 'true'
@@ -876,7 +876,7 @@ jobs:
         uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           path: install-native
-          key: ${{ runner.os }}-stage-v1-${{ needs.compute-hashes.outputs['gcc-first'] }}
+          key: ${{ runner.os }}-stage-v2-${{ needs.compute-hashes.outputs['gcc-first'] }}
 
       - name: Build and cache stage – newlib-nano
         id: build-newlib-nano
@@ -884,7 +884,7 @@ jobs:
         with:
           stage-name: newlib-nano
           cache-paths: build-native/target-libs
-          cache-key: ${{ runner.os }}-stage-v1-${{ needs.compute-hashes.outputs['newlib-nano'] }}
+          cache-key: ${{ runner.os }}-stage-v2-${{ needs.compute-hashes.outputs['newlib-nano'] }}
           build-script: ./build-newlib-nano.sh
           pre-cache-hit: ${{ steps.pre-restore.outputs.cache-hit == 'true' }}
           save-in-merge-group: 'true'
@@ -911,7 +911,7 @@ jobs:
         uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           path: install-native
-          key: ${{ runner.os }}-stage-v1-${{ needs.compute-hashes.outputs['gcc-final'] }}
+          key: ${{ runner.os }}-stage-v2-${{ needs.compute-hashes.outputs['gcc-final'] }}
 
       - name: Free disk space
         if: steps.pre-restore.outputs.cache-hit != 'true'
@@ -1001,7 +1001,7 @@ jobs:
         uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           path: install-native
-          key: ${{ runner.os }}-stage-v1-${{ needs.compute-hashes.outputs.newlib }}
+          key: ${{ runner.os }}-stage-v2-${{ needs.compute-hashes.outputs.newlib }}
 
       - name: Build and cache stage – gcc-final
         id: build-gcc-final
@@ -1009,7 +1009,7 @@ jobs:
         with:
           stage-name: gcc-final
           cache-paths: install-native
-          cache-key: ${{ runner.os }}-stage-v1-${{ needs.compute-hashes.outputs['gcc-final'] }}
+          cache-key: ${{ runner.os }}-stage-v2-${{ needs.compute-hashes.outputs['gcc-final'] }}
           build-script: ./build-gcc-final.sh
           pre-cache-hit: ${{ steps.pre-restore.outputs.cache-hit == 'true' }}
           save-in-merge-group: 'true'
@@ -1039,7 +1039,7 @@ jobs:
           path: |
             install-native
             build-native/target-libs
-          key: ${{ runner.os }}-stage-v1-${{ needs.compute-hashes.outputs['gcc-size-libstdcxx'] }}
+          key: ${{ runner.os }}-stage-v2-${{ needs.compute-hashes.outputs['gcc-size-libstdcxx'] }}
 
       - name: Free disk space
         if: steps.pre-restore.outputs.cache-hit != 'true'
@@ -1129,14 +1129,14 @@ jobs:
         uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           path: install-native
-          key: ${{ runner.os }}-stage-v1-${{ needs.compute-hashes.outputs['gcc-final'] }}
+          key: ${{ runner.os }}-stage-v2-${{ needs.compute-hashes.outputs['gcc-final'] }}
 
       - name: Restore cache – newlib-nano
         if: steps.pre-restore.outputs.cache-hit != 'true'
         uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           path: build-native/target-libs
-          key: ${{ runner.os }}-stage-v1-${{ needs.compute-hashes.outputs['newlib-nano'] }}
+          key: ${{ runner.os }}-stage-v2-${{ needs.compute-hashes.outputs['newlib-nano'] }}
 
       - name: Build and cache stage – gcc-size-libstdcxx
         id: build-gcc-size-libstdcxx
@@ -1146,7 +1146,7 @@ jobs:
           cache-paths: |
             install-native
             build-native/target-libs
-          cache-key: ${{ runner.os }}-stage-v1-${{ needs.compute-hashes.outputs['gcc-size-libstdcxx'] }}
+          cache-key: ${{ runner.os }}-stage-v2-${{ needs.compute-hashes.outputs['gcc-size-libstdcxx'] }}
           build-script: ./build-gcc-size-libstdcxx.sh
           pre-cache-hit: ${{ steps.pre-restore.outputs.cache-hit == 'true' }}
           save-in-merge-group: 'true'
@@ -1277,7 +1277,7 @@ jobs:
           path: |
             install-native
             build-native/target-libs
-          key: ${{ runner.os }}-stage-v1-${{ needs.compute-hashes.outputs['gcc-size-libstdcxx'] }}
+          key: ${{ runner.os }}-stage-v2-${{ needs.compute-hashes.outputs['gcc-size-libstdcxx'] }}
 
       # Layer gdb snapshot on top — tar extraction adds gdb binaries without
       # removing gcc/newlib files already present in install-native.
@@ -1286,7 +1286,7 @@ jobs:
         uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           path: install-native
-          key: ${{ runner.os }}-stage-v1-${{ needs.compute-hashes.outputs.gdb }}
+          key: ${{ runner.os }}-stage-v2-${{ needs.compute-hashes.outputs.gdb }}
 
       # Run pretidy / strip / specs (all stage builds are skipped)
       - name: Build toolchain – final assembly
