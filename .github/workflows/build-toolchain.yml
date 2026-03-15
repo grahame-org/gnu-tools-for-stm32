@@ -127,8 +127,11 @@ jobs:
             | sha256sum | cut -d' ' -f1
           )
           final_scripts_hash=$(
-            printf '%s\n' build-toolchain.sh build-toolchain-args.sh build-common.sh \
-            | git hash-object --stdin-paths | sha256sum | cut -d' ' -f1
+            printf '%s\n' \
+              "$(hash_dir build-toolchain.sh)" \
+              "$(hash_dir build-toolchain-args.sh)" \
+              "$(hash_dir build-common.sh)" \
+            | sha256sum | cut -d' ' -f1
           )
           prereqs_key="${{ steps.cache-prerequisites.outputs.cache-primary-key }}"
 
@@ -1271,9 +1274,18 @@ jobs:
           path: install-native
           key: ${{ runner.os }}-toolchain-${{ hashFiles('build-*.sh') }}-${{ steps.src-hashes.outputs.toolchain-src }}
 
+      # Pre-restore: check for a cached final assembly with the same inputs.
+      - name: Restore cache – stage-final
+        id: pre-restore
+        if: steps.cache-toolchain.outputs.cache-hit != 'true'
+        uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        with:
+          path: install-native
+          key: ${{ runner.os }}-stage-v2-${{ needs.compute-hashes.outputs.final }}
+
       # Restore gcc-size-libstdcxx snapshot (full gcc chain output)
       - name: Restore cache – gcc-size-libstdcxx
-        if: steps.cache-toolchain.outputs.cache-hit != 'true'
+        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.pre-restore.outputs.cache-hit != 'true'
         uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           path: |
@@ -1284,7 +1296,7 @@ jobs:
       # Layer gdb snapshot on top — tar extraction adds gdb binaries without
       # removing gcc/newlib files already present in install-native.
       - name: Restore cache – gdb
-        if: steps.cache-toolchain.outputs.cache-hit != 'true'
+        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.pre-restore.outputs.cache-hit != 'true'
         uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         with:
           path: install-native
@@ -1292,13 +1304,20 @@ jobs:
 
       # Run pretidy / strip / specs (all stage builds are skipped)
       - name: Build toolchain – final assembly
-        if: steps.cache-toolchain.outputs.cache-hit != 'true'
+        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.pre-restore.outputs.cache-hit != 'true'
         run: |
           JOBS=$(nproc)
           export JOBS
           ./build-toolchain.sh \
             --skip_steps=mingw,mingw-gdb-with-python,gdb-with-python,manual,package_sources \
             --skip_stages=binutils,gcc-first,newlib,newlib-nano,gcc-final,gcc-size-libstdcxx,gdb
+
+      - name: Save cache – stage-final
+        if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.pre-restore.outputs.cache-hit != 'true' && github.event_name != 'merge_group'
+        uses: actions/cache/save@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        with:
+          path: install-native
+          key: ${{ runner.os }}-stage-v2-${{ needs.compute-hashes.outputs.final }}
 
       - name: Save cache – toolchain
         if: steps.cache-toolchain.outputs.cache-hit != 'true' && github.event_name != 'merge_group'
