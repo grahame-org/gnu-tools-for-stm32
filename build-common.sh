@@ -329,8 +329,8 @@ LIBICONV_URL=https://ftp.gnu.org/pub/gnu/libiconv/$LIBICONV_PACK
 ZLIB_URL=http://www.zlib.net/fossils/$ZLIB_PACK
 PYTHON_WIN_URL=https://www.python.org/ftp/python/$PYTHON_WIN_VER/$PYTHON_WIN_PACK
 
-# shellcheck disable=SC2034  # read by build-toolchain.sh after sourcing build-common.sh
 TAR=tar
+export TAR
 # Set variables according to real environment to make this script can run
 # on Ubuntu and Mac OS X.
 uname_string=$(uname | sed 'y/LINUXDARWIN/linuxdarwin/')
@@ -338,27 +338,27 @@ host_arch=$(uname -m | sed 'y/XI/xi/')
 if [ "$uname_string" == "linux" ] ; then
     BUILD="$host_arch"-linux-gnu
     HOST_NATIVE="$host_arch"-linux-gnu
-    # shellcheck disable=SC2034  # read by build-toolchain.sh and build-prerequisites.sh after sourcing build-common.sh
     JOBS=$(grep ^processor /proc/cpuinfo|wc -l)
-    # shellcheck disable=SC2034  # read by build-gcc-first.sh, build-gcc-final.sh, build-gcc-size-libstdcxx.sh after sourcing build-common.sh
+    export JOBS
     GCC_CONFIG_OPTS_LCPP="--with-host-libstdcxx=-static-libgcc -Wl,-Bstatic,-lstdc++,-Bdynamic -lm"
-    # shellcheck disable=SC2034  # read by build-toolchain.sh after sourcing build-common.sh
+    export GCC_CONFIG_OPTS_LCPP
     MD5="md5sum -b"
+    export MD5
     PACKAGE_NAME_SUFFIX="${host_arch}-linux"
 elif [ "$uname_string" == "darwin" ] ; then
     BUILD=x86_64-apple-darwin10
     HOST_NATIVE=x86_64-apple-darwin10
     # Disable parallel build for mac as we will randomly run into "Permission denied" issue.
     #JOBS=`sysctl -n hw.ncpu`
-    # shellcheck disable=SC2034  # read by build-toolchain.sh and build-prerequisites.sh after sourcing build-common.sh
     JOBS=1
-    # shellcheck disable=SC2034  # read by build-gcc-first.sh, build-gcc-final.sh, build-gcc-size-libstdcxx.sh after sourcing build-common.sh
+    export JOBS
     GCC_CONFIG_OPTS_LCPP="--with-host-libstdcxx=-static-libgcc -Wl,-lstdc++ -lm"
-    # shellcheck disable=SC2034  # read by build-toolchain.sh after sourcing build-common.sh
+    export GCC_CONFIG_OPTS_LCPP
     MD5="md5 -r"
+    export MD5
     PACKAGE_NAME_SUFFIX=mac-$(sw_vers -productVersion)
-    # shellcheck disable=SC2034  # read by build-toolchain.sh after sourcing build-common.sh
     TAR=gtar
+    export TAR
 else
     error "Unsupported build system : $uname_string"
 fi
@@ -392,8 +392,8 @@ if [[ "${SCRIPT%%-*}" = "build" || "${SCRIPT#*_*}" = "build" ]]; then
     STM32_TOOLS_VER=$(git describe --tags 2>/dev/null || echo "$GCC_VER_DISPLAY-$RELEASEVER~$(git rev-parse --verify HEAD)")
 
     HOST_MINGW=x86_64-w64-mingw32
-    # shellcheck disable=SC2034  # read by build-toolchain.sh and build-prerequisites.sh after sourcing build-common.sh
     HOST_MINGW_TOOL=x86_64-w64-mingw32
+    export HOST_MINGW_TOOL
     TARGET=arm-none-eabi
     ENV_CFLAGS=
     ENV_CPPFLAGS=
