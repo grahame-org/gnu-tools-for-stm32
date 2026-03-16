@@ -381,7 +381,9 @@ if [[ "${SCRIPT%%-*}" = "build" || "${SCRIPT#*_*}" = "build" ]]; then
 
     stack_level=0
 
+    # shellcheck disable=SC2034  # output of setup(); consumed by build-toolchain.sh and build-prerequisites.sh after sourcing build-common.sh
     LICENSE_FILE=license.txt
+    # shellcheck disable=SC2034  # output of setup(); consumed by build-toolchain.sh and build-prerequisites.sh after sourcing build-common.sh
     GCC_VER=$(cat $SRCDIR/$GCC/gcc/BASE-VER)
     GCC_VER_DISPLAY=$(cut -d'.' -f1,2 $SRCDIR/$GCC/gcc/BASE-VER)
     STM32_TOOLS_VER=$(git describe --tags 2>/dev/null || echo "$GCC_VER_DISPLAY-$RELEASEVER~$(git rev-parse --verify HEAD)")
@@ -396,24 +398,36 @@ if [[ "${SCRIPT%%-*}" = "build" || "${SCRIPT#*_*}" = "build" ]]; then
     HOST_MINGW=x86_64-w64-mingw32
     HOST_MINGW_TOOL=x86_64-w64-mingw32
     TARGET=arm-none-eabi
+    # shellcheck disable=SC2034  # output of setup(); overridden and consumed by build-toolchain.sh and build-prerequisites.sh
     ENV_CFLAGS=
+    # shellcheck disable=SC2034  # output of setup(); overridden and consumed by build-toolchain.sh and build-prerequisites.sh
     ENV_CPPFLAGS=
+    # shellcheck disable=SC2034  # output of setup(); overridden and consumed by build-toolchain.sh and build-prerequisites.sh
     ENV_LDFLAGS=
+    # shellcheck disable=SC2034  # output of setup(); overridden and consumed by build-toolchain.sh and build-prerequisites.sh
     BINUTILS_CONFIG_OPTS=
+    # shellcheck disable=SC2034  # output of setup(); overridden and consumed by build-toolchain.sh and build-prerequisites.sh
     GCC_CONFIG_OPTS=
+    # shellcheck disable=SC2034  # output of setup(); overridden and consumed by build-toolchain.sh and build-prerequisites.sh
     GDB_CONFIG_OPTS=
+    # shellcheck disable=SC2034  # output of setup(); overridden and consumed by build-toolchain.sh and build-prerequisites.sh
     NEWLIB_CONFIG_OPTS=
 
 
     PKGROOTNAME="GNU Tools for STM32"
+    # shellcheck disable=SC2034  # output of setup(); consumed by build-toolchain.sh and build-prerequisites.sh after sourcing build-common.sh
     PKGVERSION="$PKGROOTNAME $STM32_TOOLS_VER"
-    BUGURL="https://developer.arm.com/open-source/gnu-toolchain/gnu-rm"
 
+    # shellcheck disable=SC2034  # output of setup(); consumed by build-toolchain.sh and build-prerequisites.sh after sourcing build-common.sh
     OBJ_SUFFIX_MINGW=$TARGET-$RELEASEDATE-$HOST_MINGW
+    # shellcheck disable=SC2034  # output of setup(); consumed by build-toolchain.sh and build-prerequisites.sh after sourcing build-common.sh
     OBJ_SUFFIX_NATIVE=$TARGET-$RELEASEDATE-$HOST_NATIVE
     PACKAGE_NAME=gnu-tools-for-stm32-$STM32_TOOLS_VER
+    # shellcheck disable=SC2034  # output of setup(); consumed by build-toolchain.sh and build-prerequisites.sh after sourcing build-common.sh
     PACKAGE_NAME_NATIVE=$PACKAGE_NAME-$PACKAGE_NAME_SUFFIX
+    # shellcheck disable=SC2034  # output of setup(); consumed by build-toolchain.sh and build-prerequisites.sh after sourcing build-common.sh
     PACKAGE_NAME_MINGW=$PACKAGE_NAME-win32
+    # shellcheck disable=SC2034  # output of setup(); consumed by build-toolchain.sh and build-prerequisites.sh after sourcing build-common.sh
     INSTALL_PACKAGE_NAME=$PACKAGE_NAME
 
 fi # not a build script
