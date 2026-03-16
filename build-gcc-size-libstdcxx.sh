@@ -54,7 +54,7 @@ umask 022
 
 exec < /dev/null
 
-script_path=$(cd $(dirname $0) && pwd -P)
+script_path=$(cd "$(dirname "$0")" && pwd -P)
 cd "$script_path"
 . $script_path/build-common.sh
 
