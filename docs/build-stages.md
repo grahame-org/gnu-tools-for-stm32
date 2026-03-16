@@ -518,3 +518,5 @@ flowchart TD
 ---
 
 *Related: [Issue #71](https://github.com/grahame-white/gnu-tools-for-stm32/issues/71) — implement incremental caching*
+
+*See also: [`docs/cache-sizes.md`](cache-sizes.md) — empirical cache entry sizes and budget analysis*
