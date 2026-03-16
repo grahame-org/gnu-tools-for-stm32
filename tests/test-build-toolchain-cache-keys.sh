@@ -158,6 +158,9 @@ compute_key_final_ignoring_unrelated() {
     local specs_src="$4"
     # $5 is an unrelated scripts hash (e.g. binutils_scripts_hash) that is
     # intentionally NOT part of the key_final formula.
+    # Consume the 5th argument explicitly so it is required, while keeping it
+    # out of the key_final formula.
+    local unrelated_scripts_hash="${5:?unrelated_scripts_hash argument is required}"
     compute_key_final "$final_scripts_hash" "$key_gcc_size" "$key_gdb" "$specs_src"
 }
 
