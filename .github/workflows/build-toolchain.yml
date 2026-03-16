@@ -335,7 +335,11 @@ jobs:
             size_human="(not found)"
             size_bytes="0"
           fi
-          echo "| binutils | install-native | ${size_human} |" >> "${GITHUB_STEP_SUMMARY}"
+          {
+            echo "| Stage | Path | Size |"
+            echo "|-------|------|------|"
+            echo "| binutils | install-native | ${size_human} |"
+          } >> "${GITHUB_STEP_SUMMARY}"
           echo "cache-size-bytes=${size_bytes}" >> "${GITHUB_OUTPUT}"
 
   # ---------------------------------------------------------------------------
@@ -509,7 +513,11 @@ jobs:
             size_human="(not found)"
             size_bytes="0"
           fi
-          echo "| gdb | install-native | ${size_human} |" >> "${GITHUB_STEP_SUMMARY}"
+          {
+            echo "| Stage | Path | Size |"
+            echo "|-------|------|------|"
+            echo "| gdb | install-native | ${size_human} |"
+          } >> "${GITHUB_STEP_SUMMARY}"
           echo "cache-size-bytes=${size_bytes}" >> "${GITHUB_OUTPUT}"
 
   # ---------------------------------------------------------------------------
@@ -654,7 +662,11 @@ jobs:
             size_human="(not found)"
             size_bytes="0"
           fi
-          echo "| gcc-first | install-native | ${size_human} |" >> "${GITHUB_STEP_SUMMARY}"
+          {
+            echo "| Stage | Path | Size |"
+            echo "|-------|------|------|"
+            echo "| gcc-first | install-native | ${size_human} |"
+          } >> "${GITHUB_STEP_SUMMARY}"
           echo "cache-size-bytes=${size_bytes}" >> "${GITHUB_OUTPUT}"
 
   # ---------------------------------------------------------------------------
@@ -835,7 +847,11 @@ jobs:
             size_human="(not found)"
             size_bytes="0"
           fi
-          echo "| newlib | install-native | ${size_human} |" >> "${GITHUB_STEP_SUMMARY}"
+          {
+            echo "| Stage | Path | Size |"
+            echo "|-------|------|------|"
+            echo "| newlib | install-native | ${size_human} |"
+          } >> "${GITHUB_STEP_SUMMARY}"
           echo "cache-size-bytes=${size_bytes}" >> "${GITHUB_OUTPUT}"
 
   # ---------------------------------------------------------------------------
@@ -981,7 +997,11 @@ jobs:
             size_human="(not found)"
             size_bytes="0"
           fi
-          echo "| newlib-nano | build-native/target-libs | ${size_human} |" >> "${GITHUB_STEP_SUMMARY}"
+          {
+            echo "| Stage | Path | Size |"
+            echo "|-------|------|------|"
+            echo "| newlib-nano | build-native/target-libs | ${size_human} |"
+          } >> "${GITHUB_STEP_SUMMARY}"
           echo "cache-size-bytes=${size_bytes}" >> "${GITHUB_OUTPUT}"
 
   # ---------------------------------------------------------------------------
@@ -1134,7 +1154,11 @@ jobs:
             size_human="(not found)"
             size_bytes="0"
           fi
-          echo "| gcc-final | install-native | ${size_human} |" >> "${GITHUB_STEP_SUMMARY}"
+          {
+            echo "| Stage | Path | Size |"
+            echo "|-------|------|------|"
+            echo "| gcc-final | install-native | ${size_human} |"
+          } >> "${GITHUB_STEP_SUMMARY}"
           echo "cache-size-bytes=${size_bytes}" >> "${GITHUB_OUTPUT}"
 
       - name: Check ccache directory – gcc-final
@@ -1325,6 +1349,8 @@ jobs:
             size_bytes_target="0"
           fi
           {
+            echo "| Stage | Path | Size |"
+            echo "|-------|------|------|"
             echo "| gcc-size-libstdcxx | install-native | ${size_human_install} |"
             echo "| gcc-size-libstdcxx | build-native/target-libs | ${size_human_target} |"
           } >> "${GITHUB_STEP_SUMMARY}"
