@@ -68,11 +68,12 @@ copy_dir_clean() {
 # excluding unnecessary parts, and create package named param2.
 pack_dir_clean() {
     set +u
-    tar cjfh $3 \
+    # shellcheck disable=SC2086 # intentional: word-split needed for optional extra exclude arguments
+    tar cjfh "$3" \
         --exclude=CVS --exclude=.svn --exclude=.git --exclude=.pc \
         --exclude="*~" --exclude=".#*" \
         --exclude="*.orig" --exclude="*.rej" $4 $5 $6 $7 $8 $9 ${10} \
-        -C $1 $2
+        -C "$1" "$2"
     set -u
 }
 
