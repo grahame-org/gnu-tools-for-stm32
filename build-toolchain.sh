@@ -93,28 +93,6 @@ if [ ! -d $SRCDIR/$PYTHON_WIN ] \
     skip_mingw32_gdb_with_python=yes
 fi
 
-if [ "$is_ppa_release" != "yes" ]; then
-  ENV_CFLAGS=" -I$BUILDDIR_NATIVE/host-libs/zlib/include $BUILD_OPTIONS "
-  ENV_CPPFLAGS=" -I$BUILDDIR_NATIVE/host-libs/zlib/include "
-  ENV_LDFLAGS=" -L$BUILDDIR_NATIVE/host-libs/zlib/lib
-                -L$BUILDDIR_NATIVE/host-libs/usr/lib "
-
-  GCC_CONFIG_OPTS=" --build=$BUILD --host=$HOST_NATIVE
-                    --with-gmp=$BUILDDIR_NATIVE/host-libs/usr
-                    --with-mpfr=$BUILDDIR_NATIVE/host-libs/usr
-                    --with-mpc=$BUILDDIR_NATIVE/host-libs/usr
-                    --with-isl=$BUILDDIR_NATIVE/host-libs/usr "
-
-  BINUTILS_CONFIG_OPTS=" --build=$BUILD --host=$HOST_NATIVE "
-
-  NEWLIB_CONFIG_OPTS=" --build=$BUILD --host=$HOST_NATIVE "
-
-  GDB_CONFIG_OPTS=" --build=$BUILD --host=$HOST_NATIVE
-                    --with-gmp=$BUILDDIR_NATIVE/host-libs/usr
-                    --with-mpfr=$BUILDDIR_NATIVE/host-libs/usr
-                    --with-libexpat-prefix=$BUILDDIR_NATIVE/host-libs/usr "
-fi
-
 # shellcheck disable=SC2154  # set by parse_toolchain_args() in build-toolchain-args.sh
 if [ "$skip_native_build" != "yes" ] ; then
     mkdir -p $BUILDDIR_NATIVE
