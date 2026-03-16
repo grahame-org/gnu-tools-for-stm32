@@ -55,12 +55,17 @@ assert_zero_exit() {
 
 assert_unset() {
     local desc="$1" varname="$2"
+    if [ $# -lt 2 ]; then
+        _FAIL=$((_FAIL + 1))
+        echo "  FAIL: $desc (no variable name provided to assert_unset)"
+        return
+    fi
     if ! declare -p "$varname" >/dev/null 2>&1; then
         _PASS=$((_PASS + 1))
         echo "  PASS: $desc"
     else
         _FAIL=$((_FAIL + 1))
-        echo "  FAIL: $desc (expected unset, got [${!varname}])"
+        echo "  FAIL: $desc (expected unset, got $(declare -p "$varname"))"
     fi
 }
 
