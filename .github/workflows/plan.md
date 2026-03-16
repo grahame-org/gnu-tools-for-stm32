@@ -80,10 +80,14 @@ Order the tasks logically:
 - Follow with implementation tasks
 - End with validation and documentation
 - Consider dependencies between tasks
+- Append a sequence marker `(xx / yy)` to each related issue title, where
+  - xx is the position of the task within the sequence
+  - yy is the total number of issues in that sequence
 
 ### 3. Right Level of Granularity
 Each task should:
 - Be completable in a single PR
+- Coding agents time out after 15 minutes, create tasks that take 10 minutes to complete. 
 - Not be too large (avoid epic-sized tasks)
 - With a single focus or goal. Keep them extremely small and focused even it means more tasks.
 - Have clear acceptance criteria
