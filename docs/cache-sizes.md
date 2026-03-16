@@ -13,9 +13,10 @@ All sizes are the compressed zstd archive sizes reported by `actions/cache/save`
 
 ### Stage caches (`stage-v2-*` key prefix)
 
-These are written by the `build-stage` composite action.  All 7 are written on
-`push` and `pull_request` events.  All 7 are also written on `merge_group`
-events because every stage sets `save-in-merge-group: 'true'`.
+These are written by the `build-stage` composite action on a cache miss.  All 7
+are eligible to be saved on `push` and `pull_request` events.  All 7 are also
+eligible to be saved on `merge_group` events because every stage sets
+`save-in-merge-group: 'true'`.
 
 | Cache key prefix | CI job | Cached paths | Measured size (bytes) | Measured size (MB) |
 | --- | --- | --- | --- | --- |
@@ -28,7 +29,7 @@ events because every stage sets `save-in-merge-group: 'true'`.
 | `stage-v2-<gdb-hash>` | `build-gdb` | `install-native` | 91,515,748 | 87.3 |
 | **Total (7 stage caches)** | | | **3,735,812,505** | **3,563.0** |
 
-### Other caches (not written in `merge_group`)
+### Other caches
 
 | Cache key prefix | CI job | Cached paths | Measured size (bytes) | Measured size (MB) | Written in `merge_group`? |
 | --- | --- | --- | --- | --- | --- |
@@ -36,7 +37,7 @@ events because every stage sets `save-in-merge-group: 'true'`.
 | `stage-v2-<final-hash>` (stage-final) | `build-final` | `install-native` | not yet measured | — | No |
 | `ccache-gcc-final-*` | `build-gcc-final` | `~/.ccache` | not yet measured | — | No |
 | `ccache-gcc-size-libstdcxx-*` | `build-gcc-size-libstdcxx` | `~/.ccache` | not yet measured | — | No |
-| prerequisites | `build-binutils` / others | `build-native/host-libs` | not yet measured | — | No |
+| prerequisites | `build-binutils` / others | `build-native/host-libs` | not yet measured | — | Yes (on cache miss) |
 
 ---
 
@@ -116,6 +117,10 @@ excluded from `merge_group` writes (the workflow guards these saves with
 writing the ccache entries in particular — which are expected to be large —
 from every merge queue build would make the budget pressure substantially
 worse.
+
+The prerequisites cache (`build-native/host-libs`) does **not** have a
+`merge_group` guard and will be saved during a `merge_group` run on a cache
+miss, just as it would be on any other event.
 
 ---
 
