@@ -1026,6 +1026,16 @@ jobs:
           path: install-native
           key: ${{ runner.os }}-stage-v2-${{ needs.compute-hashes.outputs.newlib }}
 
+      - name: Restore ccache – gcc-final
+        id: cache-gcc-final
+        if: steps.pre-restore.outputs.cache-hit != 'true'
+        uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        with:
+          path: ~/.ccache
+          key: ${{ runner.os }}-ccache-gcc-final-${{ needs.compute-hashes.outputs['gcc-final'] }}
+          restore-keys: |
+            ${{ runner.os }}-ccache-gcc-final-
+
       - name: Build and cache stage – gcc-final
         id: build-gcc-final
         uses: ./.github/actions/build-stage
@@ -1036,6 +1046,23 @@ jobs:
           build-script: ./build-gcc-final.sh
           pre-cache-hit: ${{ steps.pre-restore.outputs.cache-hit == 'true' }}
           save-in-merge-group: 'true'
+
+      - name: Check ccache directory – gcc-final
+        id: check-ccache-gcc-final
+        if: steps.pre-restore.outputs.cache-hit != 'true' && steps.cache-gcc-final.outputs.cache-hit != 'true' && github.event_name != 'merge_group'
+        run: |
+          if [ -d ~/.ccache ] && [ -n "$(ls -A ~/.ccache 2>/dev/null)" ]; then
+            echo "non-empty=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "non-empty=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Save ccache – gcc-final
+        if: steps.check-ccache-gcc-final.outputs.non-empty == 'true'
+        uses: actions/cache/save@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        with:
+          path: ~/.ccache
+          key: ${{ runner.os }}-ccache-gcc-final-${{ needs.compute-hashes.outputs['gcc-final'] }}
 
   # ---------------------------------------------------------------------------
   # Job: build-gcc-size-libstdcxx
@@ -1164,6 +1191,16 @@ jobs:
           path: build-native/target-libs
           key: ${{ runner.os }}-stage-v2-${{ needs.compute-hashes.outputs['newlib-nano'] }}
 
+      - name: Restore ccache – gcc-size-libstdcxx
+        id: cache-gcc-size-libstdcxx
+        if: steps.pre-restore.outputs.cache-hit != 'true'
+        uses: actions/cache/restore@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        with:
+          path: ~/.ccache
+          key: ${{ runner.os }}-ccache-gcc-size-libstdcxx-${{ needs.compute-hashes.outputs['gcc-size-libstdcxx'] }}
+          restore-keys: |
+            ${{ runner.os }}-ccache-gcc-size-libstdcxx-
+
       - name: Build and cache stage – gcc-size-libstdcxx
         id: build-gcc-size-libstdcxx
         uses: ./.github/actions/build-stage
@@ -1177,6 +1214,22 @@ jobs:
           pre-cache-hit: ${{ steps.pre-restore.outputs.cache-hit == 'true' }}
           save-in-merge-group: 'true'
 
+      - name: Check ccache directory – gcc-size-libstdcxx
+        id: check-ccache-gcc-size-libstdcxx
+        if: steps.pre-restore.outputs.cache-hit != 'true' && steps.cache-gcc-size-libstdcxx.outputs.cache-hit != 'true' && github.event_name != 'merge_group'
+        run: |
+          if [ -d ~/.ccache ] && [ -n "$(ls -A ~/.ccache 2>/dev/null)" ]; then
+            echo "non-empty=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "non-empty=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Save ccache – gcc-size-libstdcxx
+        if: steps.check-ccache-gcc-size-libstdcxx.outputs.non-empty == 'true'
+        uses: actions/cache/save@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+        with:
+          path: ~/.ccache
+          key: ${{ runner.os }}-ccache-gcc-size-libstdcxx-${{ needs.compute-hashes.outputs['gcc-size-libstdcxx'] }}
   # ---------------------------------------------------------------------------
   # Job: build-final
   # Converges build-gcc-size-libstdcxx and build-gdb.  Restores the

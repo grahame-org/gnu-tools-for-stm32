@@ -89,6 +89,7 @@ if [ "x$skip_native_build" != "xyes" ] ; then
     rm -rf $BUILDDIR_NATIVE/gcc-size-libstdcxx && mkdir -p $BUILDDIR_NATIVE/gcc-size-libstdcxx
     pushd $BUILDDIR_NATIVE/gcc-size-libstdcxx
 
+    echo "[timing] gcc-size-libstdcxx configure start: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
     $SRCDIR/$GCC/configure --target=$TARGET \
         --prefix=$BUILDDIR_NATIVE/target-libs \
         --enable-languages=c,c++ \
@@ -115,11 +116,17 @@ if [ "x$skip_native_build" != "xyes" ] ; then
         "${GCC_CONFIG_OPTS_LCPP}"                              \
         "--with-pkgversion=$PKGVERSION" \
         ${MULTILIB_LIST}
+    echo "[timing] gcc-size-libstdcxx configure end: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
+    echo "[timing] gcc-size-libstdcxx make start: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
     make -j$JOBS CCXXFLAGS="$BUILD_OPTIONS" \
             LDFLAGS_FOR_TARGET="--specs=nosys.specs" \
             CXXFLAGS_FOR_TARGET="-g -Os -ffunction-sections -fdata-sections -fno-exceptions"
+    echo "[timing] gcc-size-libstdcxx make end: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
+    echo "[timing] gcc-size-libstdcxx install start: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
     make install
+    echo "[timing] gcc-size-libstdcxx install end: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
     copy_multi_libs src_prefix="$BUILDDIR_NATIVE/target-libs/arm-none-eabi/lib" \
                     dst_prefix="$INSTALLDIR_NATIVE/arm-none-eabi/lib"           \
