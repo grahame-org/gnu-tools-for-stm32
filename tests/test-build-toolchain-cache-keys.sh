@@ -195,6 +195,6 @@ assert_ne "key_final differs when final_scripts_hash is replaced with an unrelat
 echo ""
 echo "Results: $_PASS passed, $_FAIL failed"
 
-if [ $_FAIL -ne 0 ]; then
+if [ "$_FAIL" -ne 0 ]; then
     exit 1
 fi
