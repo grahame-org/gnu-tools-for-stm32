@@ -7,7 +7,7 @@
 #
 # Run with: bash tests/test-build-toolchain-cache-keys.sh
 
-set -e
+set -euo pipefail
 
 # ---------------------------------------------------------------------------
 # Minimal test harness (same pattern as test-build-common.sh)
@@ -73,7 +73,8 @@ ALT_KEY_GCC_SIZE="eeee5555eeee5555eeee5555eeee5555eeee5555eeee5555eeee5555eeee55
 ALT_FINAL_SCRIPTS_HASH="ffff6666ffff6666ffff6666ffff6666ffff6666ffff6666ffff6666ffff6666"
 ALT_KEY_GDB="88881111888811118888111188881111888811118888111188881111aaaa1111"
 ALT_SPECS_SRC="77772222777722227777222277772222777722227777222277772222bbbb2222"
-UNRELATED_SCRIPTS_HASH="99997777999977779999777799997777999977779999777799997777aaaa7777"
+UNRELATED_SCRIPTS_HASH_A="99997777999977779999777799997777999977779999777799997777aaaa7777"
+UNRELATED_SCRIPTS_HASH_B="11118888111188881111888811118888111188881111888811118888bbbb8888"
 
 key_final_base=$(compute_key_final \
     "$BASE_FINAL_SCRIPTS_HASH" "$BASE_KEY_GCC_SIZE" "$BASE_KEY_GDB" "$BASE_SPECS_SRC")
@@ -157,8 +158,7 @@ compute_key_final_ignoring_unrelated() {
     local specs_src="$4"
     # $5 is an unrelated scripts hash (e.g. binutils_scripts_hash) that is
     # intentionally NOT part of the key_final formula.
-    printf '%s' "Linux-stage-final-${final_scripts_hash}-${key_gcc_size}-${key_gdb}-${specs_src}" \
-        | sha256sum | cut -d' ' -f1
+    compute_key_final "$final_scripts_hash" "$key_gcc_size" "$key_gdb" "$specs_src"
 }
 
 echo ""
@@ -168,10 +168,10 @@ echo "=== Group 5: key_final depends on final_scripts_hash, not an unrelated scr
 # key_final must be identical, proving it ignores the unrelated hash.
 key_final_with_unrelated_A=$(compute_key_final_ignoring_unrelated \
     "$BASE_FINAL_SCRIPTS_HASH" "$BASE_KEY_GCC_SIZE" "$BASE_KEY_GDB" "$BASE_SPECS_SRC" \
-    "$BASE_FINAL_SCRIPTS_HASH")
+    "$UNRELATED_SCRIPTS_HASH_A")
 key_final_with_unrelated_B=$(compute_key_final_ignoring_unrelated \
     "$BASE_FINAL_SCRIPTS_HASH" "$BASE_KEY_GCC_SIZE" "$BASE_KEY_GDB" "$BASE_SPECS_SRC" \
-    "$UNRELATED_SCRIPTS_HASH")
+    "$UNRELATED_SCRIPTS_HASH_B")
 
 assert_eq "key_final is unchanged when an unrelated scripts hash (e.g. binutils_scripts_hash) changes" \
     "$key_final_with_unrelated_A" "$key_final_with_unrelated_B"
@@ -179,8 +179,8 @@ assert_eq "key_final is unchanged when an unrelated scripts hash (e.g. binutils_
 # Replacing final_scripts_hash with the unrelated hash DOES change key_final,
 # confirming the formula is sensitive specifically to final_scripts_hash.
 key_final_with_unrelated_as_final=$(compute_key_final_ignoring_unrelated \
-    "$UNRELATED_SCRIPTS_HASH" "$BASE_KEY_GCC_SIZE" "$BASE_KEY_GDB" "$BASE_SPECS_SRC" \
-    "$UNRELATED_SCRIPTS_HASH")
+    "$UNRELATED_SCRIPTS_HASH_A" "$BASE_KEY_GCC_SIZE" "$BASE_KEY_GDB" "$BASE_SPECS_SRC" \
+    "$UNRELATED_SCRIPTS_HASH_A")
 
 assert_ne "key_final differs when final_scripts_hash is replaced with an unrelated scripts hash" \
     "$key_final_base" "$key_final_with_unrelated_as_final"
