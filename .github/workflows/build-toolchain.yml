@@ -1324,10 +1324,14 @@ jobs:
             size_human_target="(not found)"
             size_bytes_target="0"
           fi
-          echo "| gcc-size-libstdcxx | install-native | ${size_human_install} |" >> "${GITHUB_STEP_SUMMARY}"
-          echo "| gcc-size-libstdcxx | build-native/target-libs | ${size_human_target} |" >> "${GITHUB_STEP_SUMMARY}"
-          echo "cache-size-bytes-install=${size_bytes_install}" >> "${GITHUB_OUTPUT}"
-          echo "cache-size-bytes-target=${size_bytes_target}" >> "${GITHUB_OUTPUT}"
+          {
+            echo "| gcc-size-libstdcxx | install-native | ${size_human_install} |"
+            echo "| gcc-size-libstdcxx | build-native/target-libs | ${size_human_target} |"
+          } >> "${GITHUB_STEP_SUMMARY}"
+          {
+            echo "cache-size-bytes-install=${size_bytes_install}"
+            echo "cache-size-bytes-target=${size_bytes_target}"
+          } >> "${GITHUB_OUTPUT}"
 
       - name: Check ccache directory – gcc-size-libstdcxx
         id: check-ccache-gcc-size-libstdcxx
