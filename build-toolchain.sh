@@ -37,9 +37,8 @@ umask 022
 
 exec < /dev/null
 
-# shellcheck disable=SC2046
-script_path=$(cd $(dirname $0) && pwd -P)
-. $script_path/build-common.sh
+script_path=$(cd "$(dirname "$0")" && pwd -P)
+. "$script_path/build-common.sh"
 
 # This file contains the sequence of commands used to build the
 # GNU Tools Arm Embedded toolchain.

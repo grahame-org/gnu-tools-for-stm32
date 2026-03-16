@@ -52,10 +52,9 @@ umask 022
 
 exec < /dev/null
 
-# shellcheck disable=SC2046
-script_path=$(cd $(dirname $0) && pwd -P)
+script_path=$(cd "$(dirname "$0")" && pwd -P)
 cd "$script_path"
-. $script_path/build-common.sh
+. "$script_path/build-common.sh"
 
 . "$script_path/build-toolchain-args.sh"
 parse_toolchain_args "$@"
