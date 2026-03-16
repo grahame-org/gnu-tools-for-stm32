@@ -14,6 +14,9 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 ACTION_YML="${REPO_ROOT}/.github/actions/build-stage/action.yml"
 YAMLLINT_CFG="${REPO_ROOT}/.yamllint"
 
+# shellcheck source=test-helpers.sh
+. "$SCRIPT_DIR/test-helpers.sh"
+
 if [ ! -f "${ACTION_YML}" ]; then
     echo "ERROR: action.yml not found at ${ACTION_YML}" >&2
     exit 1
@@ -28,26 +31,6 @@ if ! command -v python3 > /dev/null 2>&1; then
     echo "ERROR: python3 is required but not found" >&2
     exit 1
 fi
-
-# ---------------------------------------------------------------------------
-# Minimal test harness (same pattern as test-build-common.sh)
-# ---------------------------------------------------------------------------
-
-_PASS=0
-_FAIL=0
-
-assert_eq() {
-    local desc="$1" expected="$2" actual="$3"
-    if [ "$expected" = "$actual" ]; then
-        _PASS=$((_PASS + 1))
-        echo "  PASS: $desc"
-    else
-        _FAIL=$((_FAIL + 1))
-        echo "  FAIL: $desc"
-        echo "        expected: [$expected]"
-        echo "        actual:   [$actual]"
-    fi
-}
 
 # Run a Python one-liner against ACTION_YML; pass on exit 0, fail on non-zero.
 # Stderr is captured and printed on failure to help diagnose assertion errors
@@ -148,9 +131,4 @@ py_assert "output 'build-time-seconds' exists" \
 # Summary
 # ---------------------------------------------------------------------------
 
-echo ""
-echo "Results: $_PASS passed, $_FAIL failed"
-
-if [ $_FAIL -ne 0 ]; then
-    exit 1
-fi
+print_test_results
