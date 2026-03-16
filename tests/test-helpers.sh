@@ -21,12 +21,12 @@ assert_eq() {
 
 assert_nonzero_exit() {
     local desc="$1"
-    shift
-    if [ $# -eq 0 ]; then
+    if [ $# -lt 2 ]; then
         _FAIL=$((_FAIL + 1))
         echo "  FAIL: $desc (no command provided to assert_nonzero_exit)"
         return
     fi
+    shift
     if "$@" 2>/dev/null; then
         _FAIL=$((_FAIL + 1))
         echo "  FAIL: $desc (expected non-zero exit)"
@@ -38,12 +38,12 @@ assert_nonzero_exit() {
 
 assert_zero_exit() {
     local desc="$1"
-    shift
-    if [ $# -eq 0 ]; then
+    if [ $# -lt 2 ]; then
         _FAIL=$((_FAIL + 1))
         echo "  FAIL: $desc (no command provided to assert_zero_exit)"
         return
     fi
+    shift
     if "$@" 2>/dev/null; then
         _PASS=$((_PASS + 1))
         echo "  PASS: $desc"
