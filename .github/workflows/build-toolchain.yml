@@ -176,6 +176,7 @@ jobs:
     outputs:
       binutils-build-time: ${{ steps.build-binutils.outputs.build-time-seconds }}
       binutils-cache-hit: ${{ steps.build-binutils.outputs.cache-hit }}
+      binutils-cache-sizes: ${{ steps.cache-sizes-binutils.outputs.cache-size-bytes }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -323,6 +324,25 @@ jobs:
           pre-cache-hit: ${{ steps.pre-restore.outputs.cache-hit == 'true' }}
           save-in-merge-group: 'true'
 
+      - name: Report cache sizes – binutils
+        id: cache-sizes-binutils
+        if: always()
+        run: |
+          set -euo pipefail
+          if [ -d install-native ]; then
+            size_human=$(du -sh install-native | cut -f1)
+            size_bytes=$(du -sb install-native | cut -f1)
+          else
+            size_human="(not found)"
+            size_bytes="0"
+          fi
+          {
+            echo "| Stage | Path | Size |"
+            echo "|-------|------|------|"
+            echo "| binutils | install-native | ${size_human} |"
+          } >> "${GITHUB_STEP_SUMMARY}"
+          echo "cache-size-bytes=${size_bytes}" >> "${GITHUB_OUTPUT}"
+
   # ---------------------------------------------------------------------------
   # Job: build-gdb
   # GDB build (stage III-6).  Runs in PARALLEL with the gcc/newlib chain since
@@ -339,6 +359,7 @@ jobs:
     outputs:
       gdb-build-time: ${{ steps.build-gdb.outputs.build-time-seconds }}
       gdb-cache-hit: ${{ steps.build-gdb.outputs.cache-hit }}
+      gdb-cache-sizes: ${{ steps.cache-sizes-gdb.outputs.cache-size-bytes }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -482,6 +503,25 @@ jobs:
           pre-cache-hit: ${{ steps.pre-restore.outputs.cache-hit == 'true' }}
           save-in-merge-group: 'true'
 
+      - name: Report cache sizes – gdb
+        id: cache-sizes-gdb
+        if: always()
+        run: |
+          set -euo pipefail
+          if [ -d install-native ]; then
+            size_human=$(du -sh install-native | cut -f1)
+            size_bytes=$(du -sb install-native | cut -f1)
+          else
+            size_human="(not found)"
+            size_bytes="0"
+          fi
+          {
+            echo "| Stage | Path | Size |"
+            echo "|-------|------|------|"
+            echo "| gdb | install-native | ${size_human} |"
+          } >> "${GITHUB_STEP_SUMMARY}"
+          echo "cache-size-bytes=${size_bytes}" >> "${GITHUB_OUTPUT}"
+
   # ---------------------------------------------------------------------------
   # Job: build-gcc-first
   # GCC first stage (III-1).  Runs immediately after build-binutils and
@@ -497,6 +537,7 @@ jobs:
     outputs:
       gcc-first-build-time: ${{ steps.build-gcc-first.outputs.build-time-seconds }}
       gcc-first-cache-hit: ${{ steps.build-gcc-first.outputs.cache-hit }}
+      gcc-first-cache-sizes: ${{ steps.cache-sizes-gcc-first.outputs.cache-size-bytes }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -612,6 +653,25 @@ jobs:
           pre-cache-hit: ${{ steps.pre-restore.outputs.cache-hit == 'true' }}
           save-in-merge-group: 'true'
 
+      - name: Report cache sizes – gcc-first
+        id: cache-sizes-gcc-first
+        if: always()
+        run: |
+          set -euo pipefail
+          if [ -d install-native ]; then
+            size_human=$(du -sh install-native | cut -f1)
+            size_bytes=$(du -sb install-native | cut -f1)
+          else
+            size_human="(not found)"
+            size_bytes="0"
+          fi
+          {
+            echo "| Stage | Path | Size |"
+            echo "|-------|------|------|"
+            echo "| gcc-first | install-native | ${size_human} |"
+          } >> "${GITHUB_STEP_SUMMARY}"
+          echo "cache-size-bytes=${size_bytes}" >> "${GITHUB_OUTPUT}"
+
   # ---------------------------------------------------------------------------
   # Job: build-newlib
   # Newlib standard library (III-2).  Depends on build-gcc-first.
@@ -626,6 +686,7 @@ jobs:
     outputs:
       newlib-build-time: ${{ steps.build-newlib.outputs.build-time-seconds }}
       newlib-cache-hit: ${{ steps.pre-restore.outputs.cache-hit }}
+      newlib-cache-sizes: ${{ steps.cache-sizes-newlib.outputs.cache-size-bytes }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -778,6 +839,25 @@ jobs:
           pre-cache-hit: ${{ steps.pre-restore.outputs.cache-hit == 'true' }}
           save-in-merge-group: 'true'
 
+      - name: Report cache sizes – newlib
+        id: cache-sizes-newlib
+        if: always()
+        run: |
+          set -euo pipefail
+          if [ -d install-native ]; then
+            size_human=$(du -sh install-native | cut -f1)
+            size_bytes=$(du -sb install-native | cut -f1)
+          else
+            size_human="(not found)"
+            size_bytes="0"
+          fi
+          {
+            echo "| Stage | Path | Size |"
+            echo "|-------|------|------|"
+            echo "| newlib | install-native | ${size_human} |"
+          } >> "${GITHUB_STEP_SUMMARY}"
+          echo "cache-size-bytes=${size_bytes}" >> "${GITHUB_OUTPUT}"
+
   # ---------------------------------------------------------------------------
   # Job: build-newlib-nano
   # Newlib-nano size-optimised library (III-3).  Depends on build-gcc-first and
@@ -794,6 +874,7 @@ jobs:
     outputs:
       newlib-nano-build-time: ${{ steps.build-newlib-nano.outputs.build-time-seconds }}
       newlib-nano-cache-hit: ${{ steps.build-newlib-nano.outputs.cache-hit }}
+      newlib-nano-cache-sizes: ${{ steps.cache-sizes-newlib-nano.outputs.cache-size-bytes }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -909,6 +990,25 @@ jobs:
           pre-cache-hit: ${{ steps.pre-restore.outputs.cache-hit == 'true' }}
           save-in-merge-group: 'true'
 
+      - name: Report cache sizes – newlib-nano
+        id: cache-sizes-newlib-nano
+        if: always()
+        run: |
+          set -euo pipefail
+          if [ -d build-native/target-libs ]; then
+            size_human=$(du -sh build-native/target-libs | cut -f1)
+            size_bytes=$(du -sb build-native/target-libs | cut -f1)
+          else
+            size_human="(not found)"
+            size_bytes="0"
+          fi
+          {
+            echo "| Stage | Path | Size |"
+            echo "|-------|------|------|"
+            echo "| newlib-nano | build-native/target-libs | ${size_human} |"
+          } >> "${GITHUB_STEP_SUMMARY}"
+          echo "cache-size-bytes=${size_bytes}" >> "${GITHUB_OUTPUT}"
+
   # ---------------------------------------------------------------------------
   # Job: build-gcc-final
   # GCC final compiler (stage III-4).  Depends on build-newlib.
@@ -923,6 +1023,7 @@ jobs:
     outputs:
       gcc-final-build-time: ${{ steps.build-gcc-final.outputs.build-time-seconds }}
       gcc-final-cache-hit: ${{ steps.build-gcc-final.outputs.cache-hit }}
+      gcc-final-cache-sizes: ${{ steps.cache-sizes-gcc-final.outputs.cache-size-bytes }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -1047,6 +1148,25 @@ jobs:
           pre-cache-hit: ${{ steps.pre-restore.outputs.cache-hit == 'true' }}
           save-in-merge-group: 'true'
 
+      - name: Report cache sizes – gcc-final
+        id: cache-sizes-gcc-final
+        if: always()
+        run: |
+          set -euo pipefail
+          if [ -d install-native ]; then
+            size_human=$(du -sh install-native | cut -f1)
+            size_bytes=$(du -sb install-native | cut -f1)
+          else
+            size_human="(not found)"
+            size_bytes="0"
+          fi
+          {
+            echo "| Stage | Path | Size |"
+            echo "|-------|------|------|"
+            echo "| gcc-final | install-native | ${size_human} |"
+          } >> "${GITHUB_STEP_SUMMARY}"
+          echo "cache-size-bytes=${size_bytes}" >> "${GITHUB_OUTPUT}"
+
       - name: Check ccache directory – gcc-final
         id: check-ccache-gcc-final
         if: steps.pre-restore.outputs.cache-hit != 'true' && steps.cache-gcc-final.outputs.cache-hit != 'true' && github.event_name != 'merge_group'
@@ -1079,6 +1199,8 @@ jobs:
     outputs:
       gcc-size-libstdcxx-build-time: ${{ steps.build-gcc-size-libstdcxx.outputs.build-time-seconds }}
       gcc-size-libstdcxx-cache-hit: ${{ steps.build-gcc-size-libstdcxx.outputs.cache-hit }}
+      gcc-size-libstdcxx-cache-sizes-install: ${{ steps.cache-sizes-gcc-size-libstdcxx.outputs.cache-size-bytes-install }}
+      gcc-size-libstdcxx-cache-sizes-target: ${{ steps.cache-sizes-gcc-size-libstdcxx.outputs.cache-size-bytes-target }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -1213,6 +1335,36 @@ jobs:
           build-script: ./build-gcc-size-libstdcxx.sh
           pre-cache-hit: ${{ steps.pre-restore.outputs.cache-hit == 'true' }}
           save-in-merge-group: 'true'
+
+      - name: Report cache sizes – gcc-size-libstdcxx
+        id: cache-sizes-gcc-size-libstdcxx
+        if: always()
+        run: |
+          set -euo pipefail
+          if [ -d install-native ]; then
+            size_human_install=$(du -sh install-native | cut -f1)
+            size_bytes_install=$(du -sb install-native | cut -f1)
+          else
+            size_human_install="(not found)"
+            size_bytes_install="0"
+          fi
+          if [ -d build-native/target-libs ]; then
+            size_human_target=$(du -sh build-native/target-libs | cut -f1)
+            size_bytes_target=$(du -sb build-native/target-libs | cut -f1)
+          else
+            size_human_target="(not found)"
+            size_bytes_target="0"
+          fi
+          {
+            echo "| Stage | Path | Size |"
+            echo "|-------|------|------|"
+            echo "| gcc-size-libstdcxx | install-native | ${size_human_install} |"
+            echo "| gcc-size-libstdcxx | build-native/target-libs | ${size_human_target} |"
+          } >> "${GITHUB_STEP_SUMMARY}"
+          {
+            echo "cache-size-bytes-install=${size_bytes_install}"
+            echo "cache-size-bytes-target=${size_bytes_target}"
+          } >> "${GITHUB_OUTPUT}"
 
       - name: Check ccache directory – gcc-size-libstdcxx
         id: check-ccache-gcc-size-libstdcxx
@@ -1392,6 +1544,41 @@ jobs:
         with:
           path: install-native
           key: ${{ runner.os }}-stage-v2-${{ needs.compute-hashes.outputs.final }}
+
+      - name: Report cache sizes – summary
+        if: always()
+        env:
+          BINUTILS_CACHE_SIZES: ${{ needs.build-binutils.outputs.binutils-cache-sizes }}
+          GDB_CACHE_SIZES: ${{ needs.build-gdb.outputs.gdb-cache-sizes }}
+          GCC_FIRST_CACHE_SIZES: ${{ needs.build-gcc-first.outputs.gcc-first-cache-sizes }}
+          NEWLIB_CACHE_SIZES: ${{ needs.build-newlib.outputs.newlib-cache-sizes }}
+          NEWLIB_NANO_CACHE_SIZES: ${{ needs.build-newlib-nano.outputs.newlib-nano-cache-sizes }}
+          GCC_FINAL_CACHE_SIZES: ${{ needs.build-gcc-final.outputs.gcc-final-cache-sizes }}
+          GCC_SIZE_LIBSTDCXX_CACHE_SIZES_INSTALL: ${{ needs.build-gcc-size-libstdcxx.outputs.gcc-size-libstdcxx-cache-sizes-install }}
+          GCC_SIZE_LIBSTDCXX_CACHE_SIZES_TARGET: ${{ needs.build-gcc-size-libstdcxx.outputs.gcc-size-libstdcxx-cache-sizes-target }}
+        run: |
+          format_bytes() {
+            local bytes="${1:-}"
+            if [ -z "${bytes}" ] || [ "${bytes}" = "0" ]; then
+              echo "—"
+            else
+              echo "${bytes}"
+            fi
+          }
+          {
+            echo "## Cache Directory Sizes"
+            echo ""
+            echo "| Stage | Path | Size (bytes) |"
+            echo "|-------|------|-------------|"
+            echo "| \`binutils\` | \`install-native\` | $(format_bytes "${BINUTILS_CACHE_SIZES}") |"
+            echo "| \`gdb\` | \`install-native\` | $(format_bytes "${GDB_CACHE_SIZES}") |"
+            echo "| \`gcc-first\` | \`install-native\` | $(format_bytes "${GCC_FIRST_CACHE_SIZES}") |"
+            echo "| \`newlib\` | \`install-native\` | $(format_bytes "${NEWLIB_CACHE_SIZES}") |"
+            echo "| \`newlib-nano\` | \`build-native/target-libs\` | $(format_bytes "${NEWLIB_NANO_CACHE_SIZES}") |"
+            echo "| \`gcc-final\` | \`install-native\` | $(format_bytes "${GCC_FINAL_CACHE_SIZES}") |"
+            echo "| \`gcc-size-libstdcxx\` | \`install-native\` | $(format_bytes "${GCC_SIZE_LIBSTDCXX_CACHE_SIZES_INSTALL}") |"
+            echo "| \`gcc-size-libstdcxx\` | \`build-native/target-libs\` | $(format_bytes "${GCC_SIZE_LIBSTDCXX_CACHE_SIZES_TARGET}") |"
+          } >> "${GITHUB_STEP_SUMMARY}"
 
       - name: Save cache – toolchain
         if: steps.cache-toolchain.outputs.cache-hit != 'true' && github.event_name != 'merge_group'
