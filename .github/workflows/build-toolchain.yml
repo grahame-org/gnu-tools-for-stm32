@@ -1652,6 +1652,10 @@ jobs:
           fi
           echo "All artifacts match reference binaries."
 
+      - name: Validate cache budget
+        if: always()
+        run: ./build-cache-budget-check.sh
+
       - name: Report build times
         if: always()
         env:
