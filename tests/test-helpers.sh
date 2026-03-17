@@ -53,6 +53,17 @@ assert_zero_exit() {
     fi
 }
 
+assert_ne() {
+    local desc="$1" val1="$2" val2="$3"
+    if [ "$val1" != "$val2" ]; then
+        _PASS=$((_PASS + 1))
+        echo "  PASS: $desc"
+    else
+        _FAIL=$((_FAIL + 1))
+        echo "  FAIL: $desc (expected values to differ, both were: [$val1])"
+    fi
+}
+
 assert_unset() {
     local desc="$1" varname="$2"
     if [ $# -lt 2 ]; then
