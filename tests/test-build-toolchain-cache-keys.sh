@@ -70,10 +70,7 @@ compute_key_gdb() {
 }
 
 compute_key_final() {
-    local final_scripts_hash="$1"
-    local key_gcc_size="$2"
-    local key_gdb="$3"
-    local specs_src="$4"
+    local final_scripts_hash="$1" key_gcc_size="$2" key_gdb="$3" specs_src="$4"
     _sha256 "Linux-stage-final-${final_scripts_hash}-${key_gcc_size}-${key_gdb}-${specs_src}"
 }
 
