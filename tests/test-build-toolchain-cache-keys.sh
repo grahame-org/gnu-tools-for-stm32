@@ -20,8 +20,10 @@
 
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 # shellcheck source=test-helpers.sh
-. "$(dirname "$0")/test-helpers.sh"
+. "$SCRIPT_DIR/test-helpers.sh"
 
 # ---------------------------------------------------------------------------
 # Helpers: compute each cache key exactly as the workflow does.
@@ -209,18 +211,28 @@ assert_ne "key_gcc_size changes independently for each upstream" \
 echo ""
 echo "=== Group 3: key_gcc_final depends on key_newlib but not key_newlib_nano ==="
 
-# Changing newlib_nano_scripts_hash changes key_newlib_nano but not key_gcc_final.
+# In this scenario only newlib_nano_scripts_hash changes (all other inputs baseline):
+#   key_gcc_first:   unchanged (same binutils + gcc_first scripts + gcc_src)
+#   key_newlib:      unchanged (depends on newlib_scripts_hash + key_gcc_first + newlib_src,
+#                               none of which changed in this scenario)
+#   key_newlib_nano: CHANGED   (different newlib_nano_scripts_hash)
+#   key_gcc_final:   must be UNCHANGED (chains through key_newlib, not key_newlib_nano)
 alt_key_newlib_nano=$(compute_key_newlib_nano \
     "$ALT_NEWLIB_NANO_SCRIPTS_HASH" "$BASE_KEY_GCC_FIRST" "$BASE_NEWLIB_SRC")
 
-# key_gcc_final is computed from key_newlib (not key_newlib_nano), so it must
-# be unchanged when only newlib-nano's scripts hash changes.
-assert_eq "key_gcc_final unchanged when only newlib-nano scripts change" \
-    "$BASE_KEY_GCC_FINAL" \
-    "$(compute_key_gcc_final \
-        "$BASE_GCC_FINAL_SCRIPTS_HASH" "$BASE_KEY_NEWLIB" "$BASE_GCC_SRC")"
+# key_newlib in the alt-nano scenario is unchanged (its inputs didn't change).
+# Compute it explicitly from the same inputs to make the scenario traceable.
+key_newlib_in_alt_nano_scenario=$(compute_key_newlib \
+    "$BASE_NEWLIB_SCRIPTS_HASH" "$BASE_KEY_GCC_FIRST" "$BASE_NEWLIB_SRC")
 
-# Sanity: key_newlib_nano did actually change.
+# key_gcc_final in the alt-nano scenario: its only upstream is key_newlib (unchanged).
+key_gcc_final_in_alt_nano_scenario=$(compute_key_gcc_final \
+    "$BASE_GCC_FINAL_SCRIPTS_HASH" "$key_newlib_in_alt_nano_scenario" "$BASE_GCC_SRC")
+
+assert_eq "key_gcc_final unchanged when only newlib-nano scripts change" \
+    "$BASE_KEY_GCC_FINAL" "$key_gcc_final_in_alt_nano_scenario"
+
+# Sanity: key_newlib_nano did actually change in this scenario.
 assert_ne "key_newlib_nano changes when its scripts hash changes" \
     "$BASE_KEY_NEWLIB_NANO" "$alt_key_newlib_nano"
 
