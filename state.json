@@ -1,10 +1,10 @@
 {
-  "last_run": "2026-03-16T05:45Z",
-  "tests": "bash tests/test-build-common.sh && bash tests/test-build-toolchain-args.sh && bash tests/test-strip-binary.sh && PATH=$PATH:/home/runner/.local/bin bash tests/test-build-stage-action.sh",
-  "counts": {"total": 172, "build-common": 59, "toolchain-args": 86, "strip-binary": 13, "stage-action": 14},
+  "last_run": "2026-03-17T05:17Z",
+  "tests": "bash tests/test-build-common.sh && bash tests/test-build-toolchain-args.sh && bash tests/test-strip-binary.sh && PATH=$PATH:/home/runner/.local/bin bash tests/test-build-stage-action.sh && bash tests/test-build-toolchain-cache-keys.sh",
+  "counts": {"total_after_merge": 177, "total_before_merge": 165, "build-common": 59, "toolchain-args": 86, "strip-binary": 13, "stage-action": 14, "cache-keys": 19},
   "issues": {"108": "Monthly 2026-03"},
-  "backlog": [],
-  "done": ["toolchain-args", "pack_dir_clean-g13", "strip_binary", "copy_dir/clean", "saveenv", "parse_args", "break_hardlink", "extend-toolchain-args-tests"],
-  "notes": "PR #368 merged (extend-toolchain-args-tests, groups 8-10). PR #370 merged (strengthen group 8 reset). PR #525 merged (save-in-merge-group + build-time-seconds output tests, stage-action). All 172 tests pass. No [Test Improver] PRs open. Copilot agent has open PRs #545 (cache-key tests) and #556 (test-helpers.sh). test-build-stage-action.sh needs yamllint (pip3 install yamllint).",
-  "tasks_run": {"t1": "2026-03-16", "t2": "2026-03-11", "t3": "2026-03-14", "t4": "2026-03-16", "t5": "2026-03-14", "t6": "2026-03-11", "t7": "2026-03-16"}
+  "backlog": ["copy_multi_libs unit tests (needs mock gcc)"],
+  "done": ["toolchain-args", "pack_dir_clean-g13", "strip_binary", "copy_dir/clean", "saveenv", "parse_args", "break_hardlink", "extend-toolchain-args-tests", "cache-key-dependency-chain"],
+  "notes": "PR #368 merged (toolchain-args). PR #370 merged (strengthen group 8). PR #525 merged (stage-action tests). PR #545 merged (cache-key tests). PR #556 merged (test-helpers.sh). New PR created 2026-03-17: expand cache-key tests (19 tests) + add assert_ne to test-helpers.sh. test-build-stage-action.sh needs yamllint. Base branch is 13.3.rel1 (not main - main only has README).",
+  "tasks_run": {"t1": "2026-03-16", "t2": "2026-03-11", "t3": "2026-03-17", "t4": "2026-03-16", "t5": "2026-03-14", "t6": "2026-03-11", "t7": "2026-03-17"}
 }
