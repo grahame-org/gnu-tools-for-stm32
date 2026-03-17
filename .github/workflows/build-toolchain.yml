@@ -326,6 +326,7 @@ jobs:
 
       - name: Report cache sizes – binutils
         id: cache-sizes-binutils
+        if: always()
         run: |
           set -euo pipefail
           if [ -d install-native ]; then
@@ -504,6 +505,7 @@ jobs:
 
       - name: Report cache sizes – gdb
         id: cache-sizes-gdb
+        if: always()
         run: |
           set -euo pipefail
           if [ -d install-native ]; then
@@ -653,6 +655,7 @@ jobs:
 
       - name: Report cache sizes – gcc-first
         id: cache-sizes-gcc-first
+        if: always()
         run: |
           set -euo pipefail
           if [ -d install-native ]; then
@@ -838,6 +841,7 @@ jobs:
 
       - name: Report cache sizes – newlib
         id: cache-sizes-newlib
+        if: always()
         run: |
           set -euo pipefail
           if [ -d install-native ]; then
@@ -988,6 +992,7 @@ jobs:
 
       - name: Report cache sizes – newlib-nano
         id: cache-sizes-newlib-nano
+        if: always()
         run: |
           set -euo pipefail
           if [ -d build-native/target-libs ]; then
@@ -1145,6 +1150,7 @@ jobs:
 
       - name: Report cache sizes – gcc-final
         id: cache-sizes-gcc-final
+        if: always()
         run: |
           set -euo pipefail
           if [ -d install-native ]; then
@@ -1332,6 +1338,7 @@ jobs:
 
       - name: Report cache sizes – gcc-size-libstdcxx
         id: cache-sizes-gcc-size-libstdcxx
+        if: always()
         run: |
           set -euo pipefail
           if [ -d install-native ]; then
