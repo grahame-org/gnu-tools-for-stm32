@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Unit tests for the build-toolchain.yml cache key computation logic.
 #
-# Verifies that each stage's cache key correctly depends on all of its inputs,
+# Verifies key dependency chain relationships and transitivity constraints,
 # matching the logic in .github/workflows/build-toolchain.yml (compute-hashes
 # job).  Key relationships tested:
 #
@@ -236,7 +236,7 @@ assert_eq "key_gcc_final unchanged when only newlib-nano scripts change" \
 assert_ne "key_newlib_nano changes when its scripts hash changes" \
     "$BASE_KEY_NEWLIB_NANO" "$alt_key_newlib_nano"
 
-# Changing newlib scripts does change key_gcc_final (via key_newlib).
+# Changing newlib_src does change key_gcc_final (via key_newlib).
 assert_ne "key_gcc_final changes when newlib_src changes (via key_newlib)" \
     "$BASE_KEY_GCC_FINAL" \
     "$(compute_key_gcc_final \
