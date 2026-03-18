@@ -90,9 +90,9 @@ strip_elf_file() {
 # Strip ELF binaries in bin/, libexec/, arm-none-eabi/bin/
 # ---------------------------------------------------------------------------
 
+# bin/ and arm-none-eabi/bin/ are flat; strip only direct children.
 for bin_dir in \
     "$root_dir/bin" \
-    "$root_dir/libexec" \
     "$root_dir/arm-none-eabi/bin"
 do
     if [ -d "$bin_dir" ]; then
@@ -103,6 +103,16 @@ do
         done < <(find "$bin_dir" -maxdepth 1 -type f -print0)
     fi
 done
+
+# libexec/ is recursive: GCC installs binaries under
+# libexec/gcc/<target>/<version>/ (cc1, cc1plus, lto1, …).
+if [ -d "$root_dir/libexec" ]; then
+    while IFS= read -r -d '' file; do
+        if [ -f "$file" ] && [ ! -L "$file" ]; then
+            strip_elf_file "$file"
+        fi
+    done < <(find "$root_dir/libexec" -type f -print0)
+fi
 
 # ---------------------------------------------------------------------------
 # Strip .a static libraries anywhere under root_dir (--strip-debug)

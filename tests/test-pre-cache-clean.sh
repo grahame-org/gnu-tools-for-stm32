@@ -61,15 +61,17 @@ echo ""
 echo "=== Group 3: ELF stripping ==="
 
 _ROOT3="$_TMPDIR/root3"
-mkdir -p "$_ROOT3/bin" "$_ROOT3/libexec" "$_ROOT3/arm-none-eabi/bin"
+mkdir -p "$_ROOT3/bin" "$_ROOT3/libexec/gcc/arm-none-eabi/14.3.1" "$_ROOT3/arm-none-eabi/bin"
 
 _ELF_BIN="$_ROOT3/bin/mytool"
 _ELF_LIBEXEC="$_ROOT3/libexec/cc1"
+_ELF_LIBEXEC_NESTED="$_ROOT3/libexec/gcc/arm-none-eabi/14.3.1/cc1"
 _ELF_CROSS="$_ROOT3/arm-none-eabi/bin/ld"
 _TEXT_FILE="$_ROOT3/bin/script.sh"
 
 make_elf "$_ELF_BIN"
 make_elf "$_ELF_LIBEXEC"
+make_elf "$_ELF_LIBEXEC_NESTED"
 make_elf "$_ELF_CROSS"
 echo "#!/bin/sh" > "$_TEXT_FILE"
 chmod +x "$_TEXT_FILE"
@@ -97,6 +99,8 @@ assert_eq "bin/ ELF stripped" "called" \
     "$(grep -qF "$_ELF_BIN" "$_STRIP_LOG3" 2>/dev/null && echo called || echo not-called)"
 assert_eq "libexec/ ELF stripped" "called" \
     "$(grep -qF "$_ELF_LIBEXEC" "$_STRIP_LOG3" 2>/dev/null && echo called || echo not-called)"
+assert_eq "libexec/ nested ELF stripped" "called" \
+    "$(grep -qF "$_ELF_LIBEXEC_NESTED" "$_STRIP_LOG3" 2>/dev/null && echo called || echo not-called)"
 assert_eq "arm-none-eabi/bin/ ELF stripped" "called" \
     "$(grep -qF "$_ELF_CROSS" "$_STRIP_LOG3" 2>/dev/null && echo called || echo not-called)"
 assert_eq "plain text file not stripped" "not-called" \
