@@ -8,10 +8,19 @@
 #   build-native/target-libs/ – the newlib-nano/gcc-size intermediate sysroot
 #
 # Thresholds (configurable via environment variables):
-#   INSTALL_NATIVE_WARN_GB  warn threshold for install-native/          (default: 3)
-#   INSTALL_NATIVE_MAX_GB   fail threshold for install-native/          (default: 4)
-#   TARGET_LIBS_WARN_GB     warn threshold for build-native/target-libs (default: 1)
-#   TARGET_LIBS_MAX_GB      fail threshold for build-native/target-libs (default: 1.5)
+#
+# These are uncompressed on-disk sizes as measured by `du -sb`.  They differ
+# significantly from the compressed GitHub Actions cache archive sizes reported
+# by `actions/cache/save` (see docs/cache-sizes.md).
+#
+# The script runs in build-final after the strip stages, so install-native/ is
+# the fully-stripped final toolchain (~1.1 GB); build-native/target-libs/ is
+# the unstripped nano sysroot left by the gcc-size-libstdcxx stage (~2.6 GB).
+#
+#   INSTALL_NATIVE_WARN_GB  warn threshold for install-native/          (default: 1.5)
+#   INSTALL_NATIVE_MAX_GB   fail threshold for install-native/          (default: 2)
+#   TARGET_LIBS_WARN_GB     warn threshold for build-native/target-libs (default: 3)
+#   TARGET_LIBS_MAX_GB      fail threshold for build-native/target-libs (default: 4)
 #
 # Outputs a Markdown table to $GITHUB_STEP_SUMMARY (when set) and to stdout.
 # Exits non-zero when a fail threshold is exceeded.
@@ -24,10 +33,10 @@ set -euo pipefail
 # ---------------------------------------------------------------------------
 # Thresholds
 # ---------------------------------------------------------------------------
-INSTALL_NATIVE_WARN_GB=${INSTALL_NATIVE_WARN_GB:-3}
-INSTALL_NATIVE_MAX_GB=${INSTALL_NATIVE_MAX_GB:-4}
-TARGET_LIBS_WARN_GB=${TARGET_LIBS_WARN_GB:-1}
-TARGET_LIBS_MAX_GB=${TARGET_LIBS_MAX_GB:-1.5}
+INSTALL_NATIVE_WARN_GB=${INSTALL_NATIVE_WARN_GB:-1.5}
+INSTALL_NATIVE_MAX_GB=${INSTALL_NATIVE_MAX_GB:-2}
+TARGET_LIBS_WARN_GB=${TARGET_LIBS_WARN_GB:-3}
+TARGET_LIBS_MAX_GB=${TARGET_LIBS_MAX_GB:-4}
 
 # ---------------------------------------------------------------------------
 # Helpers
