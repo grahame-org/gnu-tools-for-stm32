@@ -5,7 +5,7 @@
 # (required inputs, outputs, composite type) with Python's yaml.safe_load.
 #
 # Run with: bash tests/test-build-stage-action.sh
-# Requires:  yamllint – install via: python3 -m pip install -r tests/requirements.txt
+# Requires:  yamllint, pytest – install via: python3 -m pip install -r tests/requirements.txt
 
 set -e
 
@@ -132,3 +132,15 @@ py_assert "output 'build-time-seconds' exists" \
 # ---------------------------------------------------------------------------
 
 print_test_results
+
+# ---------------------------------------------------------------------------
+# Run pytest tests (tests/test_build_stage_action.py)
+# ---------------------------------------------------------------------------
+
+if ! command -v pytest > /dev/null 2>&1; then
+    echo "ERROR: pytest is required but not found; install with: pip3 install -r tests/requirements.txt" >&2
+    exit 1
+fi
+
+pytest "${SCRIPT_DIR}/test_build_stage_action.py" -v
+
