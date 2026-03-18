@@ -25,10 +25,10 @@ Investigation findings referenced by this document:
 
 Two new parallel CI jobs replace the existing single `build-gcc-final` job:
 
-| CI job | Stage | `--with-multilib-list` | Variants built | Cache paths saved |
-|--------|-------|------------------------|----------------|-------------------|
-| `build-gcc-final-rmprofile` | III-4a | `rmprofile` | 20 M-profile + 8 base | `install-native`, `build-native/gcc-final` |
-| `build-gcc-final-aprofile` | III-4b | `aprofile` | 10 A-profile + 8 base | `install-native` |
+| CI job | Stage | `--with-multilib-list` | Variants built | Cache entries saved |
+|--------|-------|------------------------|----------------|---------------------|
+| `build-gcc-final-rmprofile` | III-4a | `rmprofile` | 20 M-profile + 8 base | (1) `install-native` → key `gcc-final-rmprofile`; (2) `build-native/gcc-final` → key `gcc-final-rmprofile-builddir` |
+| `build-gcc-final-aprofile` | III-4b | `aprofile` | 10 A-profile + 8 base | `install-native` → key `gcc-final-aprofile` |
 
 Both jobs invoke the existing `build-gcc-final.sh` script, which already accepts the
 `--with-multilib-list` flag via `build-toolchain-args.sh`:
@@ -45,12 +45,13 @@ Each job runs on a separate GitHub Actions runner and saves its output to a
 separate profile-specific cache key (see [§4 Cache Key Scheme](#4-cache-key-scheme)).
 The jobs share no state and can run completely in parallel once `build-newlib` completes.
 
-> **Build-directory cache:** The rmprofile job saves **both** `install-native` and
-> `build-native/gcc-final` (the GCC build directory) to its cache. The build
-> directory is required by the merge job to run `make s-mlib`, `make gcc.o`, and
-> relink the driver executables with a combined `multilib.h` (see [§3](#3-multilibh-regeneration)).
-> The aprofile job saves only `install-native`; its build directory is not needed
-> by any downstream step.
+> **Build-directory cache:** The rmprofile job saves the GCC build directory
+> (`build-native/gcc-final`) as a **second, separate** cache entry (key
+> `gcc-final-rmprofile-builddir`), distinct from the install-tree cache (key
+> `gcc-final-rmprofile`). The build directory is required by the merge job to run
+> `make s-mlib`, `make gcc.o`, and relink the driver executables with a combined
+> `multilib.h` (see [§3](#3-multilibh-regeneration)). The aprofile job saves only
+> `install-native`; its build directory is not needed by any downstream step.
 
 ### 1.2 Merge job
 
@@ -79,44 +80,77 @@ The merge job performs the following steps in order:
    MPC, ISL), which are linked into the host-side GCC build.
 4. **Restore cache – newlib** — restore `install-native` from the newlib cache to
    provide the sysroot headers and libraries needed by the installed compiler.
-5. **Restore cache – gcc-final-rmprofile** — restore both `install-native` (the full
-   rmprofile compiler install tree) and `build-native/gcc-final` (the GCC build
-   directory) from the rmprofile cache. The build directory contains the compiled
-   objects required to relink the driver executables in step 7.
+5. **Restore cache – gcc-final-rmprofile** — restore `install-native` (the full
+   rmprofile compiler install tree) from the rmprofile install cache. Then restore
+   `build-native/gcc-final` (the GCC build directory) from the separate rmprofile
+   build-directory cache. The build directory contains the compiled objects required
+   to relink the driver executables in step 7.
 6. **Restore cache – gcc-final-aprofile** — overlay `install-native` with the
-   aprofile install cache. Because the rmprofile and aprofile library subdirectories
-   under `arm-none-eabi/lib/thumb/` are completely disjoint
-   (see [multilib-variants.md §Disjointness](multilib-variants.md#disjointness)), tar
-   extraction adds only aprofile library directories without touching any rmprofile
-   files. After this step `install-native/` contains the union of both profile
-   outputs, except for the driver binaries (`arm-none-eabi-gcc`, `arm-none-eabi-g++`,
-   `arm-none-eabi-cpp`), which still encode only the rmprofile multilib tables.
+   aprofile install cache. The rmprofile and aprofile library subdirectories under
+   `arm-none-eabi/lib/thumb/` are completely disjoint
+   (see [multilib-variants.md §Disjointness](multilib-variants.md#disjointness)), so
+   tar extraction adds the aprofile library directories without removing any rmprofile
+   library files. However, the driver binaries at `install-native/bin/`
+   (`arm-none-eabi-gcc`, `arm-none-eabi-g++`, `arm-none-eabi-cpp`) are present in
+   both caches and will be overwritten by the aprofile versions during this restore.
+   After this step `install-native/` contains the union of both profile library trees,
+   with driver binaries encoding only the aprofile multilib tables. Step 7 replaces
+   those drivers with correctly merged versions.
 7. **Regenerate `multilib.h` and relink drivers** — run the concrete shell commands
    from [§3](#3-multilibh-regeneration) to produce combined-profile driver binaries.
 8. **Save cache – gcc-final (merged)** — save `install-native` under the shared
-   `${{ runner.os }}-stage-v2-${{ needs.compute-hashes.outputs['gcc-final'] }}` key
-   (the same key the old single `build-gcc-final` job used) with
-   `save-in-merge-group: 'true'`.
+   `${{ runner.os }}-stage-v2-${{ needs.compute-hashes.outputs['gcc-final'] }}` key.
+   Since the merge job cannot use the `build-stage` composite action (it has multiple
+   independent restore steps preceding this save), the save is implemented as a direct
+   `actions/cache/save` step. The step is gated on a pre-restore cache-miss check
+   at the start of the job (analogous to the `pre-restore` step in the current
+   `build-gcc-final` job) and has no `merge_group` exclusion — the merged cache
+   must be written on all event types so that `build-gcc-size-libstdcxx` and
+   `build-final` can restore it in the same workflow run:
+
+   ```yaml
+   - name: Restore cache – gcc-final (merged, pre-check)
+     id: pre-restore-merged
+     uses: actions/cache/restore@...
+     with:
+       path: install-native
+       key: ${{ runner.os }}-stage-v2-${{ needs.compute-hashes.outputs['gcc-final'] }}
+
+   # ... (all other steps are skipped when pre-restore-merged is a cache hit) ...
+
+   - name: Save cache – gcc-final (merged)
+     if: steps.pre-restore-merged.outputs.cache-hit != 'true'
+     uses: actions/cache/save@...
+     with:
+       path: install-native
+       key: ${{ runner.os }}-stage-v2-${{ needs.compute-hashes.outputs['gcc-final'] }}
+   ```
 
 ---
 
 ## 3. `multilib.h` Regeneration
 
 After step 6 above the `install-native/bin/` driver binaries contain multilib
-routing tables for only one profile (rmprofile, since the rmprofile cache was
-restored last in step 5 and the aprofile restore in step 6 does not overwrite the
-drivers — see the disjointness note above). They must be replaced by drivers
-compiled with a combined `multilib.h` covering both profiles.
+routing tables for only one profile (aprofile, since the aprofile cache was restored
+last in step 6 and overwrote the rmprofile driver binaries). They must be replaced
+by drivers compiled with a combined `multilib.h` covering both profiles.
 
 The following commands are executed inside the merge job. `BUILDDIR_NATIVE` and
 `INSTALLDIR_NATIVE` are set by `build-common.sh` to `build-native` and
 `install-native` respectively.
 
+In a GitHub Actions inline `run:` step, `build-common.sh` is sourced via
+`${GITHUB_WORKSPACE}` (the repository root). If these steps are extracted into a
+dedicated `build-gcc-final-merge.sh` script instead (consistent with how other
+stages are implemented), then `script_path=$(cd "$(dirname "$0")" && pwd -P)`
+resolves correctly and `"${script_path}/build-common.sh"` is used instead.
+
 ```bash
 # Source build-common.sh to set BUILDDIR_NATIVE, INSTALLDIR_NATIVE, and other
 # shared build variables.  build-common.sh is a sourced script (no shebang).
-script_path=$(cd "$(dirname "$0")" && pwd -P)
-. "$script_path/build-common.sh"
+# Use ${GITHUB_WORKSPACE} in an inline run: step; in a standalone script,
+# use: script_path=$(cd "$(dirname "$0")" && pwd -P)
+. "${GITHUB_WORKSPACE}/build-common.sh"
 
 # Move into the gcc/ subdirectory of the GCC build tree.
 # TM_MULTILIB_CONFIG, the s-mlib stamp target, gcc.o, xgcc, xg++, and cpp all
