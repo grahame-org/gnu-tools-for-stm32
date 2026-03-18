@@ -79,3 +79,7 @@ To compare the build-time impact of a source change:
 Jobs unaffected by your change will show a very short duration (< 1 min,
 indicating a cache hit), so you can quickly focus on the stages that actually
 rebuilt.
+
+---
+
+*See also: [`docs/cache-sizes.md`](cache-sizes.md) — empirical cache entry sizes and budget analysis*

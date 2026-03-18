@@ -36,6 +36,7 @@ jobs:
               - 'build-toolchain.sh'
               - 'build-toolchain-args.sh'
               - 'tests/**'
+              - '.github/workflows/build-toolchain.yml'
               - '.github/workflows/shell-unit-tests.yml'
               - '.github/actions/build-stage/action.yml'
               - '.yamllint'
@@ -65,6 +66,7 @@ jobs:
           bash tests/test-build-toolchain-args.sh
           bash tests/test-strip-binary.sh
           bash tests/test-build-stage-action.sh
+          bash tests/test-build-toolchain-cache-keys.sh
 
   shell-unit-tests-status:
     runs-on: ubuntu-slim

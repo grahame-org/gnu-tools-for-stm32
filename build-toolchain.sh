@@ -37,9 +37,8 @@ umask 022
 
 exec < /dev/null
 
-# shellcheck disable=SC2046
-script_path=$(cd $(dirname $0) && pwd -P)
-. $script_path/build-common.sh
+script_path=$(cd "$(dirname "$0")" && pwd -P)
+. "$script_path/build-common.sh"
 
 # This file contains the sequence of commands used to build the
 # GNU Tools Arm Embedded toolchain.
@@ -450,6 +449,7 @@ if [ "$skip_mingw32" != "yes" ] ; then
         saveenvvar LDFLAGS "-L$BUILDDIR_MINGW/host-libs/zlib/lib -Wl,/usr/$HOST_MINGW/lib/CRT_glob.o"
         saveenvvar LDFLAGS_WRAP_FILEIO "@$BUILDDIR_MINGW/liblongpath-win32/gcc/exe.inputs"
         saveenvvar LDFLAGS_DLLWRAP_FILEIO "@$BUILDDIR_MINGW/liblongpath-win32/gcc/dll.inputs"
+        # shellcheck disable=SC2016
         $SRCDIR/$GDB/configure --build=$BUILD \
             --host=$HOST_MINGW \
             --target=$TARGET \
