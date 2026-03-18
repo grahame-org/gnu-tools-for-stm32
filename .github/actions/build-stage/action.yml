@@ -82,7 +82,7 @@ runs:
       run: "${GITHUB_ACTION_PATH}/run-build-stage.sh"
 
     - name: Clean before cache save – ${{ inputs.stage-name }}
-      if: steps.check.outputs.cache-miss == 'true'
+      if: steps.check.outputs.cache-miss == 'true' && (github.event_name != 'merge_group' || inputs.save-in-merge-group == 'true')
       shell: bash
       env:
         CACHE_PATHS: ${{ inputs.cache-paths }}

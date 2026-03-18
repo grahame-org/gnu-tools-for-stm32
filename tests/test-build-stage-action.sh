@@ -137,8 +137,8 @@ echo "=== Group 6: Clean before cache save step ==="
 py_assert "'Clean before cache save' step exists" \
     "import yaml, sys; f=open(sys.argv[1]); d=yaml.safe_load(f); f.close(); steps=d['runs']['steps']; assert any('Clean before cache save' in (s.get('name','')) for s in steps)"
 
-py_assert "'Clean before cache save' step has cache-miss condition" \
-    "import yaml, sys; f=open(sys.argv[1]); d=yaml.safe_load(f); f.close(); steps=d['runs']['steps']; step=next(s for s in steps if 'Clean before cache save' in s.get('name','')); assert \"steps.check.outputs.cache-miss == 'true'\" in step.get('if','')"
+py_assert "'Clean before cache save' step has same condition as 'Save cache' step" \
+    "import yaml, sys; f=open(sys.argv[1]); d=yaml.safe_load(f); f.close(); steps=d['runs']['steps']; clean_step=next(s for s in steps if 'Clean before cache save' in s.get('name','')); save_step=next(s for s in steps if 'Save cache' in s.get('name','')); assert clean_step.get('if') == save_step.get('if'), f'clean: {clean_step.get(\"if\")!r} != save: {save_step.get(\"if\")!r}'"
 
 py_assert "'Clean before cache save' step uses bash shell" \
     "import yaml, sys; f=open(sys.argv[1]); d=yaml.safe_load(f); f.close(); steps=d['runs']['steps']; step=next(s for s in steps if 'Clean before cache save' in s.get('name','')); assert step.get('shell')=='bash'"
