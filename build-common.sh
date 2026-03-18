@@ -235,8 +235,7 @@ strip_binary() {
     local strip="$1"
     local bin="$2"
 
-    file "$bin" | grep -q -e "\bELF\b" -e "\bPE\b" -e "\bPE32\b" -e "\bMach-O\b"
-    if [ $? -eq 0 ]; then
+    if file "$bin" | grep -q -e "\bELF\b" -e "\bPE\b" -e "\bPE32\b" -e "\bMach-O\b"; then
         "$strip" "$bin" 2>/dev/null || true
     fi
 

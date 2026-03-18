@@ -420,7 +420,7 @@ for _mdir in "." "thumb/v8-m.main/fp"; do
     for _spec in nano.specs rdimon.specs nosys.specs; do
         printf '%s' "${_spec}" > "${_CML_TMPDIR}/src/${_mdir}/${_spec}"
     done
-    printf 'crt0' > "${_CML_TMPDIR}/src/${_mdir}/crt0.o"
+    printf '%s' 'crt0' > "${_CML_TMPDIR}/src/${_mdir}/crt0.o"
 done
 
 copy_multi_libs \
