@@ -53,13 +53,13 @@ measure_human() {
     fi
 }
 
-# Exit 0 if the given byte count exceeds the threshold expressed in gigabytes,
-# exit 1 otherwise.
+# Exit 0 if the given byte count exceeds the threshold expressed in gigabytes
+# (1 GB = 1,000,000,000 bytes), exit 1 otherwise.
 exceeds_gb() {
     local bytes="$1"
     local threshold_gb="$2"
     awk -v b="${bytes}" -v t="${threshold_gb}" \
-        'BEGIN { exit (b > t * 1073741824) ? 0 : 1 }'
+        'BEGIN { exit (b > t * 1000000000) ? 0 : 1 }'
 }
 
 # Print a status string (OK, WARNING, OVER BUDGET, or not found) for a

@@ -1538,6 +1538,9 @@ jobs:
             --skip_steps=mingw,mingw-gdb-with-python,gdb-with-python,manual,package_sources \
             --skip_stages=binutils,gcc-first,newlib,newlib-nano,gcc-final,gcc-size-libstdcxx,gdb
 
+      - name: Validate cache budget
+        run: ./build-cache-budget-check.sh
+
       - name: Save cache – stage-final
         if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.pre-restore.outputs.cache-hit != 'true' && github.event_name != 'merge_group'
         uses: actions/cache/save@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
@@ -1651,10 +1654,6 @@ jobs:
             exit 1
           fi
           echo "All artifacts match reference binaries."
-
-      - name: Validate cache budget
-        if: always()
-        run: ./build-cache-budget-check.sh
 
       - name: Report build times
         if: always()

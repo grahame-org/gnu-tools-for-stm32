@@ -16,7 +16,9 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 # ---------------------------------------------------------------------------
 
 _TMPDIR=$(mktemp -d)
-trap 'rm -rf "$_TMPDIR"' EXIT
+_EMPTY_TMPDIR=$(mktemp -d)
+_cleanup() { rm -rf "${_TMPDIR}" "${_EMPTY_TMPDIR}"; }
+trap '_cleanup' EXIT
 
 mkdir -p "${_TMPDIR}/install-native"
 mkdir -p "${_TMPDIR}/build-native/target-libs"
@@ -26,17 +28,6 @@ mkdir -p "${_TMPDIR}/build-native/target-libs"
 #   build-native/target-libs/dummy : 512 KiB
 dd if=/dev/zero of="${_TMPDIR}/install-native/dummy" bs=1024 count=1024 2>/dev/null
 dd if=/dev/zero of="${_TMPDIR}/build-native/target-libs/dummy" bs=1024 count=512 2>/dev/null
-
-# run_check: run build-cache-budget-check.sh from _TMPDIR with the supplied
-# environment variable overrides.  Extra arguments are passed as VAR=value
-# pairs to env(1).  Stderr is captured and discarded so assert helpers only
-# see the exit code.
-run_check() {
-    (
-        cd "${_TMPDIR}"
-        exec env "$@" bash "${REPO_ROOT}/build-cache-budget-check.sh"
-    ) 2>/dev/null
-}
 
 # ---------------------------------------------------------------------------
 # Group 1: Both directories within all thresholds — should exit 0
@@ -108,9 +99,6 @@ assert_zero_exit "exits 0 when install-native is in warn zone (above warn, below
 
 echo ""
 echo "=== Group 5: Missing cache directories ==="
-
-_EMPTY_TMPDIR=$(mktemp -d)
-trap 'rm -rf "$_EMPTY_TMPDIR"' EXIT
 
 assert_zero_exit "exits 0 when cache directories do not exist" \
     env -C "${_EMPTY_TMPDIR}" \
