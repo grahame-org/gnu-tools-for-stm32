@@ -129,27 +129,27 @@ cd "$SRCDIR"
 
 if [ "$skip_native_build" != "yes" ] ; then
     echo "Task [I-0] /$HOST_NATIVE/zlib/" | tee -a "$BUILDDIR_NATIVE/.stage"
-    rm -rf $BUILDDIR_NATIVE/zlib
-    copy_dir_clean $SRCDIR/$ZLIB $BUILDDIR_NATIVE/zlib
-    pushd $BUILDDIR_NATIVE/zlib
+    rm -rf "$BUILDDIR_NATIVE/zlib"
+    copy_dir_clean "$SRCDIR/$ZLIB" "$BUILDDIR_NATIVE/zlib"
+    pushd "$BUILDDIR_NATIVE/zlib"
     #install zlib at .../host-libs/zlib, prevent gcc from linking into this external zlib
-    ./configure --static --prefix=$BUILDDIR_NATIVE/host-libs/zlib
+    ./configure --static --prefix="$BUILDDIR_NATIVE/host-libs/zlib"
     make
     make install
     popd
 
     echo "Task [I-1] /$HOST_NATIVE/gmp/" | tee -a "$BUILDDIR_NATIVE/.stage"
-    rm -rf $BUILDDIR_NATIVE/gmp && mkdir -p $BUILDDIR_NATIVE/gmp
-    pushd $BUILDDIR_NATIVE/gmp
+    rm -rf "$BUILDDIR_NATIVE/gmp" && mkdir -p "$BUILDDIR_NATIVE/gmp"
+    pushd "$BUILDDIR_NATIVE/gmp"
 
-    CPPFLAGS="-fexceptions" $SRCDIR/$GMP/configure --build=$BUILD \
-        --host=$HOST_NATIVE \
-        --prefix=$BUILDDIR_NATIVE/host-libs/usr \
+    CPPFLAGS="-fexceptions" "$SRCDIR/$GMP/configure" --build="$BUILD" \
+        --host="$HOST_NATIVE" \
+        --prefix="$BUILDDIR_NATIVE/host-libs/usr" \
         --enable-cxx \
         --enable-fft \
         --disable-shared
 
-    make -j$JOBS
+    make -j"$JOBS"
     make install
     #make check
     popd
