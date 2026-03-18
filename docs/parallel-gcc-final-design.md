@@ -244,29 +244,53 @@ artifact.
 
 These two new outputs are added alongside the existing `gcc-final` output in
 the `echo` block that writes to `$GITHUB_OUTPUT`. The existing `gcc-final`
-computation is **unchanged**:
+computation must be updated to include `build-gcc-final-merge.sh` in
+`gcc_final_scripts_hash`, so that any change to the merge job logic
+invalidates the merged `install-native` cache:
 
 ```bash
-# Existing computation — unchanged
+# Updated computation — gcc_final_scripts_hash now includes build-gcc-final-merge.sh
+# so that changes to the merge logic (multilib.h regeneration, driver relink/install)
+# invalidate the merged gcc-final cache entry.
+gcc_final_scripts_hash=$(
+  printf '%s\n' \
+    "$(hash_dir build-gcc-final.sh)" \
+    "$(hash_dir build-gcc-final-merge.sh)" \
+    "$(hash_dir build-toolchain-args.sh)" \
+    "$(hash_dir build-common.sh)" \
+  | sha256sum | cut -d' ' -f1
+)
+
 key_gcc_final=$(printf '%s' \
     "${{ runner.os }}-stage-gcc-final-${gcc_final_scripts_hash}-${key_newlib}-${gcc_src}" \
   | sha256sum | cut -d' ' -f1)
 ```
 
+This is the only change required to `compute-hashes`. The `key_gcc_final` formula
+itself is otherwise unchanged; the merge script's hash flows into
+`gcc_final_scripts_hash`, which is already an input to `key_gcc_final`.
+
 ### 4.2 What changes each key
 
-| Input | `gcc-final-rmprofile` | `gcc-final-aprofile` | `gcc-final` (merged / existing) |
-|-------|-----------------------|----------------------|----------------------------------|
+| Input | `gcc-final-rmprofile` | `gcc-final-aprofile` | `gcc-final` (merged) |
+|-------|-----------------------|----------------------|-----------------------|
 | `runner.os` | ✓ | ✓ | ✓ |
-| `gcc_final_scripts_hash` | ✓ | ✓ | ✓ |
+| `gcc_final_scripts_hash` (incl. `build-gcc-final-merge.sh`) | ✓ | ✓ | ✓ |
 | `key_newlib` | ✓ | ✓ | ✓ |
 | `gcc_src` (git tree hash of `src/gcc/`) | ✓ | ✓ | ✓ |
 | Profile discriminator string | `rmprofile` | `aprofile` | _(none)_ |
 
-The per-profile keys are invalidated by the same source changes that invalidate the
-merged `gcc-final` key. The profile discriminator in the key string ensures the two
-parallel jobs never collide in the cache store while sharing identical invalidation
-logic.
+Because `build-gcc-final-merge.sh` is included in `gcc_final_scripts_hash`, any
+change to the merge script (e.g., altered `multilib.h` regeneration commands,
+additional driver installation steps) will change `gcc_final_scripts_hash` and
+therefore invalidate all three keys: `gcc-final-rmprofile`, `gcc-final-aprofile`,
+and the merged `gcc-final`.  This is intentional — a merge logic change requires
+both parallel jobs to re-run with the new merge behaviour.
+
+The per-profile keys are also invalidated by the same source changes that
+invalidate the merged key. The profile discriminator in the key string ensures
+the two parallel jobs never collide in the cache store while sharing identical
+invalidation logic.
 
 ### 4.3 Cache key format in `actions/cache`
 
@@ -288,8 +312,10 @@ All stage caches use the `stage-v2-` prefix in the `key:` field of
 | `gcc-final-rmprofile-builddir` | Workflow artifact | `build-gcc-final-rmprofile` | `build-gcc-final-merge` | N/A (always available within the same run) |
 | `stage-v2-<gcc-final-hash>` _(existing)_ | Cache | `build-gcc-final-merge` | `build-gcc-size-libstdcxx`, `build-final` | Yes |
 
-The existing `stage-v2-<gcc-final-hash>` entry is now written by the merge job
-rather than a build job. Its key and all downstream restore steps that reference
+The `stage-v2-<gcc-final-hash>` entry is now written by the merge job rather than
+a build job. Its key formula is otherwise unchanged — the addition of
+`build-gcc-final-merge.sh` to `gcc_final_scripts_hash` is the only modification
+(see §4.1). All downstream restore steps that reference
 `needs.compute-hashes.outputs['gcc-final']` are **unchanged**.
 
 The rmprofile GCC build directory is transferred via a workflow artifact rather than
@@ -340,7 +366,9 @@ No other workflow changes are required in those jobs. Their cache restore steps
 continue to reference `needs.compute-hashes.outputs['gcc-final']`, which is the
 key under which the merge job saves the combined result.
 
-### 5.3 New `compute-hashes` outputs
+### 5.3 Changes to `compute-hashes`
+
+**New outputs:**
 
 | New output | Used by |
 |------------|---------|
@@ -349,6 +377,16 @@ key under which the merge job saves the combined result.
 
 The rmprofile GCC build directory is handed off via the `gcc-final-rmprofile-builddir`
 workflow artifact and does not require a new `compute-hashes` output.
+
+**Modified computation:**
+
+The `gcc_final_scripts_hash` variable must be updated to include
+`build-gcc-final-merge.sh` alongside `build-gcc-final.sh`, so that changes to
+the merge logic (i.e. `multilib.h` regeneration, driver relink/install commands)
+invalidate the merged `gcc-final` cache — and by extension both per-profile caches
+which share the same `gcc_final_scripts_hash`. See §4.1 for the updated shell
+fragment.
+
 The existing `gcc-final` output is retained and continues to be used by
 `build-gcc-size-libstdcxx` and `build-final` (unchanged).
 
