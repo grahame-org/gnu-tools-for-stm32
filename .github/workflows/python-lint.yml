@@ -1,0 +1,70 @@
+name: Python Lint
+
+on:
+  push:
+    branches:
+      - 13.3.rel1
+  pull_request:
+  merge_group:
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  check-changes:
+    runs-on: ubuntu-slim
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      should-lint: ${{ steps.filter.outputs.lint || 'true' }}
+    steps:
+      - name: Check for lint-relevant file changes
+        if: github.event_name == 'pull_request'
+        id: filter
+        uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
+        with:
+          filters: |
+            lint:
+              - 'tests/**/*.py'
+              - 'tests/requirements.txt'
+              - 'tests/pyproject.toml'
+              - 'tests/.flake8'
+              - '.github/workflows/python-lint.yml'
+
+  python-lint:
+    needs: check-changes
+    if: needs.check-changes.outputs.should-lint == 'true'
+    runs-on: ubuntu-slim
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Install dependencies
+        run: |
+          TEST_VENV_PATH=/opt/test-venv
+          python3 -m venv "${TEST_VENV_PATH}"
+          "${TEST_VENV_PATH}/bin/python3" -m pip install -r tests/requirements.txt
+          echo "${TEST_VENV_PATH}/bin" >> "${GITHUB_PATH}"
+
+      - name: Run flake8
+        run: flake8 tests/
+
+  python-lint-status:
+    runs-on: ubuntu-slim
+    needs: [check-changes, python-lint]
+    if: always()
+    steps:
+      - name: Report lint status
+        run: |
+          if [[ "${{ needs.check-changes.result }}" == "failure" || "${{ needs.check-changes.result }}" == "cancelled" ]]; then
+            echo "check-changes job failed or was cancelled" && exit 1
+          fi
+          if [[ "${{ needs.python-lint.result }}" == "failure" || "${{ needs.python-lint.result }}" == "cancelled" ]]; then
+            echo "Lint failed or was cancelled" && exit 1
+          fi
+          echo "Lint skipped or succeeded"
