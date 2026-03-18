@@ -25,10 +25,10 @@ Investigation findings referenced by this document:
 
 Two new parallel CI jobs replace the existing single `build-gcc-final` job:
 
-| CI job | Stage | `--with-multilib-list` | Variants built | Cache entries saved |
-|--------|-------|------------------------|----------------|---------------------|
-| `build-gcc-final-rmprofile` | III-4a | `rmprofile` | 20 M-profile + 8 base | (1) `install-native` → key `gcc-final-rmprofile`; (2) `build-native/gcc-final` → key `gcc-final-rmprofile-builddir` |
-| `build-gcc-final-aprofile` | III-4b | `aprofile` | 10 A-profile + 8 base | `install-native` → key `gcc-final-aprofile` |
+| CI job | Stage | `--with-multilib-list` | Variants built | Outputs |
+|--------|-------|------------------------|----------------|---------|
+| `build-gcc-final-rmprofile` | III-4a | `rmprofile` | 20 M-profile + 8 base | (1) `install-native` → cache key `gcc-final-rmprofile`; (2) `build-native/gcc-final` → workflow artifact `gcc-final-rmprofile-builddir` |
+| `build-gcc-final-aprofile` | III-4b | `aprofile` | 10 A-profile + 8 base | `install-native` → cache key `gcc-final-aprofile` |
 
 Both jobs invoke the existing `build-gcc-final.sh` script, which already accepts the
 `--with-multilib-list` flag via `build-toolchain-args.sh`:
@@ -45,13 +45,15 @@ Each job runs on a separate GitHub Actions runner and saves its output to a
 separate profile-specific cache key (see [§4 Cache Key Scheme](#4-cache-key-scheme)).
 The jobs share no state and can run completely in parallel once `build-newlib` completes.
 
-> **Build-directory cache:** The rmprofile job saves the GCC build directory
-> (`build-native/gcc-final`) as a **second, separate** cache entry (key
-> `gcc-final-rmprofile-builddir`), distinct from the install-tree cache (key
-> `gcc-final-rmprofile`). The build directory is required by the merge job to run
-> `make s-mlib`, `make gcc.o`, and relink the driver executables with a combined
-> `multilib.h` (see [§3](#3-multilibh-regeneration)). The aprofile job saves only
-> `install-native`; its build directory is not needed by any downstream step.
+> **Build-directory artifact:** The rmprofile job uploads the GCC build directory
+> (`build-native/gcc-final`) as a **workflow artifact** (`gcc-final-rmprofile-builddir`),
+> distinct from the install-tree cache (key `gcc-final-rmprofile`). Using an artifact
+> rather than a cache entry ensures the build directory is always available to the merge
+> job within the same workflow run regardless of `merge_group` cache-write restrictions,
+> cache eviction, or first-time key scenarios. The build directory is required by the
+> merge job to run `make s-mlib`, `make gcc.o`, and relink the driver executables with
+> a combined `multilib.h` (see [§3](#3-multilibh-regeneration)). The aprofile job
+> uploads no artifact; its build directory is not needed by any downstream step.
 
 ### 1.2 Merge job
 
@@ -78,14 +80,13 @@ The merge job performs the following steps in order:
    jobs; a host C++ compiler is needed for `make gcc.o`.
 3. **Restore cache – prerequisites** — restore `build-native/host-libs` (GMP, MPFR,
    MPC, ISL), which are linked into the host-side GCC build.
-4. **Restore cache – newlib** — restore `install-native` from the newlib cache to
-   provide the sysroot headers and libraries needed by the installed compiler.
-5. **Restore cache – gcc-final-rmprofile** — restore `install-native` (the full
-   rmprofile compiler install tree) from the rmprofile install cache. Then restore
-   `build-native/gcc-final` (the GCC build directory) from the separate rmprofile
-   build-directory cache. The build directory contains the compiled objects required
-   to relink the driver executables in step 7.
-6. **Restore cache – gcc-final-aprofile** — overlay `install-native` with the
+4. **Restore cache – gcc-final-rmprofile; download build-directory artifact** — restore
+   `install-native` (the full rmprofile compiler install tree, which includes the newlib
+   output) from the rmprofile install cache. Then download `build-native/gcc-final` from
+   the `gcc-final-rmprofile-builddir` workflow artifact uploaded by
+   `build-gcc-final-rmprofile`. The build directory contains the compiled objects
+   required to relink the driver executables in step 6.
+5. **Restore cache – gcc-final-aprofile** — overlay `install-native` with the
    aprofile install cache. The rmprofile and aprofile library subdirectories under
    `arm-none-eabi/lib/thumb/` are completely disjoint
    (see [multilib-variants.md §Disjointness](multilib-variants.md#disjointness)), so
@@ -94,19 +95,17 @@ The merge job performs the following steps in order:
    (`arm-none-eabi-gcc`, `arm-none-eabi-g++`, `arm-none-eabi-cpp`) are present in
    both caches and will be overwritten by the aprofile versions during this restore.
    After this step `install-native/` contains the union of both profile library trees,
-   with driver binaries encoding only the aprofile multilib tables. Step 7 replaces
+   with driver binaries encoding only the aprofile multilib tables. Step 6 replaces
    those drivers with correctly merged versions.
-7. **Regenerate `multilib.h` and relink drivers** — run the concrete shell commands
+6. **Regenerate `multilib.h` and relink drivers** — run the concrete shell commands
    from [§3](#3-multilibh-regeneration) to produce combined-profile driver binaries.
-8. **Save cache – gcc-final (merged)** — save `install-native` under the shared
+7. **Save cache – gcc-final (merged)** — save `install-native` under the shared
    `${{ runner.os }}-stage-v2-${{ needs.compute-hashes.outputs['gcc-final'] }}` key.
    Since the merge job cannot use the `build-stage` composite action (it has multiple
    independent restore steps preceding this save), the save is implemented as a direct
-   `actions/cache/save` step. The step is gated on a pre-restore cache-miss check
-   at the start of the job (analogous to the `pre-restore` step in the current
-   `build-gcc-final` job) and has no `merge_group` exclusion — the merged cache
-   must be written on all event types so that `build-gcc-size-libstdcxx` and
-   `build-final` can restore it in the same workflow run:
+   `actions/cache/save` step. The step is gated on a `lookup-only` pre-check at the
+   start of the job so that on a cache hit the entire merge job body is skipped without
+   downloading the large `install-native` tree:
 
    ```yaml
    - name: Restore cache – gcc-final (merged, pre-check)
@@ -115,6 +114,7 @@ The merge job performs the following steps in order:
      with:
        path: install-native
        key: ${{ runner.os }}-stage-v2-${{ needs.compute-hashes.outputs['gcc-final'] }}
+       lookup-only: true
 
    # ... (all other steps are skipped when pre-restore-merged is a cache hit) ...
 
@@ -130,9 +130,9 @@ The merge job performs the following steps in order:
 
 ## 3. `multilib.h` Regeneration
 
-After step 6 above the `install-native/bin/` driver binaries contain multilib
+After step 5 above the `install-native/bin/` driver binaries contain multilib
 routing tables for only one profile (aprofile, since the aprofile cache was restored
-last in step 6 and overwrote the rmprofile driver binaries). They must be replaced
+last in step 5 and overwrote the rmprofile driver binaries). They must be replaced
 by drivers compiled with a combined `multilib.h` covering both profiles.
 
 The following commands are executed inside the merge job. `BUILDDIR_NATIVE` and
@@ -222,7 +222,7 @@ which contains the full rationale and references to the relevant GCC source file
 
 ### 4.1 New outputs added to `compute-hashes`
 
-Three new outputs are added to the `compute-hashes` job alongside the existing
+Two new outputs are added to the `compute-hashes` job alongside the existing
 `gcc-final` output:
 
 ```bash
@@ -235,15 +235,14 @@ key_gcc_final_rmprofile=$(printf '%s' \
 key_gcc_final_aprofile=$(printf '%s' \
     "${{ runner.os }}-stage-gcc-final-aprofile-${gcc_final_scripts_hash}-${key_newlib}-${gcc_src}" \
   | sha256sum | cut -d' ' -f1)
-
-# Separate key for the rmprofile GCC build directory (build-native/gcc-final).
-# Same inputs as the rmprofile install cache, distinguished by "builddir".
-key_gcc_final_rmprofile_builddir=$(printf '%s' \
-    "${{ runner.os }}-stage-gcc-final-rmprofile-builddir-${gcc_final_scripts_hash}-${key_newlib}-${gcc_src}" \
-  | sha256sum | cut -d' ' -f1)
 ```
 
-These three new outputs are added alongside the existing `gcc-final` output in
+The rmprofile GCC build directory (`build-native/gcc-final`) is transferred to the
+merge job via a **workflow artifact** (`gcc-final-rmprofile-builddir`) rather than a
+cache entry; see §1.1 above. No additional `compute-hashes` output is needed for the
+artifact.
+
+These two new outputs are added alongside the existing `gcc-final` output in
 the `echo` block that writes to `$GITHUB_OUTPUT`. The existing `gcc-final`
 computation is **unchanged**:
 
@@ -278,26 +277,26 @@ All stage caches use the `stage-v2-` prefix in the `key:` field of
 |-------------------------------|------------------------|
 | `gcc-final-rmprofile` | `${{ runner.os }}-stage-v2-${{ needs.compute-hashes.outputs['gcc-final-rmprofile'] }}` |
 | `gcc-final-aprofile` | `${{ runner.os }}-stage-v2-${{ needs.compute-hashes.outputs['gcc-final-aprofile'] }}` |
-| `gcc-final-rmprofile-builddir` | `${{ runner.os }}-stage-v2-${{ needs.compute-hashes.outputs['gcc-final-rmprofile-builddir'] }}` |
 | `gcc-final` (existing) | `${{ runner.os }}-stage-v2-${{ needs.compute-hashes.outputs['gcc-final'] }}` |
 
-### 4.4 Summary of cache entries
+### 4.4 Summary of cache and artifact outputs
 
-| Cache key pattern | Written by | Restored by | Saved in `merge_group`? |
-|-------------------|------------|-------------|-------------------------|
-| `stage-v2-<gcc-final-rmprofile-hash>` | `build-gcc-final-rmprofile` | `build-gcc-final-merge` | Yes |
-| `stage-v2-<gcc-final-aprofile-hash>` | `build-gcc-final-aprofile` | `build-gcc-final-merge` | Yes |
-| `stage-v2-<gcc-final-rmprofile-builddir-hash>` | `build-gcc-final-rmprofile` | `build-gcc-final-merge` | No |
-| `stage-v2-<gcc-final-hash>` _(existing)_ | `build-gcc-final-merge` | `build-gcc-size-libstdcxx`, `build-final` | Yes |
+| Output | Kind | Written by | Consumed by | Saved in `merge_group`? |
+|--------|------|------------|-------------|-------------------------|
+| `stage-v2-<gcc-final-rmprofile-hash>` | Cache | `build-gcc-final-rmprofile` | `build-gcc-final-merge` | Yes |
+| `stage-v2-<gcc-final-aprofile-hash>` | Cache | `build-gcc-final-aprofile` | `build-gcc-final-merge` | Yes |
+| `gcc-final-rmprofile-builddir` | Workflow artifact | `build-gcc-final-rmprofile` | `build-gcc-final-merge` | N/A (always available within the same run) |
+| `stage-v2-<gcc-final-hash>` _(existing)_ | Cache | `build-gcc-final-merge` | `build-gcc-size-libstdcxx`, `build-final` | Yes |
 
 The existing `stage-v2-<gcc-final-hash>` entry is now written by the merge job
 rather than a build job. Its key and all downstream restore steps that reference
 `needs.compute-hashes.outputs['gcc-final']` are **unchanged**.
 
-The rmprofile build directory cache is excluded from `merge_group` saves because it
-is a large intermediate artifact (the build directory grows to several GB before
-stripping) and downstream stages never need it; only the merge job requires it and
-only on a cache miss.
+The rmprofile GCC build directory is transferred via a workflow artifact rather than
+a cache entry so that the merge job can always retrieve it regardless of
+`merge_group` cache-write restrictions, cache eviction, or first-time key scenarios.
+Workflow artifacts are guaranteed to be available for the duration of the workflow run
+in which they were uploaded.
 
 ---
 
@@ -347,8 +346,9 @@ key under which the merge job saves the combined result.
 |------------|---------|
 | `gcc-final-rmprofile` | `build-gcc-final-rmprofile` (save), `build-gcc-final-merge` (restore) |
 | `gcc-final-aprofile` | `build-gcc-final-aprofile` (save), `build-gcc-final-merge` (restore) |
-| `gcc-final-rmprofile-builddir` | `build-gcc-final-rmprofile` (save), `build-gcc-final-merge` (restore) |
 
+The rmprofile GCC build directory is handed off via the `gcc-final-rmprofile-builddir`
+workflow artifact and does not require a new `compute-hashes` output.
 The existing `gcc-final` output is retained and continues to be used by
 `build-gcc-size-libstdcxx` and `build-final` (unchanged).
 
