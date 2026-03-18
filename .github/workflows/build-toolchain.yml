@@ -40,6 +40,7 @@ jobs:
               - 'build-toolchain-args.sh'
               - '.github/workflows/build-toolchain.yml'
               - '.github/actions/build-stage/**'
+              - 'build-cache-budget-check.sh'
               - 'test_project/**'
 
   compute-hashes:
@@ -1537,6 +1538,9 @@ jobs:
           ./build-toolchain.sh \
             --skip_steps=mingw,mingw-gdb-with-python,gdb-with-python,manual,package_sources \
             --skip_stages=binutils,gcc-first,newlib,newlib-nano,gcc-final,gcc-size-libstdcxx,gdb
+
+      - name: Validate cache budget
+        run: ./build-cache-budget-check.sh
 
       - name: Save cache – stage-final
         if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.pre-restore.outputs.cache-hit != 'true' && github.event_name != 'merge_group'
