@@ -87,7 +87,11 @@ STRIPEOF
 chmod +x "$_MOCK_BIN3/strip"
 
 export STRIP_LOG="$_STRIP_LOG3"
-PATH="$_MOCK_BIN3:$PATH" bash "$SCRIPT" "$_ROOT3" >/dev/null 2>&1 || true
+_SAVED_PATH3="$PATH"
+export PATH="$_MOCK_BIN3:$PATH"
+assert_zero_exit "ELF stripping: script exits 0" \
+    bash "$SCRIPT" "$_ROOT3"
+export PATH="$_SAVED_PATH3"
 
 assert_eq "bin/ ELF stripped" "called" \
     "$(grep -qF "$_ELF_BIN" "$_STRIP_LOG3" 2>/dev/null && echo called || echo not-called)"
@@ -125,7 +129,11 @@ STRIPEOF
 chmod +x "$_MOCK_BIN4/strip"
 
 export STRIP_LOG="$_STRIP_LOG4"
-PATH="$_MOCK_BIN4:$PATH" bash "$SCRIPT" "$_ROOT4" >/dev/null 2>&1 || true
+_SAVED_PATH4="$PATH"
+export PATH="$_MOCK_BIN4:$PATH"
+assert_zero_exit ".a stripping: script exits 0" \
+    bash "$SCRIPT" "$_ROOT4"
+export PATH="$_SAVED_PATH4"
 
 assert_eq ".a stripped with --strip-debug" "called" \
     "$(grep -qF -- "--strip-debug $_AR" "$_STRIP_LOG4" 2>/dev/null && echo called || echo not-called)"
