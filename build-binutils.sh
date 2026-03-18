@@ -43,7 +43,7 @@ set -x
 set -u
 set -o pipefail
 
-PS4='+$(date -u +%Y-%m-%d:%H:%M:%S) (${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
+PS4='+$(date -u +%Y-%m-%d:%H:%M:%S) (${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }' # shellcheck disable=SC2016 # intentional: single quotes defer expansion to trace-print time
 
 umask 022
 
