@@ -128,6 +128,37 @@ py_assert "output 'build-time-seconds' exists" \
     "import yaml, sys; f=open(sys.argv[1]); d=yaml.safe_load(f); f.close(); assert 'build-time-seconds' in d['outputs']"
 
 # ---------------------------------------------------------------------------
+# Test group 6: Clean before cache save step
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "=== Group 6: Clean before cache save step ==="
+
+py_assert "'Clean before cache save' step exists" \
+    "import yaml, sys; f=open(sys.argv[1]); d=yaml.safe_load(f); f.close(); steps=d['runs']['steps']; assert any('Clean before cache save' in (s.get('name','')) for s in steps)"
+
+py_assert "'Clean before cache save' step has cache-miss condition" \
+    "import yaml, sys; f=open(sys.argv[1]); d=yaml.safe_load(f); f.close(); steps=d['runs']['steps']; step=next(s for s in steps if 'Clean before cache save' in s.get('name','')); assert \"steps.check.outputs.cache-miss == 'true'\" in step.get('if','')"
+
+py_assert "'Clean before cache save' step uses bash shell" \
+    "import yaml, sys; f=open(sys.argv[1]); d=yaml.safe_load(f); f.close(); steps=d['runs']['steps']; step=next(s for s in steps if 'Clean before cache save' in s.get('name','')); assert step.get('shell')=='bash'"
+
+py_assert "'Clean before cache save' step calls build-pre-cache-clean.sh" \
+    "import yaml, sys; f=open(sys.argv[1]); d=yaml.safe_load(f); f.close(); steps=d['runs']['steps']; step=next(s for s in steps if 'Clean before cache save' in s.get('name','')); assert 'build-pre-cache-clean.sh' in step.get('run','')"
+
+py_assert "'Clean before cache save' step appears before 'Save cache' step" \
+    "import yaml, sys; f=open(sys.argv[1]); d=yaml.safe_load(f); f.close(); steps=d['runs']['steps']; names=[s.get('name','') for s in steps]; clean_idx=next(i for i,n in enumerate(names) if 'Clean before cache save' in n); save_idx=next(i for i,n in enumerate(names) if 'Save cache' in n); assert clean_idx < save_idx"
+
+py_assert "'Clean before cache save' step appears after 'Build stage' step" \
+    "import yaml, sys; f=open(sys.argv[1]); d=yaml.safe_load(f); f.close(); steps=d['runs']['steps']; names=[s.get('name','') for s in steps]; build_idx=next(i for i,n in enumerate(names) if 'Build stage' in n); clean_idx=next(i for i,n in enumerate(names) if 'Clean before cache save' in n); assert build_idx < clean_idx"
+
+py_assert "'Clean before cache save' step passes cache-paths via env (no template injection)" \
+    "import yaml, sys; f=open(sys.argv[1]); d=yaml.safe_load(f); f.close(); steps=d['runs']['steps']; step=next(s for s in steps if 'Clean before cache save' in s.get('name','')); assert 'CACHE_PATHS' in step.get('env',{})"
+
+py_assert "'Clean before cache save' step run script references \$CACHE_PATHS not \${{ inputs.cache-paths }}" \
+    "import yaml, sys; f=open(sys.argv[1]); d=yaml.safe_load(f); f.close(); steps=d['runs']['steps']; step=next(s for s in steps if 'Clean before cache save' in s.get('name','')); run=step.get('run',''); assert '\$CACHE_PATHS' in run and 'inputs.cache-paths' not in run"
+
+# ---------------------------------------------------------------------------
 # Summary
 # ---------------------------------------------------------------------------
 
