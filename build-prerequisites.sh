@@ -45,7 +45,7 @@ script_path=$(cd "$(dirname "$0")" && pwd -P)
 usage ()
 {
 cat<<EOF
-Usage: $(basename $0) [--skip_steps=...]
+Usage: $(basename "$0") [--skip_steps=...]
 
 This script will build dependent libraries for GNU Tools Arm Embedded toolchain.
 
@@ -74,7 +74,7 @@ skip_native_build=no
 for ac_arg; do
     case $ac_arg in
         --skip_steps=*)
-            skip_steps=$(echo $ac_arg | sed -e "s/--skip_steps=//g" -e "s/,/ /g")
+            skip_steps=$(echo "$ac_arg" | sed -e "s/--skip_steps=//g" -e "s/,/ /g")
             ;;
         --help|-h)
             usage
