@@ -21,7 +21,7 @@ ACTION_YML = (
 @pytest.fixture(scope="module")
 def action():
     """Load and parse action.yml once for all tests in this module."""
-    with ACTION_YML.open() as f:
+    with ACTION_YML.open(encoding="utf-8") as f:
         return yaml.safe_load(f)
 
 
