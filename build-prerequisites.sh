@@ -155,48 +155,48 @@ if [ "$skip_native_build" != "yes" ] ; then
     popd
 
     echo "Task [I-2] /$HOST_NATIVE/mpfr/" | tee -a "$BUILDDIR_NATIVE/.stage"
-    rm -rf $BUILDDIR_NATIVE/mpfr && mkdir -p $BUILDDIR_NATIVE/mpfr
-    pushd $BUILDDIR_NATIVE/mpfr
+    rm -rf "$BUILDDIR_NATIVE/mpfr" && mkdir -p "$BUILDDIR_NATIVE/mpfr"
+    pushd "$BUILDDIR_NATIVE/mpfr"
 
-    $SRCDIR/$MPFR/configure --build=$BUILD \
-        --host=$HOST_NATIVE \
-        --target=$TARGET \
-        --prefix=$BUILDDIR_NATIVE/host-libs/usr \
+    "$SRCDIR/$MPFR/configure" --build="$BUILD" \
+        --host="$HOST_NATIVE" \
+        --target="$TARGET" \
+        --prefix="$BUILDDIR_NATIVE/host-libs/usr" \
         --disable-shared \
-        --with-gmp=$BUILDDIR_NATIVE/host-libs/usr
+        --with-gmp="$BUILDDIR_NATIVE/host-libs/usr"
 
-    make -j$JOBS
+    make -j"$JOBS"
     make install
     #make check
     popd
 
     echo "Task [I-3] /$HOST_NATIVE/mpc/" | tee -a "$BUILDDIR_NATIVE/.stage"
-    rm -rf $BUILDDIR_NATIVE/mpc && mkdir -p $BUILDDIR_NATIVE/mpc
-    pushd $BUILDDIR_NATIVE/mpc
+    rm -rf "$BUILDDIR_NATIVE/mpc" && mkdir -p "$BUILDDIR_NATIVE/mpc"
+    pushd "$BUILDDIR_NATIVE/mpc"
 
-    $SRCDIR/$MPC/configure --build=$BUILD \
-        --host=$HOST_NATIVE \
-        --target=$TARGET \
-        --prefix=$BUILDDIR_NATIVE/host-libs/usr \
+    "$SRCDIR/$MPC/configure" --build="$BUILD" \
+        --host="$HOST_NATIVE" \
+        --target="$TARGET" \
+        --prefix="$BUILDDIR_NATIVE/host-libs/usr" \
         --disable-shared \
-        --with-gmp=$BUILDDIR_NATIVE/host-libs/usr \
-        --with-mpfr=$BUILDDIR_NATIVE/host-libs/usr
+        --with-gmp="$BUILDDIR_NATIVE/host-libs/usr" \
+        --with-mpfr="$BUILDDIR_NATIVE/host-libs/usr"
 
-    make -j$JOBS
+    make -j"$JOBS"
     make install
     #make check
     popd
 
     echo "Task [I-4] /$HOST_NATIVE/isl/" | tee -a "$BUILDDIR_NATIVE/.stage"
-    rm -rf $BUILDDIR_NATIVE/isl && mkdir -p $BUILDDIR_NATIVE/isl
-    pushd $BUILDDIR_NATIVE/isl
+    rm -rf "$BUILDDIR_NATIVE/isl" && mkdir -p "$BUILDDIR_NATIVE/isl"
+    pushd "$BUILDDIR_NATIVE/isl"
 
-    $SRCDIR/$ISL/configure --build=$BUILD \
-        --host=$HOST_NATIVE \
-        --target=$TARGET \
-        --prefix=$BUILDDIR_NATIVE/host-libs/usr \
+    "$SRCDIR/$ISL/configure" --build="$BUILD" \
+        --host="$HOST_NATIVE" \
+        --target="$TARGET" \
+        --prefix="$BUILDDIR_NATIVE/host-libs/usr" \
         --disable-shared \
-        --with-gmp-prefix=$BUILDDIR_NATIVE/host-libs/usr
+        --with-gmp-prefix="$BUILDDIR_NATIVE/host-libs/usr"
 
     make
     make install
@@ -204,18 +204,18 @@ if [ "$skip_native_build" != "yes" ] ; then
     popd
 
     echo "Task [I-5] /$HOST_NATIVE/expat/" | tee -a "$BUILDDIR_NATIVE/.stage"
-    rm -rf $BUILDDIR_NATIVE/expat && mkdir -p $BUILDDIR_NATIVE/expat
-    pushd $BUILDDIR_NATIVE/expat
+    rm -rf "$BUILDDIR_NATIVE/expat" && mkdir -p "$BUILDDIR_NATIVE/expat"
+    pushd "$BUILDDIR_NATIVE/expat"
 
-    $SRCDIR/$EXPAT/configure --build=$BUILD \
-        --host=$HOST_NATIVE \
-        --target=$TARGET \
-        --prefix=$BUILDDIR_NATIVE/host-libs/usr \
+    "$SRCDIR/$EXPAT/configure" --build="$BUILD" \
+        --host="$HOST_NATIVE" \
+        --target="$TARGET" \
+        --prefix="$BUILDDIR_NATIVE/host-libs/usr" \
         --without-docbook \
         --without-xmlwf \
         --disable-shared
 
-    make -j$JOBS
+    make -j"$JOBS"
     make install
     popd
 fi  # if [ "$skip_native_build" != "yes" ] ; then
@@ -227,20 +227,20 @@ fi
 
 saveenv
 saveenvvar CC_FOR_BUILD gcc
-saveenvvar CC $HOST_MINGW_TOOL-gcc
-saveenvvar CXX $HOST_MINGW_TOOL-g++
-saveenvvar AR $HOST_MINGW_TOOL-ar
-saveenvvar RANLIB $HOST_MINGW_TOOL-ranlib
-saveenvvar STRIP $HOST_MINGW_TOOL-strip
-saveenvvar NM $HOST_MINGW_TOOL-nm
-saveenvvar AS $HOST_MINGW_TOOL-as
-saveenvvar OBJDUMP $HOST_MINGW_TOOL-objdump
-saveenvvar RC $HOST_MINGW_TOOL-windres
-saveenvvar WINDRES $HOST_MINGW_TOOL-windres
+saveenvvar CC "${HOST_MINGW_TOOL}-gcc"
+saveenvvar CXX "${HOST_MINGW_TOOL}-g++"
+saveenvvar AR "${HOST_MINGW_TOOL}-ar"
+saveenvvar RANLIB "${HOST_MINGW_TOOL}-ranlib"
+saveenvvar STRIP "${HOST_MINGW_TOOL}-strip"
+saveenvvar NM "${HOST_MINGW_TOOL}-nm"
+saveenvvar AS "${HOST_MINGW_TOOL}-as"
+saveenvvar OBJDUMP "${HOST_MINGW_TOOL}-objdump"
+saveenvvar RC "${HOST_MINGW_TOOL}-windres"
+saveenvvar WINDRES "${HOST_MINGW_TOOL}-windres"
 
-echo Generate /$HOST_MINGW/liblongpath-win32 | tee -a "$BUILDDIR_MINGW/.stage"
-rm -rf $BUILDDIR_MINGW/liblongpath-win32
-$SRCDIR/liblongpath-win32/helper.py --generate $BUILDDIR_MINGW/liblongpath-win32 --triplet $HOST_MINGW_TOOL
+echo "Generate /${HOST_MINGW}/liblongpath-win32" | tee -a "$BUILDDIR_MINGW/.stage"
+rm -rf "$BUILDDIR_MINGW/liblongpath-win32"
+"$SRCDIR/liblongpath-win32/helper.py" --generate "$BUILDDIR_MINGW/liblongpath-win32" --triplet "$HOST_MINGW_TOOL"
 
 
 echo "Task [II-0] /$HOST_MINGW/zlib/" | tee -a "$BUILDDIR_MINGW/.stage"
