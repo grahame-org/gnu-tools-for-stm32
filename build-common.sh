@@ -235,8 +235,7 @@ strip_binary() {
     local strip="$1"
     local bin="$2"
 
-    file "$bin" | grep -q -e "\bELF\b" -e "\bPE\b" -e "\bPE32\b" -e "\bMach-O\b"
-    if [ $? -eq 0 ]; then
+    if file "$bin" | grep -q -e "\bELF\b" -e "\bPE\b" -e "\bPE32\b" -e "\bMach-O\b"; then
         "$strip" "$bin" 2>/dev/null || true
     fi
 
@@ -285,13 +284,20 @@ ROOT=$(pwd)
 SRCDIR=$ROOT/src
 
 BUILDDIR_NATIVE=$ROOT/build-native
+export BUILDDIR_NATIVE
 BUILDDIR_MINGW=$ROOT/build-mingw
+export BUILDDIR_MINGW
 INSTALLDIR_NATIVE=$ROOT/install-native
+export INSTALLDIR_NATIVE
 INSTALLDIR_NATIVE_DOC=$ROOT/install-native/share/doc/gcc-arm-none-eabi
+export INSTALLDIR_NATIVE_DOC
 INSTALLDIR_MINGW=$ROOT/install-mingw
+export INSTALLDIR_MINGW
 INSTALLDIR_MINGW_DOC=$ROOT/install-mingw/share/doc/gcc-arm-none-eabi
+export INSTALLDIR_MINGW_DOC
 
 PACKAGEDIR=$ROOT/pkg
+export PACKAGEDIR
 
 GMP_VER=6.2.1
 MPFR_VER=3.1.6
@@ -303,10 +309,14 @@ ZLIB_VER=1.2.12
 PYTHON_WIN_VER=2.7.13
 
 BINUTILS=binutils
+export BINUTILS
 GCC=gcc
 NEWLIB=newlib
+export NEWLIB
 NEWLIB_NANO=newlib
+export NEWLIB_NANO
 GDB=gdb
+export GDB
 GMP=gmp
 MPFR=mpfr
 MPC=mpc
