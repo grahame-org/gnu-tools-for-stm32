@@ -33,10 +33,14 @@ dd if=/dev/zero of="${_TMPDIR}/build-native/target-libs/dummy" bs=1024 count=512
 # supplied environment variable overrides.  Arguments are VAR=value pairs
 # passed to env(1).  Uses a portable subshell+cd rather than GNU env -C so the
 # tests work on macOS/BSD as well as Linux.
+#
+# GITHUB_STEP_SUMMARY is always cleared so that the script does not try to
+# append to the CI runner's summary file (which may not be writable or may not
+# exist when running tests in a different subprocess context).
 run_check() {
     local dir="$1"
     shift
-    (cd "${dir}" && exec env "$@" bash "${REPO_ROOT}/build-cache-budget-check.sh")
+    (cd "${dir}" && exec env GITHUB_STEP_SUMMARY="" "$@" bash "${REPO_ROOT}/build-cache-budget-check.sh")
 }
 
 # ---------------------------------------------------------------------------
