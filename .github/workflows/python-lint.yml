@@ -52,7 +52,8 @@ jobs:
           echo "${TEST_VENV_PATH}/bin" >> "${GITHUB_PATH}"
 
       - name: Run flake8
-        run: flake8 tests/
+        run: flake8 .
+        working-directory: tests
 
   python-lint-status:
     runs-on: ubuntu-slim
