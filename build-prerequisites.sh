@@ -45,7 +45,7 @@ script_path=$(cd "$(dirname "$0")" && pwd -P)
 usage ()
 {
 cat<<EOF
-Usage: $(basename $0) [--skip_steps=...]
+Usage: $(basename "$0") [--skip_steps=...]
 
 This script will build dependent libraries for GNU Tools Arm Embedded toolchain.
 
@@ -74,7 +74,7 @@ skip_native_build=no
 for ac_arg; do
     case $ac_arg in
         --skip_steps=*)
-            skip_steps=$(echo $ac_arg | sed -e "s/--skip_steps=//g" -e "s/,/ /g")
+            skip_steps=$(echo "$ac_arg" | sed -e "s/--skip_steps=//g" -e "s/,/ /g")
             ;;
         --help|-h)
             usage
@@ -155,34 +155,34 @@ if [ "$skip_native_build" != "yes" ] ; then
     popd
 
     echo "Task [I-2] /$HOST_NATIVE/mpfr/" | tee -a "$BUILDDIR_NATIVE/.stage"
-    rm -rf $BUILDDIR_NATIVE/mpfr && mkdir -p $BUILDDIR_NATIVE/mpfr
-    pushd $BUILDDIR_NATIVE/mpfr
+    rm -rf "$BUILDDIR_NATIVE/mpfr" && mkdir -p "$BUILDDIR_NATIVE/mpfr"
+    pushd "$BUILDDIR_NATIVE/mpfr"
 
-    $SRCDIR/$MPFR/configure --build=$BUILD \
-        --host=$HOST_NATIVE \
-        --target=$TARGET \
-        --prefix=$BUILDDIR_NATIVE/host-libs/usr \
+    "$SRCDIR/$MPFR/configure" --build="$BUILD" \
+        --host="$HOST_NATIVE" \
+        --target="$TARGET" \
+        --prefix="$BUILDDIR_NATIVE/host-libs/usr" \
         --disable-shared \
-        --with-gmp=$BUILDDIR_NATIVE/host-libs/usr
+        --with-gmp="$BUILDDIR_NATIVE/host-libs/usr"
 
-    make -j$JOBS
+    make -j"$JOBS"
     make install
     #make check
     popd
 
     echo "Task [I-3] /$HOST_NATIVE/mpc/" | tee -a "$BUILDDIR_NATIVE/.stage"
-    rm -rf $BUILDDIR_NATIVE/mpc && mkdir -p $BUILDDIR_NATIVE/mpc
-    pushd $BUILDDIR_NATIVE/mpc
+    rm -rf "$BUILDDIR_NATIVE/mpc" && mkdir -p "$BUILDDIR_NATIVE/mpc"
+    pushd "$BUILDDIR_NATIVE/mpc"
 
-    $SRCDIR/$MPC/configure --build=$BUILD \
-        --host=$HOST_NATIVE \
-        --target=$TARGET \
-        --prefix=$BUILDDIR_NATIVE/host-libs/usr \
+    "$SRCDIR/$MPC/configure" --build="$BUILD" \
+        --host="$HOST_NATIVE" \
+        --target="$TARGET" \
+        --prefix="$BUILDDIR_NATIVE/host-libs/usr" \
         --disable-shared \
-        --with-gmp=$BUILDDIR_NATIVE/host-libs/usr \
-        --with-mpfr=$BUILDDIR_NATIVE/host-libs/usr
+        --with-gmp="$BUILDDIR_NATIVE/host-libs/usr" \
+        --with-mpfr="$BUILDDIR_NATIVE/host-libs/usr"
 
-    make -j$JOBS
+    make -j"$JOBS"
     make install
     #make check
     popd
