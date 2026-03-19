@@ -227,20 +227,20 @@ fi
 
 saveenv
 saveenvvar CC_FOR_BUILD gcc
-saveenvvar CC $HOST_MINGW_TOOL-gcc
-saveenvvar CXX $HOST_MINGW_TOOL-g++
-saveenvvar AR $HOST_MINGW_TOOL-ar
-saveenvvar RANLIB $HOST_MINGW_TOOL-ranlib
-saveenvvar STRIP $HOST_MINGW_TOOL-strip
-saveenvvar NM $HOST_MINGW_TOOL-nm
-saveenvvar AS $HOST_MINGW_TOOL-as
-saveenvvar OBJDUMP $HOST_MINGW_TOOL-objdump
-saveenvvar RC $HOST_MINGW_TOOL-windres
-saveenvvar WINDRES $HOST_MINGW_TOOL-windres
+saveenvvar CC "${HOST_MINGW_TOOL}-gcc"
+saveenvvar CXX "${HOST_MINGW_TOOL}-g++"
+saveenvvar AR "${HOST_MINGW_TOOL}-ar"
+saveenvvar RANLIB "${HOST_MINGW_TOOL}-ranlib"
+saveenvvar STRIP "${HOST_MINGW_TOOL}-strip"
+saveenvvar NM "${HOST_MINGW_TOOL}-nm"
+saveenvvar AS "${HOST_MINGW_TOOL}-as"
+saveenvvar OBJDUMP "${HOST_MINGW_TOOL}-objdump"
+saveenvvar RC "${HOST_MINGW_TOOL}-windres"
+saveenvvar WINDRES "${HOST_MINGW_TOOL}-windres"
 
-echo Generate /$HOST_MINGW/liblongpath-win32 | tee -a "$BUILDDIR_MINGW/.stage"
-rm -rf $BUILDDIR_MINGW/liblongpath-win32
-$SRCDIR/liblongpath-win32/helper.py --generate $BUILDDIR_MINGW/liblongpath-win32 --triplet $HOST_MINGW_TOOL
+echo "Generate /${HOST_MINGW}/liblongpath-win32" | tee -a "$BUILDDIR_MINGW/.stage"
+rm -rf "$BUILDDIR_MINGW/liblongpath-win32"
+"$SRCDIR/liblongpath-win32/helper.py" --generate "$BUILDDIR_MINGW/liblongpath-win32" --triplet "$HOST_MINGW_TOOL"
 
 
 echo "Task [II-0] /$HOST_MINGW/zlib/" | tee -a "$BUILDDIR_MINGW/.stage"
