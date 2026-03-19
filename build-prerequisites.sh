@@ -188,15 +188,15 @@ if [ "$skip_native_build" != "yes" ] ; then
     popd
 
     echo "Task [I-4] /$HOST_NATIVE/isl/" | tee -a "$BUILDDIR_NATIVE/.stage"
-    rm -rf $BUILDDIR_NATIVE/isl && mkdir -p $BUILDDIR_NATIVE/isl
-    pushd $BUILDDIR_NATIVE/isl
+    rm -rf "$BUILDDIR_NATIVE/isl" && mkdir -p "$BUILDDIR_NATIVE/isl"
+    pushd "$BUILDDIR_NATIVE/isl"
 
-    $SRCDIR/$ISL/configure --build=$BUILD \
-        --host=$HOST_NATIVE \
-        --target=$TARGET \
-        --prefix=$BUILDDIR_NATIVE/host-libs/usr \
+    "$SRCDIR/$ISL/configure" --build="$BUILD" \
+        --host="$HOST_NATIVE" \
+        --target="$TARGET" \
+        --prefix="$BUILDDIR_NATIVE/host-libs/usr" \
         --disable-shared \
-        --with-gmp-prefix=$BUILDDIR_NATIVE/host-libs/usr
+        --with-gmp-prefix="$BUILDDIR_NATIVE/host-libs/usr"
 
     make
     make install
@@ -204,18 +204,18 @@ if [ "$skip_native_build" != "yes" ] ; then
     popd
 
     echo "Task [I-5] /$HOST_NATIVE/expat/" | tee -a "$BUILDDIR_NATIVE/.stage"
-    rm -rf $BUILDDIR_NATIVE/expat && mkdir -p $BUILDDIR_NATIVE/expat
-    pushd $BUILDDIR_NATIVE/expat
+    rm -rf "$BUILDDIR_NATIVE/expat" && mkdir -p "$BUILDDIR_NATIVE/expat"
+    pushd "$BUILDDIR_NATIVE/expat"
 
-    $SRCDIR/$EXPAT/configure --build=$BUILD \
-        --host=$HOST_NATIVE \
-        --target=$TARGET \
-        --prefix=$BUILDDIR_NATIVE/host-libs/usr \
+    "$SRCDIR/$EXPAT/configure" --build="$BUILD" \
+        --host="$HOST_NATIVE" \
+        --target="$TARGET" \
+        --prefix="$BUILDDIR_NATIVE/host-libs/usr" \
         --without-docbook \
         --without-xmlwf \
         --disable-shared
 
-    make -j$JOBS
+    make -j"$JOBS"
     make install
     popd
 fi  # if [ "$skip_native_build" != "yes" ] ; then
