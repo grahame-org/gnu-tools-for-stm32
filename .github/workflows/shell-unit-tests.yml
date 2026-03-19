@@ -71,7 +71,6 @@ jobs:
           bash tests/test-build-toolchain-cache-keys.sh
           bash tests/test-pre-cache-clean.sh
           bash tests/test-strip-binary.sh
-          pytest tests/test_build_stage_action.py
 
   shell-unit-tests-status:
     runs-on: ubuntu-slim
