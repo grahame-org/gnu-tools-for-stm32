@@ -29,6 +29,18 @@ make_ar() {
     printf '!<arch>\n' > "$1"
 }
 
+# Helper: create a mock strip binary in the given directory that logs its
+# arguments to the file referenced by ${STRIP_LOG}.
+make_mock_strip() {
+    local mock_dir="$1"
+    mkdir -p "$mock_dir"
+    cat > "$mock_dir/strip" <<'STRIPEOF'
+#!/usr/bin/env bash
+echo "$*" >> "${STRIP_LOG}"
+STRIPEOF
+    chmod +x "$mock_dir/strip"
+}
+
 # ---------------------------------------------------------------------------
 # Test group 1: Missing argument → non-zero exit
 # ---------------------------------------------------------------------------
@@ -79,14 +91,7 @@ chmod +x "$_TEXT_FILE"
 # Capture invocations of strip via PATH override
 _STRIP_LOG3="$_TMPDIR/strip-calls-3"
 _MOCK_BIN3="$_TMPDIR/mockbin3"
-mkdir -p "$_MOCK_BIN3"
-
-# Mock strip: records "--strip-unneeded <path>" or "--strip-debug <path>" calls
-cat > "$_MOCK_BIN3/strip" <<'STRIPEOF'
-#!/usr/bin/env bash
-echo "$*" >> "${STRIP_LOG}"
-STRIPEOF
-chmod +x "$_MOCK_BIN3/strip"
+make_mock_strip "$_MOCK_BIN3"
 
 export STRIP_LOG="$_STRIP_LOG3"
 _SAVED_PATH3="$PATH"
@@ -124,13 +129,7 @@ make_ar "$_AR"
 
 _STRIP_LOG4="$_TMPDIR/strip-calls-4"
 _MOCK_BIN4="$_TMPDIR/mockbin4"
-mkdir -p "$_MOCK_BIN4"
-
-cat > "$_MOCK_BIN4/strip" <<'STRIPEOF'
-#!/usr/bin/env bash
-echo "$*" >> "${STRIP_LOG}"
-STRIPEOF
-chmod +x "$_MOCK_BIN4/strip"
+make_mock_strip "$_MOCK_BIN4"
 
 export STRIP_LOG="$_STRIP_LOG4"
 _SAVED_PATH4="$PATH"
