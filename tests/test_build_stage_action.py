@@ -87,3 +87,73 @@ class TestOutputs:
     def test_build_time_seconds_output_exists(self, action_data):
         """Output 'build-time-seconds' must be defined."""
         assert "build-time-seconds" in action_data["outputs"]
+
+
+class TestCleanBeforeCacheSave:
+    """Test the 'Clean before cache save' step in the composite action."""
+
+    @pytest.fixture
+    def steps(self, action_data):
+        """Return the list of steps from the composite action."""
+        return action_data["runs"]["steps"]
+
+    @pytest.fixture
+    def clean_step(self, steps):
+        """Return the 'Clean before cache save' step."""
+        return next(
+            s for s in steps if "Clean before cache save" in s.get("name", "")
+        )
+
+    @pytest.fixture
+    def save_step(self, steps):
+        """Return the 'Save cache' step."""
+        return next(s for s in steps if "Save cache" in s.get("name", ""))
+
+    def test_step_exists(self, steps):
+        """The 'Clean before cache save' step must exist."""
+        assert any("Clean before cache save" in s.get("name", "") for s in steps)
+
+    def test_condition_matches_save_cache(self, clean_step, save_step):
+        """The condition must match the 'Save cache' step exactly."""
+        assert clean_step.get("if") == save_step.get("if"), (
+            f"clean: {clean_step.get('if')!r} != save: {save_step.get('if')!r}"
+        )
+
+    def test_uses_bash_shell(self, clean_step):
+        """The step must use the bash shell."""
+        assert clean_step.get("shell") == "bash"
+
+    def test_delegates_to_script(self, clean_step):
+        """The step must delegate to clean-before-cache-save.sh."""
+        assert "clean-before-cache-save.sh" in clean_step.get("run", "")
+
+    def test_run_is_single_line(self, clean_step):
+        """The run field must be a single-line script call (no inline logic)."""
+        run = clean_step.get("run", "").strip()
+        assert len(run.splitlines()) == 1
+
+    def test_step_before_save_cache(self, steps):
+        """The cleanup step must appear before the 'Save cache' step."""
+        names = [s.get("name", "") for s in steps]
+        clean_idx = next(
+            i for i, n in enumerate(names) if "Clean before cache save" in n
+        )
+        save_idx = next(i for i, n in enumerate(names) if "Save cache" in n)
+        assert clean_idx < save_idx
+
+    def test_step_after_build_stage(self, steps):
+        """The cleanup step must appear after the 'Build stage' step."""
+        names = [s.get("name", "") for s in steps]
+        build_idx = next(i for i, n in enumerate(names) if "Build stage" in n)
+        clean_idx = next(
+            i for i, n in enumerate(names) if "Clean before cache save" in n
+        )
+        assert build_idx < clean_idx
+
+    def test_passes_cache_paths_via_env(self, clean_step):
+        """cache-paths must be passed via env (not template expression in run)."""
+        assert "CACHE_PATHS" in clean_step.get("env", {})
+
+    def test_run_has_no_template_expressions(self, clean_step):
+        """The run field must not embed template expressions."""
+        assert "inputs." not in clean_step.get("run", "")
