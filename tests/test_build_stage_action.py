@@ -22,7 +22,7 @@ ACTION_YML = REPO_ROOT / ".github" / "actions" / "build-stage" / "action.yml"
 @pytest.fixture(scope="module")
 def action_data():
     """Load and parse the build-stage action.yml file."""
-    with open(ACTION_YML) as f:
+    with open(ACTION_YML, encoding="utf-8") as f:
         return yaml.safe_load(f)
 
 

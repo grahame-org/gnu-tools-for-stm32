@@ -33,6 +33,7 @@ jobs:
               - 'build-gdb.sh'
               - 'build-newlib.sh'
               - 'build-newlib-nano.sh'
+              - 'build-pre-cache-clean.sh'
               - 'build-prerequisites.sh'
               - 'build-toolchain.sh'
               - 'build-toolchain-args.sh'
@@ -63,12 +64,13 @@ jobs:
 
       - name: Run shell unit tests
         run: |
-          bash tests/test-build-common.sh
-          bash tests/test-build-toolchain-args.sh
-          bash tests/test-strip-binary.sh
-          bash tests/test-build-stage-action.sh
-          bash tests/test-build-toolchain-cache-keys.sh
           bash tests/test-build-cache-budget-check.sh
+          bash tests/test-build-common.sh
+          bash tests/test-build-stage-action.sh
+          bash tests/test-build-toolchain-args.sh
+          bash tests/test-build-toolchain-cache-keys.sh
+          bash tests/test-pre-cache-clean.sh
+          bash tests/test-strip-binary.sh
           pytest tests/test_build_stage_action.py
 
   shell-unit-tests-status:
