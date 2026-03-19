@@ -29,10 +29,13 @@ jobs:
               - 'build-binutils.sh'
               - 'build-common.sh'
               - 'build-gcc-first.sh'
+              - 'build-pre-cache-clean.sh'
               - 'build-prerequisites.sh'
               - 'build-toolchain-args.sh'
               - 'build-toolchain.sh'
               - '.github/actions/build-stage/*.sh'
+              - 'tests/test-build-stage-action.sh'
+              - 'tests/test-helpers.sh'
               - '.shellcheckrc'
               - '.github/workflows/shellcheck.yml'
 
@@ -54,9 +57,12 @@ jobs:
           build-binutils.sh \
           build-common.sh \
           build-gcc-first.sh \
+          build-pre-cache-clean.sh \
           build-prerequisites.sh \
           build-toolchain-args.sh \
           build-toolchain.sh \
+          tests/test-build-stage-action.sh \
+          tests/test-helpers.sh \
           .github/actions/build-stage/compute-cache-miss.sh \
           .github/actions/build-stage/run-build-stage.sh \
           .github/actions/build-stage/set-cache-hit-output.sh

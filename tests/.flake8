@@ -1,0 +1,9 @@
+[flake8]
+max-line-length = 120
+exclude =
+    src,
+    build-native,
+    install-native,
+    pkg,
+    __pycache__,
+    .git,
