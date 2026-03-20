@@ -86,8 +86,7 @@ if [ "x$skip_native_build" != "xyes" ] ; then
     saveenvvar CPPFLAGS "$ENV_CPPFLAGS"
     saveenvvar LDFLAGS "$ENV_LDFLAGS"
     # shellcheck disable=SC2086 # BINUTILS_CONFIG_OPTS is intentionally word-split (multiple --build/--host flags)
-    "$SRCDIR/$BINUTILS/configure"  \
-        ${BINUTILS_CONFIG_OPTS} \
+    "$SRCDIR/$BINUTILS/configure" ${BINUTILS_CONFIG_OPTS} \
         --target="$TARGET" \
         --prefix="$INSTALLDIR_NATIVE" \
         --infodir="$INSTALLDIR_NATIVE_DOC/info" \
