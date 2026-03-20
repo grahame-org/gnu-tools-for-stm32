@@ -29,6 +29,7 @@ jobs:
               - 'build-binutils.sh'
               - 'build-common.sh'
               - 'build-gcc-first.sh'
+              - 'build-newlib.sh'
               - 'build-pre-cache-clean.sh'
               - 'build-prerequisites.sh'
               - 'build-toolchain-args.sh'
@@ -57,6 +58,7 @@ jobs:
           build-binutils.sh \
           build-common.sh \
           build-gcc-first.sh \
+          build-newlib.sh \
           build-pre-cache-clean.sh \
           build-prerequisites.sh \
           build-toolchain-args.sh \
