@@ -97,9 +97,7 @@ for bin_dir in \
 do
     if [ -d "$bin_dir" ]; then
         while IFS= read -r -d '' file; do
-            if [ -f "$file" ] && [ ! -L "$file" ]; then
-                strip_elf_file "$file"
-            fi
+            strip_elf_file "$file"
         done < <(find "$bin_dir" -maxdepth 1 -type f -print0)
     fi
 done
@@ -108,9 +106,7 @@ done
 # libexec/gcc/<target>/<version>/ (cc1, cc1plus, lto1, …).
 if [ -d "$root_dir/libexec" ]; then
     while IFS= read -r -d '' file; do
-        if [ -f "$file" ] && [ ! -L "$file" ]; then
-            strip_elf_file "$file"
-        fi
+        strip_elf_file "$file"
     done < <(find "$root_dir/libexec" -type f -print0)
 fi
 
