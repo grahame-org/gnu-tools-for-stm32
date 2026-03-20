@@ -87,6 +87,16 @@ strip_elf_file() {
 }
 
 # ---------------------------------------------------------------------------
+# Note presence of essential binary before any modifications
+# ---------------------------------------------------------------------------
+
+_gcc_binary="$root_dir/bin/arm-none-eabi-gcc"
+_gcc_present_before=false
+if [ -e "$_gcc_binary" ]; then
+    _gcc_present_before=true
+fi
+
+# ---------------------------------------------------------------------------
 # Strip ELF binaries in bin/, libexec/, arm-none-eabi/bin/
 # ---------------------------------------------------------------------------
 
@@ -126,17 +136,45 @@ done < <(find "$root_dir" -name '*.a' -type f -print0)
 # Remove non-essential directories
 # ---------------------------------------------------------------------------
 
-for rm_dir in \
-    "$root_dir/share/man" \
-    "$root_dir/share/info" \
-    "$root_dir/share/locale" \
-    "$root_dir/share/doc" \
-    "$root_dir/arm-none-eabi/share"
-do
-    if [ -d "$rm_dir" ]; then
-        rm -rf "$rm_dir"
+remove_non_essential_dirs() {
+    local root="$1"
+    local rm_dir
+
+    for rm_dir in \
+        "$root/share/man" \
+        "$root/share/info" \
+        "$root/share/locale" \
+        "$root/share/doc" \
+        "$root/arm-none-eabi/share"
+    do
+        if [ -d "$rm_dir" ]; then
+            rm -rf "$rm_dir"
+        fi
+    done
+
+    # share/gcc-*/ may expand to multiple versioned directories; use glob.
+    # nullglob ensures the loop body is skipped when no directories match.
+    (
+        shopt -s nullglob
+        for rm_dir in "$root"/share/gcc-*/; do
+            rm -rf "$rm_dir"
+        done
+    )
+}
+
+remove_non_essential_dirs "$root_dir"
+
+# ---------------------------------------------------------------------------
+# Safety check: essential binaries must survive cleanup
+# ---------------------------------------------------------------------------
+
+if [ "$_gcc_present_before" = true ]; then
+    if [ ! -e "$_gcc_binary" ]; then
+        echo "Safety check FAILED: $_gcc_binary missing after cleanup!" >&2
+        exit 1
     fi
-done
+    echo "Safety check passed: $_gcc_binary still present after cleanup."
+fi
 
 # ---------------------------------------------------------------------------
 # Remove .la libtool metadata files
