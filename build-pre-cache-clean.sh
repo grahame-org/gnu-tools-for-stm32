@@ -98,6 +98,11 @@ fi
 
 # ---------------------------------------------------------------------------
 # Strip ELF binaries in bin/, libexec/, arm-none-eabi/bin/
+#
+# Downstream build stages invoke these executables directly (compiler, linker,
+# assembler, etc.) and do not inspect their symbol tables.  Stripping with
+# --strip-unneeded removes debug info and unreferenced symbols without
+# affecting runtime behaviour.
 # ---------------------------------------------------------------------------
 
 # bin/ and arm-none-eabi/bin/ are flat; strip only direct children.
@@ -114,8 +119,11 @@ do
     fi
 done
 
-# libexec/ is recursive: GCC installs binaries under
-# libexec/gcc/<target>/<version>/ (cc1, cc1plus, lto1, …).
+# libexec/ is recursive (e.g. GDB may install helpers there).  With
+# --libexecdir=$INSTALLDIR_NATIVE/lib the GCC internal binaries (cc1,
+# cc1plus, lto1) live under lib/gcc/<target>/<version>/ rather than
+# libexec/; they are stripped by build-toolchain.sh strip_host_objects
+# during the final assembly step.
 if [ -d "$root_dir/libexec" ]; then
     while IFS= read -r -d '' file; do
         if [ -f "$file" ] && [ ! -L "$file" ]; then
@@ -125,15 +133,51 @@ if [ -d "$root_dir/libexec" ]; then
 fi
 
 # ---------------------------------------------------------------------------
-# Strip .a static libraries anywhere under root_dir (--strip-debug)
+# Strip .a static libraries anywhere under root_dir
+#
+# Downstream build stages link against these libraries.  --strip-debug
+# removes DWARF debug sections but preserves all code and symbol tables, so
+# linking works correctly.
+#
+# .debug_frame is explicitly kept: the final assembly's strip_target_objects
+# step uses `arm-none-eabi-strip --keep-section=.debug_frame` to preserve
+# stack-unwinding data in the ARM runtime libraries.  Keeping it here ensures
+# that intent is honoured — i.e. we do not pre-remove .debug_frame before the
+# final assembly has a chance to decide what to keep.
 # ---------------------------------------------------------------------------
 
 while IFS= read -r -d '' lib; do
-    strip --strip-debug "$lib" 2>/dev/null || true
+    strip --strip-debug --keep-section=.debug_frame "$lib" 2>/dev/null || true
 done < <(find "$root_dir" -name '*.a' -type f -print0)
 
 # ---------------------------------------------------------------------------
 # Remove non-essential directories
+#
+# Safety for downstream build stages and license compliance
+# ─────────────────────────────────────────────────────────
+# None of the directories removed below are read by any subsequent build
+# stage in the pipeline.  All downstream stages use only the executables in
+# bin/, the sysroot headers/libraries in arm-none-eabi/include/ and
+# arm-none-eabi/lib/, and the GCC runtime objects in lib/gcc/.
+#
+# share/gcc-*/  – GCC Python pretty-printer scripts (libstdc++ debugger
+#   support, e.g. share/gcc-arm-none-eabi/python/).  These are installed by
+#   gcc-final and gcc-size-libstdcxx but are not consumed during compilation
+#   or linking by any downstream stage.  They are part of the end-user
+#   toolchain experience (GDB pretty-printing), but a release build from
+#   source regenerates them; removing them from CI intermediate caches does
+#   not affect correctness or license compliance since CI caches are not
+#   distributed.
+#
+# arm-none-eabi/share/  – GDB Python data files (auto-load scripts,
+#   pretty-printers for target libraries).  Installed by the gdb stage.
+#   Not required during compilation or linking.  Same reasoning as above.
+#
+# License note: Removing GPL/LGPL-licensed documentation and script files
+# from CI build caches does not constitute redistribution of an incomplete
+# toolchain.  The source code is preserved in src/; a full build from source
+# produces all required files.  These caches exist solely to accelerate CI
+# pipelines and are never distributed to end users.
 # ---------------------------------------------------------------------------
 
 remove_non_essential_dirs() {

@@ -139,8 +139,8 @@ assert_zero_exit ".a stripping: script exits 0" \
     bash "$SCRIPT" "$_ROOT4"
 export PATH="$_SAVED_PATH4"
 
-assert_eq ".a stripped with --strip-debug" "called" \
-    "$(grep -qF -- "--strip-debug $_AR" "$_STRIP_LOG4" 2>/dev/null && echo called || echo not-called)"
+assert_eq ".a stripped with --strip-debug --keep-section=.debug_frame" "called" \
+    "$(grep -qF -- "--strip-debug --keep-section=.debug_frame $_AR" "$_STRIP_LOG4" 2>/dev/null && echo called || echo not-called)"
 
 unset STRIP_LOG
 
