@@ -98,7 +98,7 @@ if [ "x$skip_native_build" != "xyes" ] ; then
         --enable-newlib-nano-formatted-io     \
         --disable-nls
 
-    make -j "$JOBS"
+    make -j"$JOBS"
     make install
 
     popd
