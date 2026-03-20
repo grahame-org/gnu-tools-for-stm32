@@ -83,7 +83,7 @@ if [ "x$skip_native_build" != "xyes" ] ; then
     echo "Task [III-1] /$HOST_NATIVE/gcc-first/" | tee -a "$BUILDDIR_NATIVE/.stage"
     rm -rf "$BUILDDIR_NATIVE/gcc-first" && mkdir -p "$BUILDDIR_NATIVE/gcc-first"
     pushd "$BUILDDIR_NATIVE/gcc-first"
-    # shellcheck disable=SC2086 # GCC_CONFIG_OPTS and MULTILIB_LIST are intentionally word-split flag lists
+    # shellcheck disable=SC2086 # GCC_CONFIG_OPTS is an intentionally word-split list of configure flags
     "$SRCDIR/$GCC/configure" --target="$TARGET" \
         --prefix="$INSTALLDIR_NATIVE" \
         --libexecdir="$INSTALLDIR_NATIVE/lib" \
@@ -116,7 +116,7 @@ if [ "x$skip_native_build" != "xyes" ] ; then
         ${GCC_CONFIG_OPTS}                              \
         "${GCC_CONFIG_OPTS_LCPP}"                              \
         "--with-pkgversion=$PKGVERSION" \
-        ${MULTILIB_LIST}
+        "${MULTILIB_LIST}"
 
     make -j"$JOBS" CXXFLAGS="$BUILD_OPTIONS" all-gcc
 
