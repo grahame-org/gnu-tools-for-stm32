@@ -235,7 +235,9 @@ echo "script" > "$_ROOT8/share/gcc-14.3.1/annotate.py"
 echo "script" > "$_ROOT8/share/gcc-13.2.1/gdbinit.py"
 echo "keep" > "$_ROOT8/share/other/file"
 
-bash "$SCRIPT" "$_ROOT8" >/dev/null 2>&1
+_root8_exit=0
+bash "$SCRIPT" "$_ROOT8" >/dev/null 2>&1 || _root8_exit=$?
+assert_eq "group 8: script exits 0" "0" "$_root8_exit"
 
 assert_eq "share/gcc-14.3.1 removed" "absent" \
     "$([ -d "$_ROOT8/share/gcc-14.3.1" ] && echo present || echo absent)"

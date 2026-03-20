@@ -139,11 +139,10 @@ fi
 # removes DWARF debug sections but preserves all code and symbol tables, so
 # linking works correctly.
 #
-# .debug_frame is explicitly kept: the final assembly's strip_target_objects
-# step uses `arm-none-eabi-strip --keep-section=.debug_frame` to preserve
-# stack-unwinding data in the ARM runtime libraries.  Keeping it here ensures
-# that intent is honoured — i.e. we do not pre-remove .debug_frame before the
-# final assembly has a chance to decide what to keep.
+# .debug_frame is explicitly kept: it is DWARF debug-time unwind metadata
+# that some post-mortem tooling may consume.  Runtime unwinding is driven by
+# .eh_frame/.ARM.exidx; keeping .debug_frame here simply ensures we do not
+# pre-remove it before the final assembly has a chance to decide what to keep.
 # ---------------------------------------------------------------------------
 
 while IFS= read -r -d '' lib; do
@@ -161,9 +160,10 @@ done < <(find "$root_dir" -name '*.a' -type f -print0)
 # arm-none-eabi/lib/, and the GCC runtime objects in lib/gcc/.
 #
 # share/gcc-*/  – GCC Python pretty-printer scripts (libstdc++ debugger
-#   support, e.g. share/gcc-arm-none-eabi/python/).  These are installed by
-#   gcc-final and gcc-size-libstdcxx but are not consumed during compilation
-#   or linking by any downstream stage.  They are part of the end-user
+#   support).  This build configures --with-python-dir=share/gcc-arm-none-eabi
+#   so the actual installed directory is share/gcc-arm-none-eabi/python/.
+#   These are installed by gcc-final and gcc-size-libstdcxx but are not
+#   consumed during compilation or linking by any downstream stage.  They are part of the end-user
 #   toolchain experience (GDB pretty-printing), but a release build from
 #   source regenerates them; removing them from CI intermediate caches does
 #   not affect correctness or license compliance since CI caches are not
