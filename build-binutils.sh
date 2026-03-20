@@ -70,40 +70,41 @@ if [ "x$is_ppa_release" != "xyes" ]; then
 fi
 
 if [ "x$skip_native_build" != "xyes" ] ; then
-    mkdir -p $BUILDDIR_NATIVE
-    mkdir -p $INSTALLDIR_NATIVE
-    mkdir -p $PACKAGEDIR
+    mkdir -p "$BUILDDIR_NATIVE"
+    mkdir -p "$INSTALLDIR_NATIVE"
+    mkdir -p "$PACKAGEDIR"
 fi
 
-cd $SRCDIR
+cd "$SRCDIR"
 
 if [ "x$skip_native_build" != "xyes" ] ; then
-    echo Task [III-0] /$HOST_NATIVE/binutils/ | tee -a "$BUILDDIR_NATIVE/.stage"
-    rm -rf $BUILDDIR_NATIVE/binutils && mkdir -p $BUILDDIR_NATIVE/binutils
-    pushd $BUILDDIR_NATIVE/binutils
+    echo "Task [III-0] /$HOST_NATIVE/binutils/" | tee -a "$BUILDDIR_NATIVE/.stage"
+    rm -rf "$BUILDDIR_NATIVE/binutils" && mkdir -p "$BUILDDIR_NATIVE/binutils"
+    pushd "$BUILDDIR_NATIVE/binutils"
     saveenv
     saveenvvar CFLAGS "$ENV_CFLAGS"
     saveenvvar CPPFLAGS "$ENV_CPPFLAGS"
     saveenvvar LDFLAGS "$ENV_LDFLAGS"
-    $SRCDIR/$BINUTILS/configure  \
+    # shellcheck disable=SC2086 # BINUTILS_CONFIG_OPTS is intentionally word-split (multiple --build/--host flags)
+    "$SRCDIR/$BINUTILS/configure"  \
         ${BINUTILS_CONFIG_OPTS} \
-        --target=$TARGET \
-        --prefix=$INSTALLDIR_NATIVE \
-        --infodir=$INSTALLDIR_NATIVE_DOC/info \
-        --mandir=$INSTALLDIR_NATIVE_DOC/man \
-        --htmldir=$INSTALLDIR_NATIVE_DOC/html \
-        --pdfdir=$INSTALLDIR_NATIVE_DOC/pdf \
+        --target="$TARGET" \
+        --prefix="$INSTALLDIR_NATIVE" \
+        --infodir="$INSTALLDIR_NATIVE_DOC/info" \
+        --mandir="$INSTALLDIR_NATIVE_DOC/man" \
+        --htmldir="$INSTALLDIR_NATIVE_DOC/html" \
+        --pdfdir="$INSTALLDIR_NATIVE_DOC/pdf" \
         --disable-nls \
         --disable-werror \
         --disable-sim \
         --disable-gdb \
         --enable-interwork \
         --enable-plugins \
-        --with-sysroot=$INSTALLDIR_NATIVE/arm-none-eabi \
+        --with-sysroot="$INSTALLDIR_NATIVE/arm-none-eabi" \
         --with-zstd=no \
         "--with-pkgversion=$PKGVERSION"
 
-    make -j$JOBS
+    make -j"$JOBS"
 
     make install
 
@@ -111,11 +112,11 @@ if [ "x$skip_native_build" != "xyes" ] ; then
         make install-html install-pdf
     fi
 
-    copy_dir $INSTALLDIR_NATIVE $BUILDDIR_NATIVE/target-libs
+    copy_dir "$INSTALLDIR_NATIVE" "$BUILDDIR_NATIVE/target-libs"
     restoreenv
     popd
 
-    pushd $INSTALLDIR_NATIVE
+    pushd "$INSTALLDIR_NATIVE"
     rm -rf ./lib
     popd
 fi
