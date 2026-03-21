@@ -287,33 +287,33 @@ make install
 popd
 
 echo "Task [II-3] /$HOST_MINGW/mpfr/" | tee -a "$BUILDDIR_MINGW/.stage"
-rm -rf $BUILDDIR_MINGW/mpfr && mkdir -p $BUILDDIR_MINGW/mpfr
-pushd $BUILDDIR_MINGW/mpfr
+rm -rf "$BUILDDIR_MINGW/mpfr" && mkdir -p "$BUILDDIR_MINGW/mpfr"
+pushd "$BUILDDIR_MINGW/mpfr"
 
-$SRCDIR/$MPFR/configure --build=$BUILD \
-    --host=$HOST_MINGW \
-    --target=$TARGET \
-    --prefix=$BUILDDIR_MINGW/host-libs/usr \
+"$SRCDIR/$MPFR/configure" --build="$BUILD" \
+    --host="$HOST_MINGW" \
+    --target="$TARGET" \
+    --prefix="$BUILDDIR_MINGW/host-libs/usr" \
     --disable-shared \
-    --with-gmp=$BUILDDIR_MINGW/host-libs/usr
+    --with-gmp="$BUILDDIR_MINGW/host-libs/usr"
 
-make -j$JOBS
+make -j"$JOBS"
 make install
 popd
 
 echo "Task [II-4] /$HOST_MINGW/mpc/" | tee -a "$BUILDDIR_MINGW/.stage"
-rm -rf $BUILDDIR_MINGW/mpc && mkdir -p $BUILDDIR_MINGW/mpc
-pushd $BUILDDIR_MINGW/mpc
+rm -rf "$BUILDDIR_MINGW/mpc" && mkdir -p "$BUILDDIR_MINGW/mpc"
+pushd "$BUILDDIR_MINGW/mpc"
 
-$SRCDIR/$MPC/configure --build=$BUILD \
-    --host=$HOST_MINGW \
-    --target=$TARGET \
-    --prefix=$BUILDDIR_MINGW/host-libs/usr \
+"$SRCDIR/$MPC/configure" --build="$BUILD" \
+    --host="$HOST_MINGW" \
+    --target="$TARGET" \
+    --prefix="$BUILDDIR_MINGW/host-libs/usr" \
     --disable-shared \
-    --with-gmp=$BUILDDIR_MINGW/host-libs/usr \
-    --with-mpfr=$BUILDDIR_MINGW/host-libs/usr
+    --with-gmp="$BUILDDIR_MINGW/host-libs/usr" \
+    --with-mpfr="$BUILDDIR_MINGW/host-libs/usr"
 
-make -j$JOBS
+make -j"$JOBS"
 make install
 popd
 
