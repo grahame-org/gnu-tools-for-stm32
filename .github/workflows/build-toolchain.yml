@@ -825,6 +825,10 @@ jobs:
           export JOBS
           ./build-prerequisites.sh --skip_steps=mingw,howto,package_sources
 
+      - name: Clean prerequisites cache before saving
+        if: steps.cache-prerequisites.outputs.cache-hit != 'true' && steps.cache-toolchain.outputs.cache-hit != 'true' && steps.pre-restore.outputs.cache-hit != 'true'
+        run: ./build-pre-cache-clean.sh build-native/host-libs
+
       - name: Save cache – prerequisites
         if: steps.cache-prerequisites.outputs.cache-hit != 'true' && steps.cache-toolchain.outputs.cache-hit != 'true' && steps.pre-restore.outputs.cache-hit != 'true'
         uses: actions/cache/save@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
