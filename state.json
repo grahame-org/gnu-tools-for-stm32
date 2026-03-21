@@ -1,10 +1,10 @@
 {
-  "last_run": "2026-03-20T05:11Z",
-  "tests": "bash tests/test-build-cache-budget-check.sh && bash tests/test-build-common.sh && bash tests/test-build-stage-scripts.sh && bash tests/test-build-toolchain-args.sh && bash tests/test-build-toolchain-cache-keys.sh && bash tests/test-pre-cache-clean.sh && bash tests/test-strip-binary.sh && PATH=$PATH:/home/runner/.local/bin bash tests/test-build-stage-action.sh",
-  "counts": {"total": 236, "build-common": 75, "toolchain-args": 86, "strip-binary": 13, "stage-action-bash": 2, "stage-scripts": 10, "cache-keys": 19, "cache-budget-check": 9, "pre-cache-clean": 24, "pytest-stage-action": 22},
+  "last_run": "2026-03-21T05:00Z",
+  "tests": "bash tests/test-build-cache-budget-check.sh && bash tests/test-build-common.sh && bash tests/test-build-stage-scripts.sh && bash tests/test-build-stage-action.sh && bash tests/test-build-toolchain-args.sh && bash tests/test-build-toolchain-cache-keys.sh && bash tests/test-pre-cache-clean.sh && bash tests/test-strip-binary.sh && python3 -m pytest tests/test_build_stage_action.py",
+  "counts": {"total": 247, "build-common": 75, "toolchain-args": 86, "strip-binary": 13, "stage-scripts": 13, "cache-keys": 19, "cache-budget-check": 9, "pre-cache-clean": 32, "pytest-stage-action": 22},
   "issues": {"108": "Monthly 2026-03"},
-  "backlog": ["all build-common.sh functions covered", "compute-cache-miss.sh/set-cache-hit-output.sh now have tests (PR open)", "no high-value gaps currently identified"],
+  "backlog": ["all build-common.sh functions covered", "all build-stage helper scripts now covered", "no high-value gaps currently identified"],
   "done": ["toolchain-args", "pack_dir_clean-g13", "strip_binary", "copy_dir/clean", "saveenv", "parse_args", "break_hardlink", "extend-toolchain-args-tests", "cache-key-dependency-chain", "copy_multi_libs", "fix-cache-budget-test-isolation", "build-stage-scripts"],
-  "notes": "PR #368 merged (toolchain-args). PR #370 merged. PR #525 merged. PR #545 merged. PR #556 merged. PR #573 merged (cache-key tests 7→19). PR #582 merged (copy_multi_libs group14). PR #604 merged (cache-budget isolation fix). test-build-stage-scripts.sh PR created 2026-03-20 (branch test-assist/build-stage-scripts-tests, 10 tests). Base branch is 13.3.rel1. python-lint.yml runs pytest tests/test_build_stage_action.py (22 tests). shell-unit-tests.yml runs all bash tests incl test-build-stage-scripts.sh.",
-  "tasks_run": {"t1": "2026-03-18", "t2": "2026-03-18", "t3": "2026-03-19", "t4": "2026-03-20", "t5": "2026-03-14", "t6": "2026-03-20", "t7": "2026-03-20"}
+  "notes": "PR #368 merged (toolchain-args). PR #370 merged. PR #525 merged. PR #545 merged. PR #556 merged. PR #573 merged (cache-key tests 7→19). PR #582 merged (copy_multi_libs group14). PR #604 merged (cache-budget isolation fix). test-build-stage-scripts.sh PR created 2026-03-21 (branch test-assist/build-stage-scripts-tests, 13 tests). Base branch is 13.3.rel1. python-lint.yml runs pytest tests/test_build_stage_action.py (22 tests). shell-unit-tests.yml runs all bash tests incl test-build-stage-scripts.sh.",
+  "tasks_run": {"t1": "2026-03-18", "t2": "2026-03-18", "t3": "2026-03-21", "t4": "2026-03-20", "t5": "2026-03-14", "t6": "2026-03-20", "t7": "2026-03-21"}
 }
