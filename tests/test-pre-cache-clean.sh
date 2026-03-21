@@ -138,8 +138,8 @@ assert_zero_exit ".a stripping: script exits 0" \
     bash "$SCRIPT" "$_ROOT4"
 export PATH="$_SAVED_PATH4"
 
-assert_eq ".a stripped with --strip-debug" "called" \
-    "$(grep -qF -- "--strip-debug $_AR" "$_STRIP_LOG4" 2>/dev/null && echo called || echo not-called)"
+assert_eq ".a stripped with --strip-debug --keep-section=.debug_frame" "called" \
+    "$(grep -qF -- "--strip-debug --keep-section=.debug_frame $_AR" "$_STRIP_LOG4" 2>/dev/null && echo called || echo not-called)"
 
 unset STRIP_LOG
 
@@ -215,6 +215,69 @@ assert_ne "before size line present" "" \
     "$(echo "$_OUTPUT7" | grep -F 'Size before cleaning' || true)"
 assert_ne "after size line present" "" \
     "$(echo "$_OUTPUT7" | grep -F 'Size after cleaning' || true)"
+
+# ---------------------------------------------------------------------------
+# Test group 8: share/gcc-*/ directories are removed
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "=== Group 8: share/gcc-*/ removal ==="
+
+_ROOT8="$_TMPDIR/root8"
+mkdir -p \
+    "$_ROOT8/share/gcc-14.3.1" \
+    "$_ROOT8/share/gcc-13.2.1" \
+    "$_ROOT8/share/other" \
+    "$_ROOT8/bin"
+echo "keep" > "$_ROOT8/bin/keep"
+echo "script" > "$_ROOT8/share/gcc-14.3.1/annotate.py"
+echo "script" > "$_ROOT8/share/gcc-13.2.1/gdbinit.py"
+echo "keep" > "$_ROOT8/share/other/file"
+
+_root8_exit=0
+bash "$SCRIPT" "$_ROOT8" >/dev/null 2>&1 || _root8_exit=$?
+assert_eq "group 8: script exits 0" "0" "$_root8_exit"
+
+assert_eq "share/gcc-14.3.1 removed" "absent" \
+    "$([ -d "$_ROOT8/share/gcc-14.3.1" ] && echo present || echo absent)"
+assert_eq "share/gcc-13.2.1 removed" "absent" \
+    "$([ -d "$_ROOT8/share/gcc-13.2.1" ] && echo present || echo absent)"
+assert_eq "share/other not removed" "present" \
+    "$([ -d "$_ROOT8/share/other" ] && echo present || echo absent)"
+assert_eq "bin/keep not removed" "present" \
+    "$([ -f "$_ROOT8/bin/keep" ] && echo present || echo absent)"
+
+# ---------------------------------------------------------------------------
+# Test group 9: Safety check passes when arm-none-eabi-gcc is present
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "=== Group 9: Safety check passes when arm-none-eabi-gcc is present ==="
+
+_ROOT9="$_TMPDIR/root9"
+mkdir -p "$_ROOT9/bin"
+echo "fake-gcc" > "$_ROOT9/bin/arm-none-eabi-gcc"
+
+_OUTPUT9=$(bash "$SCRIPT" "$_ROOT9" 2>&1)
+assert_ne "safety check passed message present" "" \
+    "$(echo "$_OUTPUT9" | grep -F 'Safety check passed' || true)"
+
+# ---------------------------------------------------------------------------
+# Test group 10: Safety check silent when arm-none-eabi-gcc was never present
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "=== Group 10: Safety check silent when arm-none-eabi-gcc absent before cleanup ==="
+
+_ROOT10="$_TMPDIR/root10"
+mkdir -p "$_ROOT10/bin"
+echo "fake-ld" > "$_ROOT10/bin/arm-none-eabi-ld"
+
+_root10_exit=0
+_OUTPUT10=$(bash "$SCRIPT" "$_ROOT10" 2>&1) || _root10_exit=$?
+assert_eq "no gcc before: script exits 0" "0" "$_root10_exit"
+assert_eq "no safety-check-passed message when gcc absent" "" \
+    "$(echo "$_OUTPUT10" | grep -F 'Safety check' || true)"
 
 # ---------------------------------------------------------------------------
 # Summary

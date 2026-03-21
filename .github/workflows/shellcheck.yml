@@ -30,6 +30,7 @@ jobs:
               - 'build-common.sh'
               - 'build-gcc-first.sh'
               - 'build-newlib.sh'
+              - 'build-newlib-nano.sh'
               - 'build-pre-cache-clean.sh'
               - 'build-prerequisites.sh'
               - 'build-toolchain-args.sh'
@@ -59,6 +60,7 @@ jobs:
           build-common.sh \
           build-gcc-first.sh \
           build-newlib.sh \
+          build-newlib-nano.sh \
           build-pre-cache-clean.sh \
           build-prerequisites.sh \
           build-toolchain-args.sh \
