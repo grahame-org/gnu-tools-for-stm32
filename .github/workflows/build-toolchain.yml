@@ -1324,6 +1324,11 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-ccache-gcc-size-libstdcxx-
 
+      - name: Audit – record install-native state before gcc-size-libstdcxx
+        if: steps.pre-restore.outputs.cache-hit != 'true'
+        run: |
+          find install-native -type f | sort > /tmp/gcc-final-filelist.txt
+
       - name: Build and cache stage – gcc-size-libstdcxx
         id: build-gcc-size-libstdcxx
         uses: ./.github/actions/build-stage
@@ -1336,6 +1341,29 @@ jobs:
           build-script: ./build-gcc-size-libstdcxx.sh
           pre-cache-hit: ${{ steps.pre-restore.outputs.cache-hit == 'true' }}
           save-in-merge-group: 'true'
+
+      - name: Audit – compute install-native delta from gcc-size-libstdcxx
+        if: steps.pre-restore.outputs.cache-hit != 'true'
+        run: |
+          set -euo pipefail
+          find install-native -type f | sort > /tmp/gcc-size-filelist.txt
+          diff /tmp/gcc-final-filelist.txt /tmp/gcc-size-filelist.txt | grep '^>' | cut -c3- \
+            > /tmp/gcc-size-delta.txt || true
+          echo "New files added by gcc-size-libstdcxx to install-native:"
+          cat /tmp/gcc-size-delta.txt
+          wc -l /tmp/gcc-size-delta.txt
+          delta_count=$(wc -l < /tmp/gcc-size-delta.txt)
+          {
+            echo "## gcc-size-libstdcxx install-native delta"
+            echo ""
+            echo "New files added to \`install-native\` by the gcc-size-libstdcxx stage:"
+            echo ""
+            echo '```'
+            cat /tmp/gcc-size-delta.txt
+            echo '```'
+            echo ""
+            echo "Total: ${delta_count} new file(s)"
+          } >> "${GITHUB_STEP_SUMMARY}"
 
       - name: Report cache sizes – gcc-size-libstdcxx
         id: cache-sizes-gcc-size-libstdcxx
