@@ -142,6 +142,10 @@ jobs:
           gdb_src=$(hash_dir src/gdb)
           specs_src=$(hash_dir src/specs)
 
+          # Cache key dependency graph (each stage key encodes its parent's key):
+          #   prereqs → binutils ─→ gcc-first ─→ newlib ─→ gcc-final ─→ gcc-size-libstdcxx
+          #                      │              └→ newlib-nano
+          #                      └→ gdb
           key_binutils=$(printf '%s' "${{ runner.os }}-stage-binutils-${binutils_scripts_hash}-${prereqs_key}-${binutils_src}" | sha256sum | cut -d' ' -f1)
           key_gcc_first=$(printf '%s' "${{ runner.os }}-stage-gcc-first-${gcc_first_scripts_hash}-${key_binutils}-${gcc_src}" | sha256sum | cut -d' ' -f1)
           key_newlib=$(printf '%s' "${{ runner.os }}-stage-newlib-${newlib_scripts_hash}-${key_gcc_first}-${newlib_src}" | sha256sum | cut -d' ' -f1)
