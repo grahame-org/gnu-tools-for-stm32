@@ -129,27 +129,27 @@ cd "$SRCDIR"
 
 if [ "$skip_native_build" != "yes" ] ; then
     echo "Task [I-0] /$HOST_NATIVE/zlib/" | tee -a "$BUILDDIR_NATIVE/.stage"
-    rm -rf $BUILDDIR_NATIVE/zlib
-    copy_dir_clean $SRCDIR/$ZLIB $BUILDDIR_NATIVE/zlib
-    pushd $BUILDDIR_NATIVE/zlib
+    rm -rf "$BUILDDIR_NATIVE/zlib"
+    copy_dir_clean "$SRCDIR/$ZLIB" "$BUILDDIR_NATIVE/zlib"
+    pushd "$BUILDDIR_NATIVE/zlib"
     #install zlib at .../host-libs/zlib, prevent gcc from linking into this external zlib
-    ./configure --static --prefix=$BUILDDIR_NATIVE/host-libs/zlib
+    ./configure --static --prefix="$BUILDDIR_NATIVE/host-libs/zlib"
     make
     make install
     popd
 
     echo "Task [I-1] /$HOST_NATIVE/gmp/" | tee -a "$BUILDDIR_NATIVE/.stage"
-    rm -rf $BUILDDIR_NATIVE/gmp && mkdir -p $BUILDDIR_NATIVE/gmp
-    pushd $BUILDDIR_NATIVE/gmp
+    rm -rf "$BUILDDIR_NATIVE/gmp" && mkdir -p "$BUILDDIR_NATIVE/gmp"
+    pushd "$BUILDDIR_NATIVE/gmp"
 
-    CPPFLAGS="-fexceptions" $SRCDIR/$GMP/configure --build=$BUILD \
-        --host=$HOST_NATIVE \
-        --prefix=$BUILDDIR_NATIVE/host-libs/usr \
+    CPPFLAGS="-fexceptions" "$SRCDIR/$GMP/configure" --build="$BUILD" \
+        --host="$HOST_NATIVE" \
+        --prefix="$BUILDDIR_NATIVE/host-libs/usr" \
         --enable-cxx \
         --enable-fft \
         --disable-shared
 
-    make -j$JOBS
+    make -j"$JOBS"
     make install
     #make check
     popd
@@ -287,33 +287,33 @@ make install
 popd
 
 echo "Task [II-3] /$HOST_MINGW/mpfr/" | tee -a "$BUILDDIR_MINGW/.stage"
-rm -rf $BUILDDIR_MINGW/mpfr && mkdir -p $BUILDDIR_MINGW/mpfr
-pushd $BUILDDIR_MINGW/mpfr
+rm -rf "$BUILDDIR_MINGW/mpfr" && mkdir -p "$BUILDDIR_MINGW/mpfr"
+pushd "$BUILDDIR_MINGW/mpfr"
 
-$SRCDIR/$MPFR/configure --build=$BUILD \
-    --host=$HOST_MINGW \
-    --target=$TARGET \
-    --prefix=$BUILDDIR_MINGW/host-libs/usr \
+"$SRCDIR/$MPFR/configure" --build="$BUILD" \
+    --host="$HOST_MINGW" \
+    --target="$TARGET" \
+    --prefix="$BUILDDIR_MINGW/host-libs/usr" \
     --disable-shared \
-    --with-gmp=$BUILDDIR_MINGW/host-libs/usr
+    --with-gmp="$BUILDDIR_MINGW/host-libs/usr"
 
-make -j$JOBS
+make -j"$JOBS"
 make install
 popd
 
 echo "Task [II-4] /$HOST_MINGW/mpc/" | tee -a "$BUILDDIR_MINGW/.stage"
-rm -rf $BUILDDIR_MINGW/mpc && mkdir -p $BUILDDIR_MINGW/mpc
-pushd $BUILDDIR_MINGW/mpc
+rm -rf "$BUILDDIR_MINGW/mpc" && mkdir -p "$BUILDDIR_MINGW/mpc"
+pushd "$BUILDDIR_MINGW/mpc"
 
-$SRCDIR/$MPC/configure --build=$BUILD \
-    --host=$HOST_MINGW \
-    --target=$TARGET \
-    --prefix=$BUILDDIR_MINGW/host-libs/usr \
+"$SRCDIR/$MPC/configure" --build="$BUILD" \
+    --host="$HOST_MINGW" \
+    --target="$TARGET" \
+    --prefix="$BUILDDIR_MINGW/host-libs/usr" \
     --disable-shared \
-    --with-gmp=$BUILDDIR_MINGW/host-libs/usr \
-    --with-mpfr=$BUILDDIR_MINGW/host-libs/usr
+    --with-gmp="$BUILDDIR_MINGW/host-libs/usr" \
+    --with-mpfr="$BUILDDIR_MINGW/host-libs/usr"
 
-make -j$JOBS
+make -j"$JOBS"
 make install
 popd
 
