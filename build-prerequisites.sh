@@ -318,33 +318,33 @@ make install
 popd
 
 echo "Task [II-5] /$HOST_MINGW/isl/" | tee -a "$BUILDDIR_MINGW/.stage"
-rm -rf $BUILDDIR_MINGW/isl && mkdir -p $BUILDDIR_MINGW/isl
-pushd $BUILDDIR_MINGW/isl
+rm -rf "$BUILDDIR_MINGW/isl" && mkdir -p "$BUILDDIR_MINGW/isl"
+pushd "$BUILDDIR_MINGW/isl"
 
-$SRCDIR/$ISL/configure --build=$BUILD \
-    --host=$HOST_MINGW \
-    --target=$TARGET \
-    --prefix=$BUILDDIR_MINGW/host-libs/usr  \
+"$SRCDIR/$ISL/configure" --build="$BUILD" \
+    --host="$HOST_MINGW" \
+    --target="$TARGET" \
+    --prefix="$BUILDDIR_MINGW/host-libs/usr" \
     --disable-shared \
-    --with-gmp-prefix=$BUILDDIR_MINGW/host-libs/usr
+    --with-gmp-prefix="$BUILDDIR_MINGW/host-libs/usr"
 
 make
 make install
 popd
 
 echo "Task [II-6] /$HOST_MINGW/expat/" | tee -a "$BUILDDIR_MINGW/.stage"
-rm -rf $BUILDDIR_MINGW/expat && mkdir -p $BUILDDIR_MINGW/expat
-pushd $BUILDDIR_MINGW/expat
+rm -rf "$BUILDDIR_MINGW/expat" && mkdir -p "$BUILDDIR_MINGW/expat"
+pushd "$BUILDDIR_MINGW/expat"
 
-$SRCDIR/$EXPAT/configure --build=$BUILD \
-    --host=$HOST_MINGW \
-    --target=$TARGET \
-    --prefix=$BUILDDIR_MINGW/host-libs/usr \
+"$SRCDIR/$EXPAT/configure" --build="$BUILD" \
+    --host="$HOST_MINGW" \
+    --target="$TARGET" \
+    --prefix="$BUILDDIR_MINGW/host-libs/usr" \
     --without-docbook \
     --without-xmlwf \
     --disable-shared
 
-make -j$JOBS
+make -j"$JOBS"
 make install
 popd
 restoreenv
