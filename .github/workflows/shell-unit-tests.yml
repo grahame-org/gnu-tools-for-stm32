@@ -41,6 +41,7 @@ jobs:
               - '.github/workflows/build-toolchain.yml'
               - '.github/workflows/shell-unit-tests.yml'
               - '.github/actions/build-stage/action.yml'
+              - '.github/actions/build-stage/*.sh'
               - '.yamllint'
 
   shell-unit-tests:
@@ -67,6 +68,7 @@ jobs:
           bash tests/test-build-cache-budget-check.sh
           bash tests/test-build-common.sh
           bash tests/test-build-stage-action.sh
+          bash tests/test-build-stage-scripts.sh
           bash tests/test-build-toolchain-args.sh
           bash tests/test-build-toolchain-cache-keys.sh
           bash tests/test-pre-cache-clean.sh

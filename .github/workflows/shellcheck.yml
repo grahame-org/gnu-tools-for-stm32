@@ -36,6 +36,7 @@ jobs:
               - 'build-toolchain.sh'
               - '.github/actions/build-stage/*.sh'
               - 'tests/test-build-stage-action.sh'
+              - 'tests/test-build-stage-scripts.sh'
               - 'tests/test-helpers.sh'
               - '.shellcheckrc'
               - '.github/workflows/shellcheck.yml'
@@ -64,6 +65,7 @@ jobs:
           build-toolchain-args.sh \
           build-toolchain.sh \
           tests/test-build-stage-action.sh \
+          tests/test-build-stage-scripts.sh \
           tests/test-helpers.sh \
           .github/actions/build-stage/clean-before-cache-save.sh \
           .github/actions/build-stage/compute-cache-miss.sh \
