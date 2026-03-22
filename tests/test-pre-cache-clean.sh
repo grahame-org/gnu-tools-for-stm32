@@ -29,6 +29,18 @@ make_ar() {
     printf '!<arch>\n' > "$1"
 }
 
+# Helper: create a mock strip binary in the given directory that logs its
+# arguments to the file referenced by ${STRIP_LOG}.
+make_mock_strip() {
+    local mock_dir="$1"
+    mkdir -p "$mock_dir"
+    cat > "$mock_dir/strip" <<'STRIPEOF'
+#!/usr/bin/env bash
+echo "$*" >> "${STRIP_LOG}"
+STRIPEOF
+    chmod +x "$mock_dir/strip"
+}
+
 # ---------------------------------------------------------------------------
 # Test group 1: Missing argument → non-zero exit
 # ---------------------------------------------------------------------------
@@ -79,14 +91,7 @@ chmod +x "$_TEXT_FILE"
 # Capture invocations of strip via PATH override
 _STRIP_LOG3="$_TMPDIR/strip-calls-3"
 _MOCK_BIN3="$_TMPDIR/mockbin3"
-mkdir -p "$_MOCK_BIN3"
-
-# Mock strip: records "--strip-unneeded <path>" or "--strip-debug <path>" calls
-cat > "$_MOCK_BIN3/strip" <<'STRIPEOF'
-#!/usr/bin/env bash
-echo "$*" >> "${STRIP_LOG}"
-STRIPEOF
-chmod +x "$_MOCK_BIN3/strip"
+make_mock_strip "$_MOCK_BIN3"
 
 export STRIP_LOG="$_STRIP_LOG3"
 _SAVED_PATH3="$PATH"
@@ -124,13 +129,7 @@ make_ar "$_AR"
 
 _STRIP_LOG4="$_TMPDIR/strip-calls-4"
 _MOCK_BIN4="$_TMPDIR/mockbin4"
-mkdir -p "$_MOCK_BIN4"
-
-cat > "$_MOCK_BIN4/strip" <<'STRIPEOF'
-#!/usr/bin/env bash
-echo "$*" >> "${STRIP_LOG}"
-STRIPEOF
-chmod +x "$_MOCK_BIN4/strip"
+make_mock_strip "$_MOCK_BIN4"
 
 export STRIP_LOG="$_STRIP_LOG4"
 _SAVED_PATH4="$PATH"
@@ -139,8 +138,8 @@ assert_zero_exit ".a stripping: script exits 0" \
     bash "$SCRIPT" "$_ROOT4"
 export PATH="$_SAVED_PATH4"
 
-assert_eq ".a stripped with --strip-debug" "called" \
-    "$(grep -qF -- "--strip-debug $_AR" "$_STRIP_LOG4" 2>/dev/null && echo called || echo not-called)"
+assert_eq ".a stripped with --strip-debug --keep-section=.debug_frame" "called" \
+    "$(grep -qF -- "--strip-debug --keep-section=.debug_frame $_AR" "$_STRIP_LOG4" 2>/dev/null && echo called || echo not-called)"
 
 unset STRIP_LOG
 
@@ -216,6 +215,97 @@ assert_ne "before size line present" "" \
     "$(echo "$_OUTPUT7" | grep -F 'Size before cleaning' || true)"
 assert_ne "after size line present" "" \
     "$(echo "$_OUTPUT7" | grep -F 'Size after cleaning' || true)"
+
+# ---------------------------------------------------------------------------
+# Test group 8: share/gcc-*/ directories are removed
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "=== Group 8: share/gcc-*/ removal ==="
+
+_ROOT8="$_TMPDIR/root8"
+mkdir -p \
+    "$_ROOT8/share/gcc-14.3.1" \
+    "$_ROOT8/share/gcc-13.2.1" \
+    "$_ROOT8/share/other" \
+    "$_ROOT8/bin"
+echo "keep" > "$_ROOT8/bin/keep"
+echo "script" > "$_ROOT8/share/gcc-14.3.1/annotate.py"
+echo "script" > "$_ROOT8/share/gcc-13.2.1/gdbinit.py"
+echo "keep" > "$_ROOT8/share/other/file"
+
+_root8_exit=0
+bash "$SCRIPT" "$_ROOT8" >/dev/null 2>&1 || _root8_exit=$?
+assert_eq "group 8: script exits 0" "0" "$_root8_exit"
+
+assert_eq "share/gcc-14.3.1 removed" "absent" \
+    "$([ -d "$_ROOT8/share/gcc-14.3.1" ] && echo present || echo absent)"
+assert_eq "share/gcc-13.2.1 removed" "absent" \
+    "$([ -d "$_ROOT8/share/gcc-13.2.1" ] && echo present || echo absent)"
+assert_eq "share/other not removed" "present" \
+    "$([ -d "$_ROOT8/share/other" ] && echo present || echo absent)"
+assert_eq "bin/keep not removed" "present" \
+    "$([ -f "$_ROOT8/bin/keep" ] && echo present || echo absent)"
+
+# ---------------------------------------------------------------------------
+# Test group 9: Safety check passes when arm-none-eabi-gcc is present
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "=== Group 9: Safety check passes when arm-none-eabi-gcc is present ==="
+
+_ROOT9="$_TMPDIR/root9"
+mkdir -p "$_ROOT9/bin"
+echo "fake-gcc" > "$_ROOT9/bin/arm-none-eabi-gcc"
+
+_OUTPUT9=$(bash "$SCRIPT" "$_ROOT9" 2>&1)
+assert_ne "safety check passed message present" "" \
+    "$(echo "$_OUTPUT9" | grep -F 'Safety check passed' || true)"
+
+# ---------------------------------------------------------------------------
+# Test group 10: Safety check silent when arm-none-eabi-gcc was never present
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "=== Group 10: Safety check silent when arm-none-eabi-gcc absent before cleanup ==="
+
+_ROOT10="$_TMPDIR/root10"
+mkdir -p "$_ROOT10/bin"
+echo "fake-ld" > "$_ROOT10/bin/arm-none-eabi-ld"
+
+_root10_exit=0
+_OUTPUT10=$(bash "$SCRIPT" "$_ROOT10" 2>&1) || _root10_exit=$?
+assert_eq "no gcc before: script exits 0" "0" "$_root10_exit"
+assert_eq "no safety-check-passed message when gcc absent" "" \
+    "$(echo "$_OUTPUT10" | grep -F 'Safety check' || true)"
+
+# ---------------------------------------------------------------------------
+# Test group 11: Safety check fails when arm-none-eabi-gcc was present before
+#                cleanup but is gone afterwards (broken symlink scenario)
+#
+# Simulate a regression where a cleanup operation removes a target that the
+# gcc binary symlink points to.  The safety check must detect this and exit 1.
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "=== Group 11: Safety check FAILED when gcc missing after cleanup ==="
+
+_ROOT11="$_TMPDIR/root11"
+mkdir -p "$_ROOT11/bin"
+mkdir -p "$_ROOT11/share/gcc-14.3.1"
+
+# Place a "gcc" file inside share/gcc-14.3.1/ — a directory that
+# remove_non_essential_dirs will delete — and point bin/arm-none-eabi-gcc at
+# it via a symlink.  After the script removes share/gcc-14.3.1/ the symlink
+# becomes broken, triggering the safety-check failure path.
+echo "fake-gcc" > "$_ROOT11/share/gcc-14.3.1/arm-none-eabi-gcc"
+ln -s "../share/gcc-14.3.1/arm-none-eabi-gcc" "$_ROOT11/bin/arm-none-eabi-gcc"
+
+_root11_exit=0
+_OUTPUT11=$(bash "$SCRIPT" "$_ROOT11" 2>&1) || _root11_exit=$?
+assert_eq "safety check FAILED: script exits with status 1" "1" "$_root11_exit"
+assert_ne "safety check FAILED message emitted" "" \
+    "$(echo "$_OUTPUT11" | grep -F 'Safety check FAILED' || true)"
 
 # ---------------------------------------------------------------------------
 # Summary

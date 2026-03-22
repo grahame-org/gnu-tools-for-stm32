@@ -2,7 +2,8 @@
 # Unit tests for .github/actions/build-stage/action.yml structure.
 #
 # Validates YAML syntax and style with yamllint, and semantic structure
-# (required inputs, outputs, composite type) via pytest.
+# (required inputs, outputs, composite type, clean-before-cache-save step)
+# via pytest.
 #
 # Run with: bash tests/test-build-stage-action.sh
 # Requires:  yamllint, pytest – install via: python3 -m pip install -r tests/requirements.txt
@@ -56,11 +57,11 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-# Tests groups 2–5: Semantic structure (pytest)
+# Tests groups 2–6: Semantic structure (pytest)
 # ---------------------------------------------------------------------------
 
 echo ""
-echo "=== Groups 2–5: Semantic structure (pytest) ==="
+echo "=== Groups 2–6: Semantic structure (pytest) ==="
 
 pytest_rc=0
 python3 -m pytest "${SCRIPT_DIR}/test_build_stage_action.py" -v || pytest_rc=$?

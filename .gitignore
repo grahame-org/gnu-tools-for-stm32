@@ -1,5 +1,5 @@
 node_modules/
 .github/aw/logs/
 __pycache__/
-.pytest_cache/
 *.pyc
+.pytest_cache/
