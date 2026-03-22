@@ -1,5 +1,5 @@
 name: Build Stage
-description: Restore cache, conditionally build, and conditionally save cache for a toolchain build stage.
+description: Restore cache, conditionally build, clean build outputs before caching, and conditionally save cache for a toolchain build stage.
 
 inputs:
   stage-name:
@@ -80,6 +80,13 @@ runs:
         BUILD_STAGE_SCRIPT: ${{ inputs.build-script }}
         BUILD_STAGE_ARGS: ${{ inputs.build-args }}
       run: "${GITHUB_ACTION_PATH}/run-build-stage.sh"
+
+    - name: Clean before cache save – ${{ inputs.stage-name }}
+      if: steps.check.outputs.cache-miss == 'true' && (github.event_name != 'merge_group' || inputs.save-in-merge-group == 'true')
+      shell: bash
+      env:
+        CACHE_PATHS: ${{ inputs.cache-paths }}
+      run: "${GITHUB_ACTION_PATH}/clean-before-cache-save.sh"
 
     - name: Save cache – ${{ inputs.stage-name }}
       if: steps.check.outputs.cache-miss == 'true' && (github.event_name != 'merge_group' || inputs.save-in-merge-group == 'true')
