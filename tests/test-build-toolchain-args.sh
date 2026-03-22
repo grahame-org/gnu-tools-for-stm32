@@ -154,6 +154,10 @@ parse_toolchain_args --with-multilib-list=rmprofile,aprofile
 assert_eq "--with-multilib-list=rmprofile,aprofile preserves comma" \
     "--with-multilib-list=rmprofile,aprofile" "$MULTILIB_LIST"
 
+parse_toolchain_args --with-multilib-list=aprofile
+assert_eq "--with-multilib-list=aprofile (single profile) sets MULTILIB_LIST" \
+    "--with-multilib-list=aprofile" "$MULTILIB_LIST"
+
 # ---------------------------------------------------------------------------
 # Test group 6: multiple flags combined
 # ---------------------------------------------------------------------------
