@@ -1150,6 +1150,19 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-ccache-gcc-final-
 
+      - name: Configure ccache – gcc-final
+        if: steps.pre-restore.outputs.cache-hit != 'true'
+        run: |
+          set -euo pipefail
+          {
+            echo "CCACHE_DIR=$HOME/.ccache"
+            echo "CCACHE_MAXSIZE=5G"
+            echo "CCACHE_SLOPPINESS=file_macro,locale,time_macros"
+            echo "CCACHE_COMPRESS=1"
+            echo "CC=ccache gcc"
+            echo "CXX=ccache g++"
+          } >> "$GITHUB_ENV"
+
       - name: Build and cache stage – gcc-final
         id: build-gcc-final
         uses: ./.github/actions/build-stage
@@ -1335,6 +1348,19 @@ jobs:
           key: ${{ runner.os }}-ccache-gcc-size-libstdcxx-${{ needs.compute-hashes.outputs['gcc-size-libstdcxx'] }}
           restore-keys: |
             ${{ runner.os }}-ccache-gcc-size-libstdcxx-
+
+      - name: Configure ccache – gcc-size-libstdcxx
+        if: steps.pre-restore.outputs.cache-hit != 'true'
+        run: |
+          set -euo pipefail
+          {
+            echo "CCACHE_DIR=$HOME/.ccache"
+            echo "CCACHE_MAXSIZE=5G"
+            echo "CCACHE_SLOPPINESS=file_macro,locale,time_macros"
+            echo "CCACHE_COMPRESS=1"
+            echo "CC=ccache gcc"
+            echo "CXX=ccache g++"
+          } >> "$GITHUB_ENV"
 
       - name: Audit – record install-native state before gcc-size-libstdcxx
         if: steps.pre-restore.outputs.cache-hit != 'true'
