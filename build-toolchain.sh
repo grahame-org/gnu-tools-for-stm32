@@ -37,9 +37,8 @@ umask 022
 
 exec < /dev/null
 
-# shellcheck disable=SC2046
-script_path=$(cd $(dirname $0) && pwd -P)
-. $script_path/build-common.sh
+script_path=$(cd "$(dirname "$0")" && pwd -P)
+. "$script_path/build-common.sh"
 
 # This file contains the sequence of commands used to build the
 # GNU Tools Arm Embedded toolchain.
@@ -236,6 +235,7 @@ if [ "$skip_native_build" != "yes" ] ; then
     echo "Task [III-12] /$HOST_NATIVE/package_tbz2/" | tee -a "$BUILDDIR_NATIVE/.stage"
 
     # Copy release.txt into share.
+    mkdir -p $INSTALLDIR_NATIVE_DOC
     cp $ROOT/$LICENSE_FILE $INSTALLDIR_NATIVE_DOC/
 
     # Cleanup any pre-existing state.
@@ -529,6 +529,7 @@ if [ "$skip_mingw32" != "yes" ] ; then
     rm -f $PACKAGEDIR/$PACKAGE_NAME_MINGW.exe
     pushd $BUILDDIR_MINGW
     rm -f $INSTALL_PACKAGE_NAME
+    mkdir -p $INSTALLDIR_MINGW_DOC
     cp $ROOT/$LICENSE_FILE $INSTALLDIR_MINGW_DOC/
     flip -m -b $INSTALLDIR_MINGW_DOC/$LICENSE_FILE
     rm -rf $INSTALLDIR_MINGW/include

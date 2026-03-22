@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Unit tests for saveenv/restoreenv/saveenvvar/prependenvvar/prepend_path,
-# break_hardlink, copy_dir, copy_dir_clean, and pack_dir_clean in build-common.sh.
+# break_hardlink, copy_dir, copy_dir_clean, pack_dir_clean, and copy_multi_libs
+# in build-common.sh.
 #
 # Run with: bash tests/test-build-common.sh
 
@@ -381,6 +382,107 @@ assert_eq "pack_dir_clean excludes .#* emacs lock files" \
     "" "$(echo "$_PDC_CONTENTS" | grep "\.#lockfile" || true)"
 
 rm -rf "$_PDC_TMPDIR"
+
+# ---------------------------------------------------------------------------
+# Test group 14: copy_multi_libs
+# ---------------------------------------------------------------------------
+# copy_multi_libs copies nano/specs/crt0 files for each multilib directory
+# reported by the target GCC compiler.  It renames library files with a
+# _nano suffix (e.g. libstdc++.a → libstdc++_nano.a) and copies specs and
+# crt0 object files unchanged.
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "=== Group 14: copy_multi_libs ==="
+
+_CML_TMPDIR=$(mktemp -d)
+
+# Build a mock GCC binary that emits two multilib entries when invoked with
+# -print-multi-lib: the root directory (".") and one nested path.
+cat > "${_CML_TMPDIR}/mock-gcc" << 'MOCK_GCC_EOF'
+#!/usr/bin/env bash
+if [ "$1" = "-print-multi-lib" ]; then
+    printf '.\n'
+    printf 'thumb/v8-m.main/fp;@mthumb@march=armv8-m.main+fp\n'
+fi
+MOCK_GCC_EOF
+chmod +x "${_CML_TMPDIR}/mock-gcc"
+
+# Create source and destination trees for each multilib directory.
+for _mdir in "." "thumb/v8-m.main/fp"; do
+    mkdir -p "${_CML_TMPDIR}/src/${_mdir}"
+    mkdir -p "${_CML_TMPDIR}/dst/${_mdir}"
+    # Libraries that get a _nano suffix.
+    for _lib in libstdc++.a libsupc++.a libc.a libg.a librdimon.a librdimon-v2m.a; do
+        printf '%s' "${_lib}" > "${_CML_TMPDIR}/src/${_mdir}/${_lib}"
+    done
+    # Spec files and crt0 object copied verbatim.
+    for _spec in nano.specs rdimon.specs nosys.specs; do
+        printf '%s' "${_spec}" > "${_CML_TMPDIR}/src/${_mdir}/${_spec}"
+    done
+    printf '%s' 'crt0' > "${_CML_TMPDIR}/src/${_mdir}/crt0.o"
+done
+
+copy_multi_libs \
+    dst_prefix="${_CML_TMPDIR}/dst" \
+    src_prefix="${_CML_TMPDIR}/src" \
+    target_gcc="${_CML_TMPDIR}/mock-gcc"
+
+# --- root multilib: renamed library files ---
+assert_eq "copy_multi_libs root: libstdc++_nano.a created" \
+    "yes" "$([ -f "${_CML_TMPDIR}/dst/libstdc++_nano.a" ] && echo yes || echo no)"
+assert_eq "copy_multi_libs root: libsupc++_nano.a created" \
+    "yes" "$([ -f "${_CML_TMPDIR}/dst/libsupc++_nano.a" ] && echo yes || echo no)"
+assert_eq "copy_multi_libs root: libc_nano.a created" \
+    "yes" "$([ -f "${_CML_TMPDIR}/dst/libc_nano.a" ] && echo yes || echo no)"
+assert_eq "copy_multi_libs root: libg_nano.a created" \
+    "yes" "$([ -f "${_CML_TMPDIR}/dst/libg_nano.a" ] && echo yes || echo no)"
+assert_eq "copy_multi_libs root: librdimon_nano.a created" \
+    "yes" "$([ -f "${_CML_TMPDIR}/dst/librdimon_nano.a" ] && echo yes || echo no)"
+assert_eq "copy_multi_libs root: librdimon-v2m_nano.a created" \
+    "yes" "$([ -f "${_CML_TMPDIR}/dst/librdimon-v2m_nano.a" ] && echo yes || echo no)"
+
+# --- root multilib: spec files and crt0 ---
+assert_eq "copy_multi_libs root: nano.specs copied" \
+    "yes" "$([ -f "${_CML_TMPDIR}/dst/nano.specs" ] && echo yes || echo no)"
+assert_eq "copy_multi_libs root: rdimon.specs copied" \
+    "yes" "$([ -f "${_CML_TMPDIR}/dst/rdimon.specs" ] && echo yes || echo no)"
+assert_eq "copy_multi_libs root: nosys.specs copied" \
+    "yes" "$([ -f "${_CML_TMPDIR}/dst/nosys.specs" ] && echo yes || echo no)"
+assert_eq "copy_multi_libs root: crt0.o copied" \
+    "yes" "$([ -f "${_CML_TMPDIR}/dst/crt0.o" ] && echo yes || echo no)"
+
+# --- root multilib: source content is preserved ---
+assert_eq "copy_multi_libs root: libstdc++_nano.a preserves content" \
+    "libstdc++.a" "$(cat "${_CML_TMPDIR}/dst/libstdc++_nano.a")"
+
+# --- nested multilib ---
+_CML_NESTED="thumb/v8-m.main/fp"
+assert_eq "copy_multi_libs nested: libstdc++_nano.a created" \
+    "yes" "$([ -f "${_CML_TMPDIR}/dst/${_CML_NESTED}/libstdc++_nano.a" ] && echo yes || echo no)"
+assert_eq "copy_multi_libs nested: libc_nano.a created" \
+    "yes" "$([ -f "${_CML_TMPDIR}/dst/${_CML_NESTED}/libc_nano.a" ] && echo yes || echo no)"
+assert_eq "copy_multi_libs nested: nano.specs copied" \
+    "yes" "$([ -f "${_CML_TMPDIR}/dst/${_CML_NESTED}/nano.specs" ] && echo yes || echo no)"
+assert_eq "copy_multi_libs nested: crt0.o copied" \
+    "yes" "$([ -f "${_CML_TMPDIR}/dst/${_CML_NESTED}/crt0.o" ] && echo yes || echo no)"
+
+# --- empty print-multi-lib: function is a no-op (exits 0) ---
+cat > "${_CML_TMPDIR}/empty-gcc" << 'EMPTY_GCC_EOF'
+#!/usr/bin/env bash
+exit 0
+EMPTY_GCC_EOF
+chmod +x "${_CML_TMPDIR}/empty-gcc"
+
+_CML_NOOP_TMPDIR=$(mktemp -d)
+assert_zero_exit "copy_multi_libs with empty print-multi-lib exits 0" \
+    copy_multi_libs \
+        dst_prefix="${_CML_NOOP_TMPDIR}/dst" \
+        src_prefix="${_CML_NOOP_TMPDIR}/src" \
+        target_gcc="${_CML_TMPDIR}/empty-gcc"
+rm -rf "${_CML_NOOP_TMPDIR}"
+
+rm -rf "$_CML_TMPDIR"
 
 # ---------------------------------------------------------------------------
 # Summary
