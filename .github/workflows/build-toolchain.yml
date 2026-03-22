@@ -142,6 +142,10 @@ jobs:
           gdb_src=$(hash_dir src/gdb)
           specs_src=$(hash_dir src/specs)
 
+          # Cache key dependency graph (each stage key encodes its parent's key):
+          #   prereqs -> binutils -> gcc-first -> newlib -> gcc-final -> gcc-size-libstdcxx
+          #                      |              \-> newlib-nano --------------------------/
+          #                      \-> gdb
           key_binutils=$(printf '%s' "${{ runner.os }}-stage-binutils-${binutils_scripts_hash}-${prereqs_key}-${binutils_src}" | sha256sum | cut -d' ' -f1)
           key_gcc_first=$(printf '%s' "${{ runner.os }}-stage-gcc-first-${gcc_first_scripts_hash}-${key_binutils}-${gcc_src}" | sha256sum | cut -d' ' -f1)
           key_newlib=$(printf '%s' "${{ runner.os }}-stage-newlib-${newlib_scripts_hash}-${key_gcc_first}-${newlib_src}" | sha256sum | cut -d' ' -f1)
@@ -1146,6 +1150,19 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-ccache-gcc-final-
 
+      - name: Configure ccache – gcc-final
+        if: steps.pre-restore.outputs.cache-hit != 'true'
+        run: |
+          set -euo pipefail
+          {
+            echo "CCACHE_DIR=$HOME/.ccache"
+            echo "CCACHE_MAXSIZE=5G"
+            echo "CCACHE_SLOPPINESS=file_macro,locale,time_macros"
+            echo "CCACHE_COMPRESS=1"
+            echo "CC=ccache gcc"
+            echo "CXX=ccache g++"
+          } >> "$GITHUB_ENV"
+
       - name: Build and cache stage – gcc-final
         id: build-gcc-final
         uses: ./.github/actions/build-stage
@@ -1332,6 +1349,25 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-ccache-gcc-size-libstdcxx-
 
+      - name: Configure ccache – gcc-size-libstdcxx
+        if: steps.pre-restore.outputs.cache-hit != 'true'
+        run: |
+          set -euo pipefail
+          {
+            echo "CCACHE_DIR=$HOME/.ccache"
+            echo "CCACHE_MAXSIZE=5G"
+            echo "CCACHE_SLOPPINESS=file_macro,locale,time_macros"
+            echo "CCACHE_COMPRESS=1"
+            echo "CC=ccache gcc"
+            echo "CXX=ccache g++"
+          } >> "$GITHUB_ENV"
+
+      - name: Audit – record install-native state before gcc-size-libstdcxx
+        if: steps.pre-restore.outputs.cache-hit != 'true'
+        run: |
+          find install-native -type f | sort > /tmp/gcc-final-filelist.txt
+          xargs -r sha256sum < /tmp/gcc-final-filelist.txt | sort -k2 > /tmp/gcc-final-checksums.txt
+
       - name: Build and cache stage – gcc-size-libstdcxx
         id: build-gcc-size-libstdcxx
         uses: ./.github/actions/build-stage
@@ -1344,6 +1380,49 @@ jobs:
           build-script: ./build-gcc-size-libstdcxx.sh
           pre-cache-hit: ${{ steps.pre-restore.outputs.cache-hit == 'true' }}
           save-in-merge-group: 'true'
+
+      - name: Audit – compute install-native delta from gcc-size-libstdcxx
+        if: steps.pre-restore.outputs.cache-hit != 'true'
+        run: |
+          set -euo pipefail
+          find install-native -type f | sort > /tmp/gcc-size-filelist.txt
+          xargs -r sha256sum < /tmp/gcc-size-filelist.txt | sort -k2 > /tmp/gcc-size-checksums.txt
+          # New files (added by gcc-size-libstdcxx)
+          comm -13 <(sort /tmp/gcc-final-filelist.txt) <(sort /tmp/gcc-size-filelist.txt) \
+            > /tmp/gcc-size-added.txt
+          # Removed files (in before but not after)
+          comm -23 <(sort /tmp/gcc-final-filelist.txt) <(sort /tmp/gcc-size-filelist.txt) \
+            > /tmp/gcc-size-removed.txt
+          # Changed/overwritten files (present in both, but with different checksums)
+          join -1 2 -2 2 /tmp/gcc-final-checksums.txt /tmp/gcc-size-checksums.txt \
+            | awk '$2 != $3 {print $1}' > /tmp/gcc-size-changed.txt
+          added_count=$(wc -l < /tmp/gcc-size-added.txt)
+          removed_count=$(wc -l < /tmp/gcc-size-removed.txt)
+          changed_count=$(wc -l < /tmp/gcc-size-changed.txt)
+          echo "New files added by gcc-size-libstdcxx to install-native (${added_count}):"
+          cat /tmp/gcc-size-added.txt
+          echo "Removed files (${removed_count}):"
+          cat /tmp/gcc-size-removed.txt
+          echo "Changed/overwritten files (${changed_count}):"
+          cat /tmp/gcc-size-changed.txt
+          {
+            echo "## gcc-size-libstdcxx install-native delta"
+            echo ""
+            echo "### New files (${added_count})"
+            echo '```'
+            cat /tmp/gcc-size-added.txt
+            echo '```'
+            echo ""
+            echo "### Removed files (${removed_count})"
+            echo '```'
+            cat /tmp/gcc-size-removed.txt
+            echo '```'
+            echo ""
+            echo "### Changed/overwritten files (${changed_count})"
+            echo '```'
+            cat /tmp/gcc-size-changed.txt
+            echo '```'
+          } >> "${GITHUB_STEP_SUMMARY}"
 
       - name: Report cache sizes – gcc-size-libstdcxx
         id: cache-sizes-gcc-size-libstdcxx
