@@ -64,25 +64,26 @@ if [ "x$is_ppa_release" != "xyes" ]; then
 fi
 
 if [ "x$skip_native_build" != "xyes" ] ; then
-    mkdir -p $BUILDDIR_NATIVE
-    mkdir -p $INSTALLDIR_NATIVE
-    mkdir -p $PACKAGEDIR
+    mkdir -p "$BUILDDIR_NATIVE"
+    mkdir -p "$INSTALLDIR_NATIVE"
+    mkdir -p "$PACKAGEDIR"
 fi
 
-cd $SRCDIR
+cd "$SRCDIR"
 
 if [ "x$skip_native_build" != "xyes" ] ; then
-    echo Task [III-3] /$HOST_NATIVE/newlib-nano/ | tee -a "$BUILDDIR_NATIVE/.stage"
+    echo "Task [III-3] /$HOST_NATIVE/newlib-nano/" | tee -a "$BUILDDIR_NATIVE/.stage"
     saveenv
-    prepend_path PATH $INSTALLDIR_NATIVE/bin
+    prepend_path PATH "$INSTALLDIR_NATIVE/bin"
     saveenvvar CFLAGS_FOR_TARGET '-g -Os -ffunction-sections -fdata-sections -fno-unroll-loops -DPREFER_SIZE_OVER_SPEED -D__OPTIMIZE_SIZE__ -DSMALL_MEMORY'
-    rm -rf $BUILDDIR_NATIVE/newlib-nano && mkdir -p $BUILDDIR_NATIVE/newlib-nano
-    pushd $BUILDDIR_NATIVE/newlib-nano
+    rm -rf "$BUILDDIR_NATIVE/newlib-nano" && mkdir -p "$BUILDDIR_NATIVE/newlib-nano"
+    pushd "$BUILDDIR_NATIVE/newlib-nano"
 
-    $SRCDIR/$NEWLIB_NANO/configure  \
+    # shellcheck disable=SC2086  # $NEWLIB_CONFIG_OPTS intentionally word-splits into multiple --build/--host flags
+    "$SRCDIR/$NEWLIB_NANO/configure"  \
         $NEWLIB_CONFIG_OPTS \
-        --target=$TARGET \
-        --prefix=$BUILDDIR_NATIVE/target-libs \
+        "--target=$TARGET" \
+        "--prefix=$BUILDDIR_NATIVE/target-libs" \
         --disable-newlib-supplied-syscalls    \
         --enable-newlib-reent-check-verify    \
         --enable-newlib-reent-small           \
@@ -97,7 +98,7 @@ if [ "x$skip_native_build" != "xyes" ] ; then
         --enable-newlib-nano-formatted-io     \
         --disable-nls
 
-    make -j$JOBS
+    make -j"$JOBS"
     make install
 
     popd

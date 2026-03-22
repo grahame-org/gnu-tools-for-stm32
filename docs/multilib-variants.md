@@ -92,6 +92,98 @@ architecture families with no path overlap.
 
 ---
 
+## gcc-final install path classification
+
+This section catalogs every file category installed by `make install` during
+`build-gcc-final.sh` (stage III-4) and classifies each as one of three
+categories:
+
+- **Multilib-specific** — under `arm-none-eabi/lib/<variant>/`; unique to each
+  profile; the rmprofile and aprofile path sets are completely disjoint, so
+  layering one install tree on top of the other is safe.
+- **Profile-dependent shared** — same install path in both rmprofile-only and
+  aprofile-only builds but with **different binary content** per profile;
+  requires special merge handling.
+- **Profile-independent shared** — same install path in both builds and
+  **identical content** regardless of which profile was built; either copy may
+  be used and no merge is needed.
+
+Sources: `build-gcc-final.sh` (lines 90–148), `src/gcc/gcc/Makefile.in`
+(`install` target), `src/gcc/gcc/cp/Make-lang.in` (`lang.install-common`),
+`src/gcc/libgcc/Makefile.in` (`install-leaf`).
+
+The "base multilibs" rows in the table refer to the 8 common multilib
+configurations defined in `t-multilib` (listed in the [Base variants](#base-variants-t-multilib--always-built)
+section above); these are built regardless of which profile is selected and
+produce identical output in both rmprofile-only and aprofile-only builds.
+
+| Install path pattern | Category | Notes |
+|----------------------|----------|-------|
+| `bin/arm-none-eabi-gcc` | Profile-dependent shared | Embeds `multilib.h` via `gcc.o`; binary differs between profiles |
+| `bin/arm-none-eabi-gcc-<ver>` | Profile-dependent shared | Versioned hard-link to `arm-none-eabi-gcc`; same binary as above |
+| `bin/arm-none-eabi-g++` | Profile-dependent shared | Links `GCC_OBJS` (includes `gcc.o`); binary differs between profiles |
+| `bin/arm-none-eabi-c++` | Profile-dependent shared | Symlink to `arm-none-eabi-g++`; inherits profile-dependent behavior |
+| `bin/arm-none-eabi-cpp` | Profile-dependent shared | Links `gcc.o`; binary differs between profiles |
+| `bin/arm-none-eabi-gcov` | Profile-independent shared | Does not link `gcc.o`; identical between profiles |
+| `bin/arm-none-eabi-gcov-dump` | Profile-independent shared | Does not link `gcc.o`; identical between profiles |
+| `bin/arm-none-eabi-gcov-tool` | Profile-independent shared | Does not link `gcc.o`; identical between profiles |
+| `bin/arm-none-eabi-lto-dump` | Profile-independent shared | Does not link `gcc.o`; identical between profiles |
+| `bin/arm-none-eabi-gcc-ar` | Profile-independent shared | Does not link `gcc.o`; identical between profiles |
+| `bin/arm-none-eabi-gcc-nm` | Profile-independent shared | Does not link `gcc.o`; identical between profiles |
+| `bin/arm-none-eabi-gcc-ranlib` | Profile-independent shared | Does not link `gcc.o`; identical between profiles |
+| `lib/gcc/arm-none-eabi/<ver>/cc1` | Profile-independent shared | C compilation pass; does not link `gcc.o` |
+| `lib/gcc/arm-none-eabi/<ver>/cc1plus` | Profile-independent shared | C++ compilation pass; does not link `gcc.o` |
+| `lib/gcc/arm-none-eabi/<ver>/lto1` | Profile-independent shared | LTO plugin; does not link `gcc.o` |
+| `lib/gcc/arm-none-eabi/<ver>/lto-wrapper` | Profile-independent shared | LTO wrapper; does not link `gcc.o` |
+| `lib/gcc/arm-none-eabi/<ver>/collect2` | Profile-independent shared | Linker wrapper; does not link `gcc.o` |
+| `lib/gcc/arm-none-eabi/<ver>/plugin/include/` | Profile-independent shared | Plugin headers; identical between profiles |
+| `lib/gcc/arm-none-eabi/<ver>/include/` | Profile-independent shared | GCC-private headers; identical between profiles |
+| `lib/gcc/arm-none-eabi/<ver>/include-fixed/` | Profile-independent shared | Fixed system headers; identical between profiles |
+| `arm-none-eabi/include/c++/<ver>/` | Profile-independent shared | C++ standard-library headers; identical between profiles |
+| `arm-none-eabi/lib/<base-variant>/libgcc.a` | Profile-independent shared | 8 base multilibs from `t-multilib`; same content in both profiles |
+| `arm-none-eabi/lib/<base-variant>/libgcc_eh.a` | Profile-independent shared | 8 base multilibs; same content in both profiles |
+| `arm-none-eabi/lib/<base-variant>/libgcov.a` | Profile-independent shared | 8 base multilibs; same content in both profiles |
+| `arm-none-eabi/lib/<base-variant>/libstdc++.a` | Profile-independent shared | 8 base multilibs; same content in both profiles |
+| `arm-none-eabi/lib/<base-variant>/libsupc++.a` | Profile-independent shared | 8 base multilibs; same content in both profiles |
+| `arm-none-eabi/lib/<base-variant>/crt*.o` | Profile-independent shared | 8 base multilibs runtime start/end objects; same content in both profiles |
+| `arm-none-eabi/lib/thumb/v{6,7,8}-m*/**/` | Multilib-specific (rmprofile) | 20 rmprofile-exclusive paths; completely disjoint from aprofile set |
+| `arm-none-eabi/lib/thumb/v{7,8}-a*/**/` | Multilib-specific (aprofile) | 10 aprofile-exclusive paths; completely disjoint from rmprofile set |
+| `share/doc/gcc-arm-none-eabi/` | Profile-independent shared | HTML/PDF documentation; identical between profiles |
+| `share/man/` | Profile-independent shared | Man pages; identical between profiles |
+| `share/info/` | Profile-independent shared | Info documentation; identical between profiles |
+
+### Conclusion: conflicting files
+
+**The only installed files that differ between a rmprofile-only build and an
+aprofile-only build are the three compiler driver binaries:**
+
+- `bin/arm-none-eabi-gcc` (and its versioned hard-link `arm-none-eabi-gcc-<ver>`)
+- `bin/arm-none-eabi-g++` (and its `arm-none-eabi-c++` symlink)
+- `bin/arm-none-eabi-cpp`
+
+Each of these executables is linked from `gcc.o`, which `#include`s `multilib.h`
+at compile time. When only one profile is built, `multilib.h` encodes only that
+profile's multilib routing tables; the resulting binary will silently misdirect
+the other profile's flags to the wrong library subdirectory.
+
+`multilib.h` is **not** installed as a standalone file — it exists only as
+compiled-in data inside the driver binaries listed above. The file that is
+commonly referred to as "the conflicting file" is `multilib.h`; the actual
+install-tree artifacts that conflict are the driver binaries that embed it.
+
+All other files at shared install paths (`cc1`, `cc1plus`, GCC-private headers,
+C++ standard-library headers, plugin headers, coverage and LTO utilities,
+documentation) are **profile-independent**: their content does not vary with
+`--with-multilib-list`.
+
+The multilib library directories under `arm-none-eabi/lib/thumb/` are
+**disjoint** between profiles: the rmprofile paths (starting with `v6-m`,
+`v7-m`, `v7e-m`, `v8-m.*`, `v8.1-m.*`) and the aprofile paths (starting with
+`v7-a`, `v7ve`, `v8-a`) never overlap, so layering one build tree on top of the
+other is safe for all library and runtime-object files.
+
+---
+
 ## MULTILIB_REQUIRED entries (make form)
 
 For reference, the raw `MULTILIB_REQUIRED` entries from each file:

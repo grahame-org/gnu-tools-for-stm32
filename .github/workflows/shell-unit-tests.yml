@@ -27,17 +27,21 @@ jobs:
           filters: |
             test:
               - 'build-binutils.sh'
+              - 'build-cache-budget-check.sh'
               - 'build-common.sh'
               - 'build-gcc-first.sh'
               - 'build-gdb.sh'
               - 'build-newlib.sh'
               - 'build-newlib-nano.sh'
+              - 'build-pre-cache-clean.sh'
               - 'build-prerequisites.sh'
               - 'build-toolchain.sh'
               - 'build-toolchain-args.sh'
               - 'tests/**'
+              - '.github/workflows/build-toolchain.yml'
               - '.github/workflows/shell-unit-tests.yml'
               - '.github/actions/build-stage/action.yml'
+              - '.github/actions/build-stage/*.sh'
               - '.yamllint'
 
   shell-unit-tests:
@@ -61,10 +65,14 @@ jobs:
 
       - name: Run shell unit tests
         run: |
+          bash tests/test-build-cache-budget-check.sh
           bash tests/test-build-common.sh
-          bash tests/test-build-toolchain-args.sh
-          bash tests/test-strip-binary.sh
           bash tests/test-build-stage-action.sh
+          bash tests/test-build-stage-scripts.sh
+          bash tests/test-build-toolchain-args.sh
+          bash tests/test-build-toolchain-cache-keys.sh
+          bash tests/test-pre-cache-clean.sh
+          bash tests/test-strip-binary.sh
 
   shell-unit-tests-status:
     runs-on: ubuntu-slim
