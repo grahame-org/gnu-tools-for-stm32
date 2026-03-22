@@ -324,7 +324,7 @@ pushd "$BUILDDIR_MINGW/isl"
 "$SRCDIR/$ISL/configure" --build="$BUILD" \
     --host="$HOST_MINGW" \
     --target="$TARGET" \
-    --prefix="$BUILDDIR_MINGW/host-libs/usr"  \
+    --prefix="$BUILDDIR_MINGW/host-libs/usr" \
     --disable-shared \
     --with-gmp-prefix="$BUILDDIR_MINGW/host-libs/usr"
 
