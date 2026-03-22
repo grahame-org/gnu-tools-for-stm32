@@ -303,7 +303,7 @@ ln -s "../share/gcc-14.3.1/arm-none-eabi-gcc" "$_ROOT11/bin/arm-none-eabi-gcc"
 
 _root11_exit=0
 _OUTPUT11=$(bash "$SCRIPT" "$_ROOT11" 2>&1) || _root11_exit=$?
-assert_ne "safety check FAILED: script exits non-zero" "0" "$_root11_exit"
+assert_eq "safety check FAILED: script exits with status 1" "1" "$_root11_exit"
 assert_ne "safety check FAILED message emitted" "" \
     "$(echo "$_OUTPUT11" | grep -F 'Safety check FAILED' || true)"
 
