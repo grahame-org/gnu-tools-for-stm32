@@ -46,6 +46,7 @@ set -x
 set -u
 set -o pipefail
 
+# shellcheck disable=SC2016 # intentional: single quotes defer expansion to trace-print time
 PS4='+$(date -u +%Y-%m-%d:%H:%M:%S) (${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
 
 umask 022
