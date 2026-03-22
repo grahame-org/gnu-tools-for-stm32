@@ -100,7 +100,7 @@ The merge job performs the following steps in order:
 6. **Regenerate `multilib.h` and relink drivers** — run the concrete shell commands
    from [§3](#3-multilibh-regeneration) to produce combined-profile driver binaries.
 7. **Save cache – gcc-final (merged)** — save `install-native` under the shared
-   `${{ runner.os }}-stage-v2-${{ needs.compute-hashes.outputs['gcc-final'] }}` key.
+   `${{ runner.os }}-stage-v3-${{ needs.compute-hashes.outputs['gcc-final'] }}` key.
    Since the merge job cannot use the `build-stage` composite action (it has multiple
    independent restore steps preceding this save), the save is implemented as a direct
    `actions/cache/save` step. The step is gated on a `lookup-only` pre-check at the
@@ -113,7 +113,7 @@ The merge job performs the following steps in order:
      uses: actions/cache/restore@...
      with:
        path: install-native
-       key: ${{ runner.os }}-stage-v2-${{ needs.compute-hashes.outputs['gcc-final'] }}
+       key: ${{ runner.os }}-stage-v3-${{ needs.compute-hashes.outputs['gcc-final'] }}
        lookup-only: true
 
    # ... (all other steps are skipped when pre-restore-merged is a cache hit) ...
@@ -123,7 +123,7 @@ The merge job performs the following steps in order:
      uses: actions/cache/save@...
      with:
        path: install-native
-       key: ${{ runner.os }}-stage-v2-${{ needs.compute-hashes.outputs['gcc-final'] }}
+       key: ${{ runner.os }}-stage-v3-${{ needs.compute-hashes.outputs['gcc-final'] }}
    ```
 
 ---
@@ -294,25 +294,25 @@ invalidation logic.
 
 ### 4.3 Cache key format in `actions/cache`
 
-All stage caches use the `stage-v2-` prefix in the `key:` field of
+All stage caches use the `stage-v3-` prefix in the `key:` field of
 `actions/cache/save` and `actions/cache/restore`:
 
 | `needs.compute-hashes` output | `key:` used in workflow |
 |-------------------------------|------------------------|
-| `gcc-final-rmprofile` | `${{ runner.os }}-stage-v2-${{ needs.compute-hashes.outputs['gcc-final-rmprofile'] }}` |
-| `gcc-final-aprofile` | `${{ runner.os }}-stage-v2-${{ needs.compute-hashes.outputs['gcc-final-aprofile'] }}` |
-| `gcc-final` (existing) | `${{ runner.os }}-stage-v2-${{ needs.compute-hashes.outputs['gcc-final'] }}` |
+| `gcc-final-rmprofile` | `${{ runner.os }}-stage-v3-${{ needs.compute-hashes.outputs['gcc-final-rmprofile'] }}` |
+| `gcc-final-aprofile` | `${{ runner.os }}-stage-v3-${{ needs.compute-hashes.outputs['gcc-final-aprofile'] }}` |
+| `gcc-final` (existing) | `${{ runner.os }}-stage-v3-${{ needs.compute-hashes.outputs['gcc-final'] }}` |
 
 ### 4.4 Summary of cache and artifact outputs
 
 | Output | Kind | Written by | Consumed by | Saved in `merge_group`? |
 |--------|------|------------|-------------|-------------------------|
-| `stage-v2-<gcc-final-rmprofile-hash>` | Cache | `build-gcc-final-rmprofile` | `build-gcc-final-merge` | Yes |
-| `stage-v2-<gcc-final-aprofile-hash>` | Cache | `build-gcc-final-aprofile` | `build-gcc-final-merge` | Yes |
+| `stage-v3-<gcc-final-rmprofile-hash>` | Cache | `build-gcc-final-rmprofile` | `build-gcc-final-merge` | Yes |
+| `stage-v3-<gcc-final-aprofile-hash>` | Cache | `build-gcc-final-aprofile` | `build-gcc-final-merge` | Yes |
 | `gcc-final-rmprofile-builddir` | Workflow artifact | `build-gcc-final-rmprofile` | `build-gcc-final-merge` | N/A (always available within the same run) |
-| `stage-v2-<gcc-final-hash>` _(existing)_ | Cache | `build-gcc-final-merge` | `build-gcc-size-libstdcxx`, `build-final` | Yes |
+| `stage-v3-<gcc-final-hash>` _(existing)_ | Cache | `build-gcc-final-merge` | `build-gcc-size-libstdcxx`, `build-final` | Yes |
 
-The `stage-v2-<gcc-final-hash>` entry is now written by the merge job rather than
+The `stage-v3-<gcc-final-hash>` entry is now written by the merge job rather than
 a build job. Its key formula is otherwise unchanged — the addition of
 `build-gcc-final-merge.sh` to `gcc_final_scripts_hash` is the only modification
 (see §4.1). All downstream restore steps that reference

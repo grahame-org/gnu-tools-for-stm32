@@ -183,9 +183,9 @@ default `--with-multilib-list=rmprofile,aprofile`.
 > **CI staging:** In CI, each parallel build job writes its output to
 > `install-native/` on the runner, then saves that directory as a
 > profile-specific GitHub Actions cache (key:
-> `stage-v2-<gcc-final-rmprofile-hash>`).  The III-4-merge (`gcc-final-merge`)
+> `stage-v3-<gcc-final-rmprofile-hash>`).  The III-4-merge (`gcc-final-merge`)
 > step later restores both profile caches and re-saves them merged under the
-> shared `stage-v2-<gcc-final-hash>` key used by downstream stages.  In local
+> shared `stage-v3-<gcc-final-hash>` key used by downstream stages.  In local
 > sequential builds both profiles write directly to `install-native/` with no
 > separate cache or merge step.
 
@@ -238,7 +238,7 @@ in both sets, so the two builds can run independently and be safely merged.
 
 **Artifacts written to staging directory (CI) / `install-native/` (local):**
 Same as III-4a (see CI staging note above) but for `aprofile` + base multilib
-subdirectories; saved under a separate `stage-v2-<gcc-final-aprofile-hash>` cache key.
+subdirectories; saved under a separate `stage-v3-<gcc-final-aprofile-hash>` cache key.
 
 ---
 
