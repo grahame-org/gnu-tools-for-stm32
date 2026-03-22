@@ -280,6 +280,34 @@ assert_eq "no safety-check-passed message when gcc absent" "" \
     "$(echo "$_OUTPUT10" | grep -F 'Safety check' || true)"
 
 # ---------------------------------------------------------------------------
+# Test group 11: Safety check fails when arm-none-eabi-gcc was present before
+#                cleanup but is gone afterwards (broken symlink scenario)
+#
+# Simulate a regression where a cleanup operation removes a target that the
+# gcc binary symlink points to.  The safety check must detect this and exit 1.
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "=== Group 11: Safety check FAILED when gcc missing after cleanup ==="
+
+_ROOT11="$_TMPDIR/root11"
+mkdir -p "$_ROOT11/bin"
+mkdir -p "$_ROOT11/share/gcc-14.3.1"
+
+# Place a "gcc" file inside share/gcc-14.3.1/ — a directory that
+# remove_non_essential_dirs will delete — and point bin/arm-none-eabi-gcc at
+# it via a symlink.  After the script removes share/gcc-14.3.1/ the symlink
+# becomes broken, triggering the safety-check failure path.
+echo "fake-gcc" > "$_ROOT11/share/gcc-14.3.1/arm-none-eabi-gcc"
+ln -s "../share/gcc-14.3.1/arm-none-eabi-gcc" "$_ROOT11/bin/arm-none-eabi-gcc"
+
+_root11_exit=0
+_OUTPUT11=$(bash "$SCRIPT" "$_ROOT11" 2>&1) || _root11_exit=$?
+assert_ne "safety check FAILED: script exits non-zero" "0" "$_root11_exit"
+assert_ne "safety check FAILED message emitted" "" \
+    "$(echo "$_OUTPUT11" | grep -F 'Safety check FAILED' || true)"
+
+# ---------------------------------------------------------------------------
 # Summary
 # ---------------------------------------------------------------------------
 
