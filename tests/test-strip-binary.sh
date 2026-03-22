@@ -8,31 +8,14 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
+# shellcheck source=test-helpers.sh
+. "$SCRIPT_DIR/test-helpers.sh"
+
 # Source build-common.sh.  The script guards against running build-phase
 # initialisation when the calling script name does not match "build-*", so
 # sourcing from here is safe.
 # shellcheck source=../build-common.sh
 . "$REPO_ROOT/build-common.sh"
-
-# ---------------------------------------------------------------------------
-# Minimal test harness (same pattern as test-build-common.sh)
-# ---------------------------------------------------------------------------
-
-_PASS=0
-_FAIL=0
-
-assert_eq() {
-    local desc="$1" expected="$2" actual="$3"
-    if [ "$expected" = "$actual" ]; then
-        _PASS=$((_PASS + 1))
-        echo "  PASS: $desc"
-    else
-        _FAIL=$((_FAIL + 1))
-        echo "  FAIL: $desc"
-        echo "        expected: [$expected]"
-        echo "        actual:   [$actual]"
-    fi
-}
 
 # ---------------------------------------------------------------------------
 # Shared temporary directory and mock strip script
@@ -161,9 +144,4 @@ assert_eq "failing strip: strip was attempted" "called" "$([ -f "$_STRIP_LOG" ] 
 # Summary
 # ---------------------------------------------------------------------------
 
-echo ""
-echo "Results: $_PASS passed, $_FAIL failed"
-
-if [ $_FAIL -ne 0 ]; then
-    exit 1
-fi
+print_test_results
