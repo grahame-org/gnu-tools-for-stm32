@@ -142,28 +142,10 @@ assert_zero_exit "GITHUB_STEP_SUMMARY file is created when variable is set" \
 
 summary_content=$(cat "${_SUMMARY_FILE}")
 assert_ne "GITHUB_STEP_SUMMARY is non-empty" "" "${summary_content}"
-
-case "${summary_content}" in
-    *"Cache Budget Validation"*)
-        assert_eq "GITHUB_STEP_SUMMARY contains table heading" \
-            "yes" "yes"
-        ;;
-    *)
-        assert_eq "GITHUB_STEP_SUMMARY contains table heading" \
-            "yes" "no"
-        ;;
-esac
-
-case "${summary_content}" in
-    *"install-native"*)
-        assert_eq "GITHUB_STEP_SUMMARY mentions install-native" \
-            "yes" "yes"
-        ;;
-    *)
-        assert_eq "GITHUB_STEP_SUMMARY mentions install-native" \
-            "yes" "no"
-        ;;
-esac
+assert_contains "GITHUB_STEP_SUMMARY contains table heading" \
+    "${summary_content}" "Cache Budget Validation"
+assert_contains "GITHUB_STEP_SUMMARY mentions install-native" \
+    "${summary_content}" "install-native"
 
 # ---------------------------------------------------------------------------
 print_test_results

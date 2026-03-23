@@ -64,6 +64,43 @@ assert_ne() {
     fi
 }
 
+assert_contains() {
+    local desc="$1" haystack="$2" needle="$3"
+    case "${haystack}" in
+        *"${needle}"*)
+            _PASS=$((_PASS + 1))
+            echo "  PASS: $desc"
+            ;;
+        *)
+            _FAIL=$((_FAIL + 1))
+            echo "  FAIL: $desc"
+            echo "        expected to contain: [${needle}]"
+            echo "        in:                  [${haystack}]"
+            ;;
+    esac
+}
+
+assert_exit_status() {
+    local desc="$1" expected_status="$2"
+    if [ $# -lt 3 ]; then
+        _FAIL=$((_FAIL + 1))
+        echo "  FAIL: $desc (no command provided to assert_exit_status)"
+        return
+    fi
+    shift 2
+    local actual_status=0
+    "$@" 2>/dev/null || actual_status=$?
+    if [ "$actual_status" -eq "$expected_status" ]; then
+        _PASS=$((_PASS + 1))
+        echo "  PASS: $desc"
+    else
+        _FAIL=$((_FAIL + 1))
+        echo "  FAIL: $desc"
+        echo "        expected exit status: [$expected_status]"
+        echo "        actual exit status:   [$actual_status]"
+    fi
+}
+
 assert_unset() {
     local desc="$1" varname="$2"
     if [ $# -lt 2 ]; then
