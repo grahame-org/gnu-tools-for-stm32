@@ -344,7 +344,7 @@ LIBICONV_URL=https://ftp.gnu.org/pub/gnu/libiconv/$LIBICONV_PACK
 ZLIB_URL=http://www.zlib.net/fossils/$ZLIB_PACK
 PYTHON_WIN_URL=https://www.python.org/ftp/python/$PYTHON_WIN_VER/$PYTHON_WIN_PACK
 
-# shellcheck disable=SC2034  # consumed by build-toolchain.sh
+# consumed by build-toolchain.sh
 TAR=tar
 # Set variables according to real environment to make this script can run
 # on Ubuntu and Mac OS X.
@@ -353,11 +353,11 @@ host_arch=$(uname -m | sed 'y/XI/xi/')
 if [ "$uname_string" == "linux" ] ; then
     BUILD="$host_arch"-linux-gnu
     HOST_NATIVE="$host_arch"-linux-gnu
-    # shellcheck disable=SC2034  # consumed by build-toolchain.sh and build-prerequisites.sh
+    # consumed by build-toolchain.sh and build-prerequisites.sh
     JOBS=$(grep ^processor /proc/cpuinfo|wc -l)
-    # shellcheck disable=SC2034  # consumed by build-gcc-first.sh, build-gcc-final.sh, build-gcc-size-libstdcxx.sh
+    # consumed by build-gcc-first.sh, build-gcc-final.sh, build-gcc-size-libstdcxx.sh
     GCC_CONFIG_OPTS_LCPP="--with-host-libstdcxx=-static-libgcc -Wl,-Bstatic,-lstdc++,-Bdynamic -lm"
-    # shellcheck disable=SC2034  # consumed by build-toolchain.sh
+    # consumed by build-toolchain.sh
     MD5="md5sum -b"
     PACKAGE_NAME_SUFFIX="${host_arch}-linux"
 elif [ "$uname_string" == "darwin" ] ; then
@@ -365,14 +365,14 @@ elif [ "$uname_string" == "darwin" ] ; then
     HOST_NATIVE=x86_64-apple-darwin10
     # Disable parallel build for mac as we will randomly run into "Permission denied" issue.
     #JOBS=`sysctl -n hw.ncpu`
-    # shellcheck disable=SC2034  # consumed by build-toolchain.sh and build-prerequisites.sh
+    # consumed by build-toolchain.sh and build-prerequisites.sh
     JOBS=1
-    # shellcheck disable=SC2034  # consumed by build-gcc-first.sh, build-gcc-final.sh, build-gcc-size-libstdcxx.sh
+    # consumed by build-gcc-first.sh, build-gcc-final.sh, build-gcc-size-libstdcxx.sh
     GCC_CONFIG_OPTS_LCPP="--with-host-libstdcxx=-static-libgcc -Wl,-lstdc++ -lm"
-    # shellcheck disable=SC2034  # consumed by build-toolchain.sh
+    # consumed by build-toolchain.sh
     MD5="md5 -r"
     PACKAGE_NAME_SUFFIX=mac-$(sw_vers -productVersion)
-    # shellcheck disable=SC2034  # consumed by build-toolchain.sh
+    # consumed by build-toolchain.sh
     TAR=gtar
 else
     error "Unsupported build system : $uname_string"
@@ -407,7 +407,7 @@ if [[ "${SCRIPT%%-*}" = "build" || "${SCRIPT#*_*}" = "build" ]]; then
     STM32_TOOLS_VER=$(git describe --tags 2>/dev/null || echo "$GCC_VER_DISPLAY-$RELEASEVER~$(git rev-parse --verify HEAD)")
 
     HOST_MINGW=x86_64-w64-mingw32
-    # shellcheck disable=SC2034  # consumed by build-toolchain.sh and build-prerequisites.sh
+    # consumed by build-toolchain.sh and build-prerequisites.sh
     HOST_MINGW_TOOL=x86_64-w64-mingw32
     TARGET=arm-none-eabi
     ENV_CFLAGS=
