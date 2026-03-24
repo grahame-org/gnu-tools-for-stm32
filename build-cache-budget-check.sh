@@ -33,6 +33,11 @@
 set -euo pipefail
 
 # ---------------------------------------------------------------------------
+# Locate sibling script
+# ---------------------------------------------------------------------------
+_SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+# ---------------------------------------------------------------------------
 # Thresholds
 # ---------------------------------------------------------------------------
 INSTALL_NATIVE_WARN_GB=${INSTALL_NATIVE_WARN_GB:-1.5}
@@ -64,18 +69,12 @@ measure_human() {
     fi
 }
 
-# Print the compressed byte count of a directory (tar piped through zstd --fast),
-# or 0 if it does not exist.  This approximates the size that GitHub Actions
-# cache/save would store and that counts against the 10 GB repository budget.
-# Note: actual cache/save compression may differ slightly depending on zstd
-# version and settings used by the actions/cache action.
+# Print the compressed byte count of a directory by delegating to the shared
+# measure-cache-compressed-size.sh script, which approximates the size that
+# GitHub Actions cache/save would store against the 10 GB repository budget.
 measure_compressed_bytes() {
     local dir="$1"
-    if [ -d "${dir}" ]; then
-        tar -cf - "${dir}" 2>/dev/null | zstd -q --fast | wc -c | tr -d '[:space:]'
-    else
-        echo "0"
-    fi
+    bash "${_SCRIPT_DIR}/measure-cache-compressed-size.sh" "${dir}"
 }
 
 # Exit 0 if the given byte count exceeds the threshold expressed in gigabytes

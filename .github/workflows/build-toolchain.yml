@@ -342,7 +342,7 @@ jobs:
           if [ -d install-native ]; then
             size_human=$(du -sh install-native | cut -f1)
             size_bytes=$(du -sb install-native | cut -f1)
-            size_compressed=$(tar -cf - install-native 2>/dev/null | zstd -q --fast | wc -c | tr -d '[:space:]')
+            size_compressed=$(./measure-cache-compressed-size.sh install-native)
           else
             size_human="(not found)"
             size_bytes="0"
@@ -525,7 +525,7 @@ jobs:
           if [ -d install-native ]; then
             size_human=$(du -sh install-native | cut -f1)
             size_bytes=$(du -sb install-native | cut -f1)
-            size_compressed=$(tar -cf - install-native 2>/dev/null | zstd -q --fast | wc -c | tr -d '[:space:]')
+            size_compressed=$(./measure-cache-compressed-size.sh install-native)
           else
             size_human="(not found)"
             size_bytes="0"
@@ -679,7 +679,7 @@ jobs:
           if [ -d install-native ]; then
             size_human=$(du -sh install-native | cut -f1)
             size_bytes=$(du -sb install-native | cut -f1)
-            size_compressed=$(tar -cf - install-native 2>/dev/null | zstd -q --fast | wc -c | tr -d '[:space:]')
+            size_compressed=$(./measure-cache-compressed-size.sh install-native)
           else
             size_human="(not found)"
             size_bytes="0"
@@ -873,7 +873,7 @@ jobs:
           if [ -d install-native ]; then
             size_human=$(du -sh install-native | cut -f1)
             size_bytes=$(du -sb install-native | cut -f1)
-            size_compressed=$(tar -cf - install-native 2>/dev/null | zstd -q --fast | wc -c | tr -d '[:space:]')
+            size_compressed=$(./measure-cache-compressed-size.sh install-native)
           else
             size_human="(not found)"
             size_bytes="0"
@@ -1028,7 +1028,7 @@ jobs:
           if [ -d build-native/target-libs ]; then
             size_human=$(du -sh build-native/target-libs | cut -f1)
             size_bytes=$(du -sb build-native/target-libs | cut -f1)
-            size_compressed=$(tar -cf - build-native/target-libs 2>/dev/null | zstd -q --fast | wc -c | tr -d '[:space:]')
+            size_compressed=$(./measure-cache-compressed-size.sh build-native/target-libs)
           else
             size_human="(not found)"
             size_bytes="0"
@@ -1203,7 +1203,7 @@ jobs:
           if [ -d install-native ]; then
             size_human=$(du -sh install-native | cut -f1)
             size_bytes=$(du -sb install-native | cut -f1)
-            size_compressed=$(tar -cf - install-native 2>/dev/null | zstd -q --fast | wc -c | tr -d '[:space:]')
+            size_compressed=$(./measure-cache-compressed-size.sh install-native)
           else
             size_human="(not found)"
             size_bytes="0"
@@ -1458,7 +1458,7 @@ jobs:
           if [ -d install-native ]; then
             size_human_install=$(du -sh install-native | cut -f1)
             size_bytes_install=$(du -sb install-native | cut -f1)
-            size_compressed_install=$(tar -cf - install-native 2>/dev/null | zstd -q --fast | wc -c | tr -d '[:space:]')
+            size_compressed_install=$(./measure-cache-compressed-size.sh install-native)
           else
             size_human_install="(not found)"
             size_bytes_install="0"
@@ -1467,7 +1467,7 @@ jobs:
           if [ -d build-native/target-libs ]; then
             size_human_target=$(du -sh build-native/target-libs | cut -f1)
             size_bytes_target=$(du -sb build-native/target-libs | cut -f1)
-            size_compressed_target=$(tar -cf - build-native/target-libs 2>/dev/null | zstd -q --fast | wc -c | tr -d '[:space:]')
+            size_compressed_target=$(./measure-cache-compressed-size.sh build-native/target-libs)
           else
             size_human_target="(not found)"
             size_bytes_target="0"
