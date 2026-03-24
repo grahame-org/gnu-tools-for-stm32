@@ -182,6 +182,7 @@ jobs:
       binutils-build-time: ${{ steps.build-binutils.outputs.build-time-seconds }}
       binutils-cache-hit: ${{ steps.build-binutils.outputs.cache-hit }}
       binutils-cache-sizes: ${{ steps.cache-sizes-binutils.outputs.cache-size-bytes }}
+      binutils-cache-sizes-compressed: ${{ steps.cache-sizes-binutils.outputs.cache-size-compressed-bytes }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -341,16 +342,19 @@ jobs:
           if [ -d install-native ]; then
             size_human=$(du -sh install-native | cut -f1)
             size_bytes=$(du -sb install-native | cut -f1)
+            size_compressed=$(tar -cf - install-native 2>/dev/null | zstd -q --fast | wc -c | tr -d '[:space:]')
           else
             size_human="(not found)"
             size_bytes="0"
+            size_compressed="0"
           fi
           {
-            echo "| Stage | Path | Size |"
-            echo "|-------|------|------|"
-            echo "| binutils | install-native | ${size_human} |"
+            echo "| Stage | Path | Uncompressed | Compressed bytes |"
+            echo "|-------|------|-------------|-----------------|"
+            echo "| binutils | install-native | ${size_human} | ${size_compressed} |"
           } >> "${GITHUB_STEP_SUMMARY}"
           echo "cache-size-bytes=${size_bytes}" >> "${GITHUB_OUTPUT}"
+          echo "cache-size-compressed-bytes=${size_compressed}" >> "${GITHUB_OUTPUT}"
 
   # ---------------------------------------------------------------------------
   # Job: build-gdb
@@ -369,6 +373,7 @@ jobs:
       gdb-build-time: ${{ steps.build-gdb.outputs.build-time-seconds }}
       gdb-cache-hit: ${{ steps.build-gdb.outputs.cache-hit }}
       gdb-cache-sizes: ${{ steps.cache-sizes-gdb.outputs.cache-size-bytes }}
+      gdb-cache-sizes-compressed: ${{ steps.cache-sizes-gdb.outputs.cache-size-compressed-bytes }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -520,16 +525,19 @@ jobs:
           if [ -d install-native ]; then
             size_human=$(du -sh install-native | cut -f1)
             size_bytes=$(du -sb install-native | cut -f1)
+            size_compressed=$(tar -cf - install-native 2>/dev/null | zstd -q --fast | wc -c | tr -d '[:space:]')
           else
             size_human="(not found)"
             size_bytes="0"
+            size_compressed="0"
           fi
           {
-            echo "| Stage | Path | Size |"
-            echo "|-------|------|------|"
-            echo "| gdb | install-native | ${size_human} |"
+            echo "| Stage | Path | Uncompressed | Compressed bytes |"
+            echo "|-------|------|-------------|-----------------|"
+            echo "| gdb | install-native | ${size_human} | ${size_compressed} |"
           } >> "${GITHUB_STEP_SUMMARY}"
           echo "cache-size-bytes=${size_bytes}" >> "${GITHUB_OUTPUT}"
+          echo "cache-size-compressed-bytes=${size_compressed}" >> "${GITHUB_OUTPUT}"
 
   # ---------------------------------------------------------------------------
   # Job: build-gcc-first
@@ -547,6 +555,7 @@ jobs:
       gcc-first-build-time: ${{ steps.build-gcc-first.outputs.build-time-seconds }}
       gcc-first-cache-hit: ${{ steps.build-gcc-first.outputs.cache-hit }}
       gcc-first-cache-sizes: ${{ steps.cache-sizes-gcc-first.outputs.cache-size-bytes }}
+      gcc-first-cache-sizes-compressed: ${{ steps.cache-sizes-gcc-first.outputs.cache-size-compressed-bytes }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -670,16 +679,19 @@ jobs:
           if [ -d install-native ]; then
             size_human=$(du -sh install-native | cut -f1)
             size_bytes=$(du -sb install-native | cut -f1)
+            size_compressed=$(tar -cf - install-native 2>/dev/null | zstd -q --fast | wc -c | tr -d '[:space:]')
           else
             size_human="(not found)"
             size_bytes="0"
+            size_compressed="0"
           fi
           {
-            echo "| Stage | Path | Size |"
-            echo "|-------|------|------|"
-            echo "| gcc-first | install-native | ${size_human} |"
+            echo "| Stage | Path | Uncompressed | Compressed bytes |"
+            echo "|-------|------|-------------|-----------------|"
+            echo "| gcc-first | install-native | ${size_human} | ${size_compressed} |"
           } >> "${GITHUB_STEP_SUMMARY}"
           echo "cache-size-bytes=${size_bytes}" >> "${GITHUB_OUTPUT}"
+          echo "cache-size-compressed-bytes=${size_compressed}" >> "${GITHUB_OUTPUT}"
 
   # ---------------------------------------------------------------------------
   # Job: build-newlib
@@ -696,6 +708,7 @@ jobs:
       newlib-build-time: ${{ steps.build-newlib.outputs.build-time-seconds }}
       newlib-cache-hit: ${{ steps.pre-restore.outputs.cache-hit }}
       newlib-cache-sizes: ${{ steps.cache-sizes-newlib.outputs.cache-size-bytes }}
+      newlib-cache-sizes-compressed: ${{ steps.cache-sizes-newlib.outputs.cache-size-compressed-bytes }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -860,16 +873,19 @@ jobs:
           if [ -d install-native ]; then
             size_human=$(du -sh install-native | cut -f1)
             size_bytes=$(du -sb install-native | cut -f1)
+            size_compressed=$(tar -cf - install-native 2>/dev/null | zstd -q --fast | wc -c | tr -d '[:space:]')
           else
             size_human="(not found)"
             size_bytes="0"
+            size_compressed="0"
           fi
           {
-            echo "| Stage | Path | Size |"
-            echo "|-------|------|------|"
-            echo "| newlib | install-native | ${size_human} |"
+            echo "| Stage | Path | Uncompressed | Compressed bytes |"
+            echo "|-------|------|-------------|-----------------|"
+            echo "| newlib | install-native | ${size_human} | ${size_compressed} |"
           } >> "${GITHUB_STEP_SUMMARY}"
           echo "cache-size-bytes=${size_bytes}" >> "${GITHUB_OUTPUT}"
+          echo "cache-size-compressed-bytes=${size_compressed}" >> "${GITHUB_OUTPUT}"
 
   # ---------------------------------------------------------------------------
   # Job: build-newlib-nano
@@ -888,6 +904,7 @@ jobs:
       newlib-nano-build-time: ${{ steps.build-newlib-nano.outputs.build-time-seconds }}
       newlib-nano-cache-hit: ${{ steps.build-newlib-nano.outputs.cache-hit }}
       newlib-nano-cache-sizes: ${{ steps.cache-sizes-newlib-nano.outputs.cache-size-bytes }}
+      newlib-nano-cache-sizes-compressed: ${{ steps.cache-sizes-newlib-nano.outputs.cache-size-compressed-bytes }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -1011,16 +1028,19 @@ jobs:
           if [ -d build-native/target-libs ]; then
             size_human=$(du -sh build-native/target-libs | cut -f1)
             size_bytes=$(du -sb build-native/target-libs | cut -f1)
+            size_compressed=$(tar -cf - build-native/target-libs 2>/dev/null | zstd -q --fast | wc -c | tr -d '[:space:]')
           else
             size_human="(not found)"
             size_bytes="0"
+            size_compressed="0"
           fi
           {
-            echo "| Stage | Path | Size |"
-            echo "|-------|------|------|"
-            echo "| newlib-nano | build-native/target-libs | ${size_human} |"
+            echo "| Stage | Path | Uncompressed | Compressed bytes |"
+            echo "|-------|------|-------------|-----------------|"
+            echo "| newlib-nano | build-native/target-libs | ${size_human} | ${size_compressed} |"
           } >> "${GITHUB_STEP_SUMMARY}"
           echo "cache-size-bytes=${size_bytes}" >> "${GITHUB_OUTPUT}"
+          echo "cache-size-compressed-bytes=${size_compressed}" >> "${GITHUB_OUTPUT}"
 
   # ---------------------------------------------------------------------------
   # Job: build-gcc-final
@@ -1037,6 +1057,7 @@ jobs:
       gcc-final-build-time: ${{ steps.build-gcc-final.outputs.build-time-seconds }}
       gcc-final-cache-hit: ${{ steps.build-gcc-final.outputs.cache-hit }}
       gcc-final-cache-sizes: ${{ steps.cache-sizes-gcc-final.outputs.cache-size-bytes }}
+      gcc-final-cache-sizes-compressed: ${{ steps.cache-sizes-gcc-final.outputs.cache-size-compressed-bytes }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -1182,16 +1203,19 @@ jobs:
           if [ -d install-native ]; then
             size_human=$(du -sh install-native | cut -f1)
             size_bytes=$(du -sb install-native | cut -f1)
+            size_compressed=$(tar -cf - install-native 2>/dev/null | zstd -q --fast | wc -c | tr -d '[:space:]')
           else
             size_human="(not found)"
             size_bytes="0"
+            size_compressed="0"
           fi
           {
-            echo "| Stage | Path | Size |"
-            echo "|-------|------|------|"
-            echo "| gcc-final | install-native | ${size_human} |"
+            echo "| Stage | Path | Uncompressed | Compressed bytes |"
+            echo "|-------|------|-------------|-----------------|"
+            echo "| gcc-final | install-native | ${size_human} | ${size_compressed} |"
           } >> "${GITHUB_STEP_SUMMARY}"
           echo "cache-size-bytes=${size_bytes}" >> "${GITHUB_OUTPUT}"
+          echo "cache-size-compressed-bytes=${size_compressed}" >> "${GITHUB_OUTPUT}"
 
       - name: Check ccache directory – gcc-final
         id: check-ccache-gcc-final
@@ -1227,6 +1251,8 @@ jobs:
       gcc-size-libstdcxx-cache-hit: ${{ steps.build-gcc-size-libstdcxx.outputs.cache-hit }}
       gcc-size-libstdcxx-cache-sizes-install: ${{ steps.cache-sizes-gcc-size-libstdcxx.outputs.cache-size-bytes-install }}
       gcc-size-libstdcxx-cache-sizes-target: ${{ steps.cache-sizes-gcc-size-libstdcxx.outputs.cache-size-bytes-target }}
+      gcc-size-libstdcxx-cache-sizes-compressed-install: ${{ steps.cache-sizes-gcc-size-libstdcxx.outputs.cache-size-compressed-bytes-install }}
+      gcc-size-libstdcxx-cache-sizes-compressed-target: ${{ steps.cache-sizes-gcc-size-libstdcxx.outputs.cache-size-compressed-bytes-target }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -1432,26 +1458,32 @@ jobs:
           if [ -d install-native ]; then
             size_human_install=$(du -sh install-native | cut -f1)
             size_bytes_install=$(du -sb install-native | cut -f1)
+            size_compressed_install=$(tar -cf - install-native 2>/dev/null | zstd -q --fast | wc -c | tr -d '[:space:]')
           else
             size_human_install="(not found)"
             size_bytes_install="0"
+            size_compressed_install="0"
           fi
           if [ -d build-native/target-libs ]; then
             size_human_target=$(du -sh build-native/target-libs | cut -f1)
             size_bytes_target=$(du -sb build-native/target-libs | cut -f1)
+            size_compressed_target=$(tar -cf - build-native/target-libs 2>/dev/null | zstd -q --fast | wc -c | tr -d '[:space:]')
           else
             size_human_target="(not found)"
             size_bytes_target="0"
+            size_compressed_target="0"
           fi
           {
-            echo "| Stage | Path | Size |"
-            echo "|-------|------|------|"
-            echo "| gcc-size-libstdcxx | install-native | ${size_human_install} |"
-            echo "| gcc-size-libstdcxx | build-native/target-libs | ${size_human_target} |"
+            echo "| Stage | Path | Uncompressed | Compressed bytes |"
+            echo "|-------|------|-------------|-----------------|"
+            echo "| gcc-size-libstdcxx | install-native | ${size_human_install} | ${size_compressed_install} |"
+            echo "| gcc-size-libstdcxx | build-native/target-libs | ${size_human_target} | ${size_compressed_target} |"
           } >> "${GITHUB_STEP_SUMMARY}"
           {
             echo "cache-size-bytes-install=${size_bytes_install}"
             echo "cache-size-bytes-target=${size_bytes_target}"
+            echo "cache-size-compressed-bytes-install=${size_compressed_install}"
+            echo "cache-size-compressed-bytes-target=${size_compressed_target}"
           } >> "${GITHUB_OUTPUT}"
 
       - name: Check ccache directory – gcc-size-libstdcxx
@@ -1640,13 +1672,21 @@ jobs:
         if: always()
         env:
           BINUTILS_CACHE_SIZES: ${{ needs.build-binutils.outputs.binutils-cache-sizes }}
+          BINUTILS_CACHE_SIZES_COMPRESSED: ${{ needs.build-binutils.outputs.binutils-cache-sizes-compressed }}
           GDB_CACHE_SIZES: ${{ needs.build-gdb.outputs.gdb-cache-sizes }}
+          GDB_CACHE_SIZES_COMPRESSED: ${{ needs.build-gdb.outputs.gdb-cache-sizes-compressed }}
           GCC_FIRST_CACHE_SIZES: ${{ needs.build-gcc-first.outputs.gcc-first-cache-sizes }}
+          GCC_FIRST_CACHE_SIZES_COMPRESSED: ${{ needs.build-gcc-first.outputs.gcc-first-cache-sizes-compressed }}
           NEWLIB_CACHE_SIZES: ${{ needs.build-newlib.outputs.newlib-cache-sizes }}
+          NEWLIB_CACHE_SIZES_COMPRESSED: ${{ needs.build-newlib.outputs.newlib-cache-sizes-compressed }}
           NEWLIB_NANO_CACHE_SIZES: ${{ needs.build-newlib-nano.outputs.newlib-nano-cache-sizes }}
+          NEWLIB_NANO_CACHE_SIZES_COMPRESSED: ${{ needs.build-newlib-nano.outputs.newlib-nano-cache-sizes-compressed }}
           GCC_FINAL_CACHE_SIZES: ${{ needs.build-gcc-final.outputs.gcc-final-cache-sizes }}
+          GCC_FINAL_CACHE_SIZES_COMPRESSED: ${{ needs.build-gcc-final.outputs.gcc-final-cache-sizes-compressed }}
           GCC_SIZE_LIBSTDCXX_CACHE_SIZES_INSTALL: ${{ needs.build-gcc-size-libstdcxx.outputs.gcc-size-libstdcxx-cache-sizes-install }}
           GCC_SIZE_LIBSTDCXX_CACHE_SIZES_TARGET: ${{ needs.build-gcc-size-libstdcxx.outputs.gcc-size-libstdcxx-cache-sizes-target }}
+          GCC_SIZE_LIBSTDCXX_CACHE_SIZES_COMPRESSED_INSTALL: ${{ needs.build-gcc-size-libstdcxx.outputs.gcc-size-libstdcxx-cache-sizes-compressed-install }}
+          GCC_SIZE_LIBSTDCXX_CACHE_SIZES_COMPRESSED_TARGET: ${{ needs.build-gcc-size-libstdcxx.outputs.gcc-size-libstdcxx-cache-sizes-compressed-target }}
         run: |
           format_bytes() {
             local bytes="${1:-}"
@@ -1659,16 +1699,16 @@ jobs:
           {
             echo "## Cache Directory Sizes"
             echo ""
-            echo "| Stage | Path | Size (bytes) |"
-            echo "|-------|------|-------------|"
-            echo "| \`binutils\` | \`install-native\` | $(format_bytes "${BINUTILS_CACHE_SIZES}") |"
-            echo "| \`gdb\` | \`install-native\` | $(format_bytes "${GDB_CACHE_SIZES}") |"
-            echo "| \`gcc-first\` | \`install-native\` | $(format_bytes "${GCC_FIRST_CACHE_SIZES}") |"
-            echo "| \`newlib\` | \`install-native\` | $(format_bytes "${NEWLIB_CACHE_SIZES}") |"
-            echo "| \`newlib-nano\` | \`build-native/target-libs\` | $(format_bytes "${NEWLIB_NANO_CACHE_SIZES}") |"
-            echo "| \`gcc-final\` | \`install-native\` | $(format_bytes "${GCC_FINAL_CACHE_SIZES}") |"
-            echo "| \`gcc-size-libstdcxx\` | \`install-native\` | $(format_bytes "${GCC_SIZE_LIBSTDCXX_CACHE_SIZES_INSTALL}") |"
-            echo "| \`gcc-size-libstdcxx\` | \`build-native/target-libs\` | $(format_bytes "${GCC_SIZE_LIBSTDCXX_CACHE_SIZES_TARGET}") |"
+            echo "| Stage | Path | Uncompressed bytes | Compressed bytes |"
+            echo "|-------|------|-------------------|-----------------|"
+            echo "| \`binutils\` | \`install-native\` | $(format_bytes "${BINUTILS_CACHE_SIZES}") | $(format_bytes "${BINUTILS_CACHE_SIZES_COMPRESSED}") |"
+            echo "| \`gdb\` | \`install-native\` | $(format_bytes "${GDB_CACHE_SIZES}") | $(format_bytes "${GDB_CACHE_SIZES_COMPRESSED}") |"
+            echo "| \`gcc-first\` | \`install-native\` | $(format_bytes "${GCC_FIRST_CACHE_SIZES}") | $(format_bytes "${GCC_FIRST_CACHE_SIZES_COMPRESSED}") |"
+            echo "| \`newlib\` | \`install-native\` | $(format_bytes "${NEWLIB_CACHE_SIZES}") | $(format_bytes "${NEWLIB_CACHE_SIZES_COMPRESSED}") |"
+            echo "| \`newlib-nano\` | \`build-native/target-libs\` | $(format_bytes "${NEWLIB_NANO_CACHE_SIZES}") | $(format_bytes "${NEWLIB_NANO_CACHE_SIZES_COMPRESSED}") |"
+            echo "| \`gcc-final\` | \`install-native\` | $(format_bytes "${GCC_FINAL_CACHE_SIZES}") | $(format_bytes "${GCC_FINAL_CACHE_SIZES_COMPRESSED}") |"
+            echo "| \`gcc-size-libstdcxx\` | \`install-native\` | $(format_bytes "${GCC_SIZE_LIBSTDCXX_CACHE_SIZES_INSTALL}") | $(format_bytes "${GCC_SIZE_LIBSTDCXX_CACHE_SIZES_COMPRESSED_INSTALL}") |"
+            echo "| \`gcc-size-libstdcxx\` | \`build-native/target-libs\` | $(format_bytes "${GCC_SIZE_LIBSTDCXX_CACHE_SIZES_TARGET}") | $(format_bytes "${GCC_SIZE_LIBSTDCXX_CACHE_SIZES_COMPRESSED_TARGET}") |"
           } >> "${GITHUB_STEP_SUMMARY}"
 
       - name: Save cache – toolchain

@@ -165,5 +165,16 @@ case "${summary_content}" in
         ;;
 esac
 
+case "${summary_content}" in
+    *"Compressed bytes"*)
+        assert_eq "GITHUB_STEP_SUMMARY contains compressed bytes column" \
+            "yes" "yes"
+        ;;
+    *)
+        assert_eq "GITHUB_STEP_SUMMARY contains compressed bytes column" \
+            "yes" "no"
+        ;;
+esac
+
 # ---------------------------------------------------------------------------
 print_test_results
