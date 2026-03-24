@@ -72,9 +72,31 @@ measure_human() {
 # Print the compressed byte count of a directory by delegating to the shared
 # measure-cache-compressed-size.sh script, which approximates the size that
 # GitHub Actions cache/save would store against the 10 GB repository budget.
+# This is best-effort: any failure (missing dir/script, tool errors, etc.)
+# results in "0" so that reporting does not interfere with budget enforcement.
 measure_compressed_bytes() {
     local dir="$1"
-    bash "${_SCRIPT_DIR}/measure-cache-compressed-size.sh" "${dir}"
+
+    # If the directory doesn't exist, treat compressed size as 0.
+    if [ ! -d "${dir}" ]; then
+        echo "0"
+        return 0
+    fi
+
+    # If the helper script is missing or not executable, fall back to 0.
+    if [ ! -x "${_SCRIPT_DIR}/measure-cache-compressed-size.sh" ]; then
+        echo "0"
+        return 0
+    fi
+
+    # Run the helper in a failure-tolerant way: on any error, emit 0 and succeed.
+    local out
+    if ! out=$(bash "${_SCRIPT_DIR}/measure-cache-compressed-size.sh" "${dir}" 2>/dev/null); then
+        echo "0"
+        return 0
+    fi
+
+    printf '%s\n' "${out}"
 }
 
 # Exit 0 if the given byte count exceeds the threshold expressed in gigabytes

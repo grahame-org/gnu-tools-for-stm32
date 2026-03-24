@@ -16,8 +16,24 @@ set -euo pipefail
 
 dir="${1:?Usage: measure-cache-compressed-size.sh <directory>}"
 
-if [ -d "${dir}" ]; then
-    tar -cf - "${dir}" 2>/dev/null | zstd -q --fast | wc -c | tr -d '[:space:]'
-else
+if [ ! -d "${dir}" ]; then
     echo "0"
+    exit 0
 fi
+
+# If tar or zstd are unavailable, treat the size as 0 but do not fail the build.
+if ! command -v tar >/dev/null 2>&1 || ! command -v zstd >/dev/null 2>&1; then
+    echo "Warning: tar and/or zstd not available; skipping compressed size measurement for '${dir}'" >&2
+    echo "0"
+    exit 0
+fi
+
+# Run the compression pipeline in a way that does not cause the script to exit
+# on failure (due to set -euo pipefail). Any error measuring size falls back to 0.
+if ! size=$(tar -cf - "${dir}" 2>/dev/null | zstd -q --fast | wc -c | tr -d '[:space:]'); then
+    echo "Warning: failed to measure compressed size for '${dir}', treating as 0" >&2
+    echo "0"
+    exit 0
+fi
+
+echo "${size}"

@@ -176,5 +176,19 @@ case "${summary_content}" in
         ;;
 esac
 
+# Verify that at least one compressed-size cell beneath the header contains digits.
+compressed_value_found="no"
+if printf '%s\n' "${summary_content}" | awk '
+    /Compressed bytes/ { header_seen=1; next }
+    header_seen && /^\|/ {
+        if ($0 ~ /[0-9][0-9]*/) { found=1; exit }
+    }
+    END { exit found ? 0 : 1 }
+'; then
+    compressed_value_found="yes"
+fi
+assert_eq "GITHUB_STEP_SUMMARY has at least one numeric compressed-size cell" \
+    "yes" "${compressed_value_found}"
+
 # ---------------------------------------------------------------------------
 print_test_results
