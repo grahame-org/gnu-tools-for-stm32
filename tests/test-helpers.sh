@@ -66,18 +66,15 @@ assert_ne() {
 
 assert_contains() {
     local desc="$1" haystack="$2" needle="$3"
-    case "${haystack}" in
-        *"${needle}"*)
-            _PASS=$((_PASS + 1))
-            echo "  PASS: $desc"
-            ;;
-        *)
-            _FAIL=$((_FAIL + 1))
-            echo "  FAIL: $desc"
-            echo "        expected to contain: [${needle}]"
-            echo "        in:                  [${haystack}]"
-            ;;
-    esac
+    if printf '%s\n' "${haystack}" | grep -Fq -- "${needle}"; then
+        _PASS=$((_PASS + 1))
+        echo "  PASS: $desc"
+    else
+        _FAIL=$((_FAIL + 1))
+        echo "  FAIL: $desc"
+        echo "        expected to contain: [${needle}]"
+        echo "        in:                  [${haystack}]"
+    fi
 }
 
 assert_exit_status() {
