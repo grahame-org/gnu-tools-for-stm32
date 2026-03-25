@@ -37,6 +37,7 @@ jobs:
               - 'build-toolchain-args.sh'
               - 'build-toolchain.sh'
               - 'measure-cache-compressed-size.sh'
+              - 'merge-gcc-final.sh'
               - '.github/actions/build-stage/*.sh'
               - 'tests/test-build-stage-action.sh'
               - 'tests/test-build-stage-scripts.sh'
@@ -70,6 +71,7 @@ jobs:
           build-toolchain.sh \
           build-cache-budget-check.sh \
           measure-cache-compressed-size.sh \
+          merge-gcc-final.sh \
           tests/test-build-stage-action.sh \
           tests/test-build-stage-scripts.sh \
           tests/test-helpers.sh \
