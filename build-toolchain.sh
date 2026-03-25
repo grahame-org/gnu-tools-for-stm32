@@ -506,7 +506,7 @@ if [ "$skip_mingw32" != "yes" ] ; then
     find "$INSTALLDIR_MINGW" -name '*.la' -exec rm '{}' ';'
 
     echo "Task [IV-6] /Validate executables/"
-    "$SRCDIR/liblongpath-win32/helper.py" --validate "$INSTALLDIR_MINGW"  --triplet "$HOST_MINGW_TOOL"
+    "$SRCDIR/liblongpath-win32/helper.py" --validate "$INSTALLDIR_MINGW" --triplet "$HOST_MINGW_TOOL"
 
     echo "Task [IV-6] /$HOST_MINGW/strip_host_objects/" | tee -a "$BUILDDIR_MINGW/.stage"
     STRIP_BINARIES=$(find "$INSTALLDIR_MINGW/bin/" -name 'arm-none-eabi-*.exe')
