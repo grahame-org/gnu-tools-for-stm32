@@ -65,7 +65,7 @@ copy_dir_clean() {
 #   parameter 3: target package name
 #   parameter 4+: additional --exclude arguments (optional, any number)
 # This function will create bz2 package for files under param1/param2,
-# excluding unnecessary parts, and create package named param2.
+# excluding unnecessary parts, and write the package to the path given in param3.
 pack_dir_clean() {
     tar cjfh "$3" \
         --exclude=CVS --exclude=.svn --exclude=.git --exclude=.pc \
