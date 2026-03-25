@@ -52,9 +52,9 @@ umask 022
 
 exec < /dev/null
 
-script_path=$(cd $(dirname $0) && pwd -P)
+script_path=$(cd "$(dirname "$0")" && pwd -P)
 cd "$script_path"
-. $script_path/build-common.sh
+. "$script_path/build-common.sh"
 
 . "$script_path/build-toolchain-args.sh"
 parse_toolchain_args "$@"
@@ -118,7 +118,7 @@ if [ "x$skip_native_build" != "xyes" ] ; then
         $GCC_CONFIG_OPTS                                \
         "${GCC_CONFIG_OPTS_LCPP}"                              \
         "--with-pkgversion=$PKGVERSION" \
-        ${MULTILIB_LIST}
+        ${MULTILIB_LIST}  # accepts a single profile (e.g. rmprofile) or a comma-separated list (e.g. rmprofile,aprofile)
 
     # Passing USE_TM_CLONE_REGISTRY=0 via INHIBIT_LIBC_CFLAGS to disable
     # transactional memory related code in crtbegin.o.

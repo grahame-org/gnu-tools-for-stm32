@@ -253,6 +253,12 @@ When creating a new workflow:
 | `perf` | Performance improvements |
 | `revert` | Reverts a previous commit |
 
+**The description must start with a lowercase letter.** `fix: correct stack calculation` ✓, `fix: Correct stack calculation` ✗.
+
+**Linter/tool IDs (e.g. `SC2086`, `E501`) must not be the first word of the description**, because they start with an uppercase letter. Rephrase so the description opens with a lowercase verb or noun instead:
+- ✓ `fix: suppress SC2086 false positive in build script`
+- ✗ `fix: SC2086 false positive in build script`
+
 Examples: `feat: add ARMv8-M support`, `fix: correct stack calculation`, `ci: add linting workflow`
 
 A `commitlint` CI check enforces this on every PR. Individual commits within a
