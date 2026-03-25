@@ -62,7 +62,7 @@ copy_dir_clean() {
 # Create source package excluding source control information
 #   parameter 1: base dir of the source tree
 #   parameter 2: dirname of the source tree
-#   parameter 3: target package name
+#   parameter 3: output archive path (including filename)
 #   parameter 4+: additional --exclude arguments (optional, any number)
 # This function will create bz2 package for files under param1/param2,
 # excluding unnecessary parts, and write the package to the path given in param3.
