@@ -160,7 +160,6 @@ parse_toolchain_args() {
             mingw|mingw32)
                 # shellcheck disable=SC2034  # output variable; read by callers after parse_toolchain_args() returns
                 skip_mingw32=yes
-                skip_mingw32_gdb_with_python=yes
                 ;;
             mingw-gdb-with-python|mingw32-gdb-with-python)
                 # shellcheck disable=SC2034  # output variable; read by callers after parse_toolchain_args() returns
