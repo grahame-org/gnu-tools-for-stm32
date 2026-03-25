@@ -56,8 +56,8 @@ echo "some content" > "$_DIR3/file.txt"
 assert_zero_exit "existing dir: exits 0" bash "$SCRIPT" "$_DIR3"
 
 _output3=$(bash "$SCRIPT" "$_DIR3" 2>/dev/null)
-assert_ne "existing dir: output is non-empty" "" "$_output3"
-assert_ne "existing dir: output is not 0" "0" "$_output3"
+assert_eq "existing dir: output is a positive integer" "yes" \
+    "$([[ "$_output3" =~ ^[0-9]+$ ]] && (( _output3 > 0 )) && echo yes || echo no)"
 
 # ---------------------------------------------------------------------------
 # Test group 4: tar/zstd absent from PATH → outputs "0", warning to stderr, exits 0
