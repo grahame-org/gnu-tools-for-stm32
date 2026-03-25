@@ -1195,6 +1195,10 @@ jobs:
           pre-cache-hit: ${{ steps.pre-restore.outputs.cache-hit == 'true' }}
           save-in-merge-group: 'true'
 
+      - name: Report ccache statistics – gcc-final
+        if: steps.pre-restore.outputs.cache-hit != 'true' && steps.cache-gcc-final.outputs.cache-hit != 'true'
+        run: ccache -s
+
       - name: Report cache sizes – gcc-final
         id: cache-sizes-gcc-final
         if: always()
@@ -1406,6 +1410,10 @@ jobs:
           build-script: ./build-gcc-size-libstdcxx.sh
           pre-cache-hit: ${{ steps.pre-restore.outputs.cache-hit == 'true' }}
           save-in-merge-group: 'true'
+
+      - name: Report ccache statistics – gcc-size-libstdcxx
+        if: steps.pre-restore.outputs.cache-hit != 'true' && steps.cache-gcc-size-libstdcxx.outputs.cache-hit != 'true'
+        run: ccache -s
 
       - name: Audit – compute install-native delta from gcc-size-libstdcxx
         if: steps.pre-restore.outputs.cache-hit != 'true'
