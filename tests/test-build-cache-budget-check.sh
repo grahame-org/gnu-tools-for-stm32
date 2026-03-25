@@ -142,28 +142,35 @@ assert_zero_exit "GITHUB_STEP_SUMMARY file is created when variable is set" \
 
 summary_content=$(cat "${_SUMMARY_FILE}")
 assert_ne "GITHUB_STEP_SUMMARY is non-empty" "" "${summary_content}"
+assert_contains "GITHUB_STEP_SUMMARY contains table heading" \
+    "${summary_content}" "Cache Budget Validation"
+assert_contains "GITHUB_STEP_SUMMARY mentions install-native" \
+    "${summary_content}" "install-native"
 
 case "${summary_content}" in
-    *"Cache Budget Validation"*)
-        assert_eq "GITHUB_STEP_SUMMARY contains table heading" \
+    *"Compressed bytes"*)
+        assert_eq "GITHUB_STEP_SUMMARY contains compressed bytes column" \
             "yes" "yes"
         ;;
     *)
-        assert_eq "GITHUB_STEP_SUMMARY contains table heading" \
+        assert_eq "GITHUB_STEP_SUMMARY contains compressed bytes column" \
             "yes" "no"
         ;;
 esac
 
-case "${summary_content}" in
-    *"install-native"*)
-        assert_eq "GITHUB_STEP_SUMMARY mentions install-native" \
-            "yes" "yes"
-        ;;
-    *)
-        assert_eq "GITHUB_STEP_SUMMARY mentions install-native" \
-            "yes" "no"
-        ;;
-esac
+# Verify that at least one compressed-size cell beneath the header contains digits.
+compressed_value_found="no"
+if printf '%s\n' "${summary_content}" | awk '
+    /Compressed bytes/ { header_seen=1; next }
+    header_seen && /^\|/ {
+        if ($0 ~ /[0-9][0-9]*/) { found=1; exit }
+    }
+    END { exit found ? 0 : 1 }
+'; then
+    compressed_value_found="yes"
+fi
+assert_eq "GITHUB_STEP_SUMMARY has at least one numeric compressed-size cell" \
+    "yes" "${compressed_value_found}"
 
 # ---------------------------------------------------------------------------
 print_test_results

@@ -211,10 +211,8 @@ echo "data" > "$_ROOT7/file"
 
 _OUTPUT7=$(bash "$SCRIPT" "$_ROOT7" 2>&1)
 
-assert_ne "before size line present" "" \
-    "$(echo "$_OUTPUT7" | grep -F 'Size before cleaning' || true)"
-assert_ne "after size line present" "" \
-    "$(echo "$_OUTPUT7" | grep -F 'Size after cleaning' || true)"
+assert_contains "before size line present" "$_OUTPUT7" "Size before cleaning"
+assert_contains "after size line present" "$_OUTPUT7" "Size after cleaning"
 
 # ---------------------------------------------------------------------------
 # Test group 8: share/gcc-*/ directories are removed
@@ -259,8 +257,7 @@ mkdir -p "$_ROOT9/bin"
 echo "fake-gcc" > "$_ROOT9/bin/arm-none-eabi-gcc"
 
 _OUTPUT9=$(bash "$SCRIPT" "$_ROOT9" 2>&1)
-assert_ne "safety check passed message present" "" \
-    "$(echo "$_OUTPUT9" | grep -F 'Safety check passed' || true)"
+assert_contains "safety check passed message present" "$_OUTPUT9" "Safety check passed"
 
 # ---------------------------------------------------------------------------
 # Test group 10: Safety check silent when arm-none-eabi-gcc was never present
@@ -304,8 +301,7 @@ ln -s "../share/gcc-14.3.1/arm-none-eabi-gcc" "$_ROOT11/bin/arm-none-eabi-gcc"
 _root11_exit=0
 _OUTPUT11=$(bash "$SCRIPT" "$_ROOT11" 2>&1) || _root11_exit=$?
 assert_eq "safety check FAILED: script exits with status 1" "1" "$_root11_exit"
-assert_ne "safety check FAILED message emitted" "" \
-    "$(echo "$_OUTPUT11" | grep -F 'Safety check FAILED' || true)"
+assert_contains "safety check FAILED message emitted" "$_OUTPUT11" "Safety check FAILED"
 
 # ---------------------------------------------------------------------------
 # Summary

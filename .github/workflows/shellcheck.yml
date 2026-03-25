@@ -27,6 +27,7 @@ jobs:
           filters: |
             test:
               - 'build-binutils.sh'
+              - 'build-cache-budget-check.sh'
               - 'build-common.sh'
               - 'build-gcc-first.sh'
               - 'build-newlib.sh'
@@ -35,6 +36,7 @@ jobs:
               - 'build-prerequisites.sh'
               - 'build-toolchain-args.sh'
               - 'build-toolchain.sh'
+              - 'measure-cache-compressed-size.sh'
               - '.github/actions/build-stage/*.sh'
               - 'tests/test-build-stage-action.sh'
               - 'tests/test-build-stage-scripts.sh'
@@ -66,6 +68,8 @@ jobs:
           build-prerequisites.sh \
           build-toolchain-args.sh \
           build-toolchain.sh \
+          build-cache-budget-check.sh \
+          measure-cache-compressed-size.sh \
           tests/test-build-stage-action.sh \
           tests/test-build-stage-scripts.sh \
           tests/test-helpers.sh \

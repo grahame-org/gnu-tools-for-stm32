@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Unit tests for .github/actions/build-stage/ helper scripts:
-#   compute-cache-miss.sh, set-cache-hit-output.sh, clean-before-cache-save.sh
+#   compute-cache-miss.sh, set-cache-hit-output.sh, clean-before-cache-save.sh,
+#   run-build-stage.sh
 #
 # Run with: bash tests/test-build-stage-scripts.sh
 
@@ -19,6 +20,7 @@ trap 'rm -rf "$_TMPDIR"' EXIT
 _COMPUTE_SCRIPT="${ACTION_DIR}/compute-cache-miss.sh"
 _SET_OUTPUT_SCRIPT="${ACTION_DIR}/set-cache-hit-output.sh"
 _CLEAN_SCRIPT="${ACTION_DIR}/clean-before-cache-save.sh"
+_RUN_SCRIPT="${ACTION_DIR}/run-build-stage.sh"
 
 # Run compute-cache-miss.sh with the given env values and return the written value.
 run_compute_cache_miss() {
@@ -137,6 +139,101 @@ if [ -f "$_CALL_LOG" ]; then
     _clean_empty_count=$(wc -l < "$_CALL_LOG")
 fi
 assert_eq "empty CACHE_PATHS: not invoked" "0" "$_clean_empty_count"
+
+# ---------------------------------------------------------------------------
+# Group 6: run-build-stage.sh
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "=== Group 6: run-build-stage.sh ==="
+
+# Create a mock build script that records argv[1..] to a log file.
+_MOCK_BUILD="${_TMPDIR}/mock-build.sh"
+_ARG_LOG="${_TMPDIR}/build-args.log"
+cat > "$_MOCK_BUILD" <<'BUILDMOCK'
+#!/usr/bin/env bash
+for arg in "$@"; do printf '%s\n' "$arg"; done > "${ARG_LOG}"
+BUILDMOCK
+chmod +x "$_MOCK_BUILD"
+
+# Run run-build-stage.sh with the given BUILD_STAGE_ARGS and return the
+# build-time-seconds value written to GITHUB_OUTPUT.
+run_build_stage() {
+    local stage_args="$1" gh_out
+    gh_out=$(mktemp "$_TMPDIR/github-output-XXXXXX")
+    rm -f "$_ARG_LOG"
+    BUILD_STAGE_SCRIPT="$_MOCK_BUILD" \
+    BUILD_STAGE_ARGS="$stage_args" \
+    ARG_LOG="$_ARG_LOG" \
+    GITHUB_OUTPUT="$gh_out" \
+    bash "$_RUN_SCRIPT"
+    grep '^build-time-seconds=' "$gh_out" | cut -d= -f2
+}
+
+# build-time-seconds is written to GITHUB_OUTPUT.
+_bts=$(run_build_stage "")
+assert_ne "empty args: build-time-seconds written to GITHUB_OUTPUT" "" "$_bts"
+
+# build-time-seconds is an integer.
+case "$_bts" in
+    ''|*[!0-9]*) assert_eq "empty args: build-time-seconds is numeric" "numeric" "non-numeric" ;;
+    *)           assert_eq "empty args: build-time-seconds is numeric" "numeric" "numeric" ;;
+esac
+
+# No arguments passed when BUILD_STAGE_ARGS is empty.
+run_build_stage "" > /dev/null
+assert_eq "empty args: mock script receives no arguments" "0" \
+    "$(wc -l < "$_ARG_LOG")"
+
+# Single argument is passed through unchanged.
+run_build_stage "--skip_steps=mingw" > /dev/null
+assert_eq "single arg: passed to build script" "--skip_steps=mingw" \
+    "$(cat "$_ARG_LOG")"
+
+# Two space-separated arguments are split into two distinct arguments.
+run_build_stage "--skip_steps=mingw --jobs=4" > /dev/null
+assert_eq "two args: correct count" "2" \
+    "$(wc -l < "$_ARG_LOG")"
+assert_eq "two args: first arg correct" "--skip_steps=mingw" \
+    "$(sed -n '1p' "$_ARG_LOG")"
+assert_eq "two args: second arg correct" "--jobs=4" \
+    "$(sed -n '2p' "$_ARG_LOG")"
+
+# JOBS is exported to the build script.
+_JOBS_BUILD="${_TMPDIR}/mock-jobs.sh"
+_JOBS_LOG="${_TMPDIR}/jobs.log"
+cat > "$_JOBS_BUILD" <<'JOBSMOCK'
+#!/usr/bin/env bash
+echo "${JOBS:-unset}" > "${JOBS_LOG}"
+JOBSMOCK
+chmod +x "$_JOBS_BUILD"
+_gh_out=$(mktemp "$_TMPDIR/github-output-XXXXXX")
+BUILD_STAGE_SCRIPT="$_JOBS_BUILD" \
+BUILD_STAGE_ARGS="" \
+JOBS_LOG="$_JOBS_LOG" \
+GITHUB_OUTPUT="$_gh_out" \
+bash "$_RUN_SCRIPT"
+_jobs_val=$(cat "$_JOBS_LOG")
+assert_ne "JOBS exported to build script and non-empty" "" "$_jobs_val"
+case "$_jobs_val" in
+    ''|*[!0-9]*) assert_eq "JOBS exported to build script is numeric" "numeric" "non-numeric" ;;
+    *)           assert_eq "JOBS exported to build script is numeric" "numeric" "numeric" ;;
+esac
+
+# Failure propagation: non-zero exit from build script propagates.
+_FAIL_BUILD="${_TMPDIR}/mock-fail.sh"
+cat > "$_FAIL_BUILD" <<'FAILMOCK'
+#!/usr/bin/env bash
+exit 1
+FAILMOCK
+chmod +x "$_FAIL_BUILD"
+_gh_out2=$(mktemp "$_TMPDIR/github-output-XXXXXX")
+_rc=0
+BUILD_STAGE_SCRIPT="$_FAIL_BUILD" \
+BUILD_STAGE_ARGS="" \
+GITHUB_OUTPUT="$_gh_out2" \
+bash "$_RUN_SCRIPT" 2>/dev/null || _rc=$?
+assert_ne "failing build script: exit code propagated (non-zero)" "0" "$_rc"
 
 # ---------------------------------------------------------------------------
 # Summary

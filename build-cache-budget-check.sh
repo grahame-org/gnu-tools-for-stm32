@@ -11,7 +11,9 @@
 #
 # These are uncompressed on-disk sizes as measured by `du -sb`.  They differ
 # significantly from the compressed GitHub Actions cache archive sizes reported
-# by `actions/cache/save` (see docs/cache-sizes.md).
+# by `actions/cache/save` (see docs/cache-sizes.md).  The script also measures
+# and reports a compressed-size estimate (tar + zstd --fast) alongside the
+# uncompressed sizes so that both figures appear in the job summary.
 #
 # The script runs in build-final after the strip stages, so install-native/ is
 # the fully-stripped final toolchain (~1.1 GB); build-native/target-libs/ is
@@ -29,6 +31,11 @@
 #   ./build-cache-budget-check.sh
 
 set -euo pipefail
+
+# ---------------------------------------------------------------------------
+# Locate sibling script
+# ---------------------------------------------------------------------------
+_SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 # ---------------------------------------------------------------------------
 # Thresholds
@@ -62,6 +69,36 @@ measure_human() {
     fi
 }
 
+# Print the compressed byte count of a directory by delegating to the shared
+# measure-cache-compressed-size.sh script, which approximates the size that
+# GitHub Actions cache/save would store against the 10 GB repository budget.
+# This is best-effort: any failure (missing dir/script, tool errors, etc.)
+# results in "0" so that reporting does not interfere with budget enforcement.
+measure_compressed_bytes() {
+    local dir="$1"
+
+    # If the directory doesn't exist, treat compressed size as 0.
+    if [ ! -d "${dir}" ]; then
+        echo "0"
+        return 0
+    fi
+
+    # If the helper script is missing or not executable, fall back to 0.
+    if [ ! -x "${_SCRIPT_DIR}/measure-cache-compressed-size.sh" ]; then
+        echo "0"
+        return 0
+    fi
+
+    # Run the helper in a failure-tolerant way: on any error, emit 0 and succeed.
+    local out
+    if ! out=$(bash "${_SCRIPT_DIR}/measure-cache-compressed-size.sh" "${dir}" 2>/dev/null); then
+        echo "0"
+        return 0
+    fi
+
+    printf '%s\n' "${out}"
+}
+
 # Exit 0 if the given byte count exceeds the threshold expressed in gigabytes
 # (1 GB = 1,000,000,000 bytes), exit 1 otherwise.
 exceeds_gb() {
@@ -93,8 +130,10 @@ status_for() {
 # ---------------------------------------------------------------------------
 install_bytes=$(measure_bytes "install-native")
 install_human=$(measure_human "install-native")
+install_compressed_bytes=$(measure_compressed_bytes "install-native")
 target_bytes=$(measure_bytes "build-native/target-libs")
 target_human=$(measure_human "build-native/target-libs")
+target_compressed_bytes=$(measure_compressed_bytes "build-native/target-libs")
 
 install_status=$(status_for "${install_bytes}" "${INSTALL_NATIVE_WARN_GB}" "${INSTALL_NATIVE_MAX_GB}")
 target_status=$(status_for "${target_bytes}" "${TARGET_LIBS_WARN_GB}" "${TARGET_LIBS_MAX_GB}")
@@ -105,10 +144,10 @@ target_status=$(status_for "${target_bytes}" "${TARGET_LIBS_WARN_GB}" "${TARGET_
 print_report() {
     echo "## Cache Budget Validation"
     echo ""
-    echo "| Directory | Size | Bytes | Warn (GB) | Fail (GB) | Status |"
-    echo "|-----------|------|-------|-----------|-----------|--------|"
-    echo "| \`install-native/\` | ${install_human} | ${install_bytes} | ${INSTALL_NATIVE_WARN_GB} | ${INSTALL_NATIVE_MAX_GB} | ${install_status} |"
-    echo "| \`build-native/target-libs/\` | ${target_human} | ${target_bytes} | ${TARGET_LIBS_WARN_GB} | ${TARGET_LIBS_MAX_GB} | ${target_status} |"
+    echo "| Directory | Size | Uncompressed bytes | Compressed bytes | Warn (GB) | Fail (GB) | Status |"
+    echo "|-----------|------|-------------------|-----------------|-----------|-----------|--------|"
+    echo "| \`install-native/\` | ${install_human} | ${install_bytes} | ${install_compressed_bytes} | ${INSTALL_NATIVE_WARN_GB} | ${INSTALL_NATIVE_MAX_GB} | ${install_status} |"
+    echo "| \`build-native/target-libs/\` | ${target_human} | ${target_bytes} | ${target_compressed_bytes} | ${TARGET_LIBS_WARN_GB} | ${TARGET_LIBS_MAX_GB} | ${target_status} |"
 }
 
 print_report
