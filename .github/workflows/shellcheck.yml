@@ -41,6 +41,7 @@ jobs:
               - 'tests/test-build-stage-action.sh'
               - 'tests/test-build-stage-scripts.sh'
               - 'tests/test-helpers.sh'
+              - 'tests/test-measure-cache-compressed-size.sh'
               - '.shellcheckrc'
               - '.github/workflows/shellcheck.yml'
 
@@ -73,6 +74,7 @@ jobs:
           tests/test-build-stage-action.sh \
           tests/test-build-stage-scripts.sh \
           tests/test-helpers.sh \
+          tests/test-measure-cache-compressed-size.sh \
           .github/actions/build-stage/clean-before-cache-save.sh \
           .github/actions/build-stage/compute-cache-miss.sh \
           .github/actions/build-stage/run-build-stage.sh \
