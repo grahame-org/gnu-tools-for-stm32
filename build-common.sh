@@ -284,44 +284,33 @@ ROOT=$(pwd)
 SRCDIR=$ROOT/src
 
 BUILDDIR_NATIVE=$ROOT/build-native
-export BUILDDIR_NATIVE
 BUILDDIR_MINGW=$ROOT/build-mingw
-export BUILDDIR_MINGW
 INSTALLDIR_NATIVE=$ROOT/install-native
-export INSTALLDIR_NATIVE
 INSTALLDIR_NATIVE_DOC=$ROOT/install-native/share/doc/gcc-arm-none-eabi
-export INSTALLDIR_NATIVE_DOC
 INSTALLDIR_MINGW=$ROOT/install-mingw
-export INSTALLDIR_MINGW
 INSTALLDIR_MINGW_DOC=$ROOT/install-mingw/share/doc/gcc-arm-none-eabi
-export INSTALLDIR_MINGW_DOC
 
 PACKAGEDIR=$ROOT/pkg
-export PACKAGEDIR
 
+# shellcheck disable=SC2034  # set here, consumed by sourcing scripts (build-prerequisites.sh)
 GMP_VER=6.2.1
-export GMP_VER
+# shellcheck disable=SC2034  # set here, consumed by sourcing scripts (build-prerequisites.sh)
 MPFR_VER=3.1.6
-export MPFR_VER
+# shellcheck disable=SC2034  # set here, consumed by sourcing scripts (build-prerequisites.sh)
 MPC_VER=1.0.3
-export MPC_VER
+# shellcheck disable=SC2034  # set here, consumed by sourcing scripts (build-prerequisites.sh)
 ISL_VER=0.18
-export ISL_VER
 EXPAT_VER=2.2.6
+# shellcheck disable=SC2034  # set here, consumed by sourcing scripts (build-prerequisites.sh)
 LIBICONV_VER=1.15
-export LIBICONV_VER
 ZLIB_VER=1.2.12
 PYTHON_WIN_VER=2.7.13
 
 BINUTILS=binutils
-export BINUTILS
 GCC=gcc
 NEWLIB=newlib
-export NEWLIB
 NEWLIB_NANO=newlib
-export NEWLIB_NANO
 GDB=gdb
-export GDB
 GMP=gmp
 MPFR=mpfr
 MPC=mpc
@@ -340,25 +329,24 @@ LIBICONV_PACK=$LIBICONV.tar.gz
 ZLIB_PACK=$ZLIB.tar.gz
 PYTHON_WIN_PACK=$PYTHON_WIN.msi
 
+# shellcheck disable=SC2034  # set here, consumed by sourcing scripts (build-prerequisites.sh)
 GMP_URL=https://gmplib.org/download/gmp/$GMP_PACK
-export GMP_URL
+# shellcheck disable=SC2034  # set here, consumed by sourcing scripts (build-prerequisites.sh)
 MPFR_URL=https://www.mpfr.org/$MPFR/$MPFR_PACK
-export MPFR_URL
+# shellcheck disable=SC2034  # set here, consumed by sourcing scripts (build-prerequisites.sh)
 MPC_URL=https://ftp.gnu.org/gnu/mpc/$MPC_PACK
-export MPC_URL
+# shellcheck disable=SC2034  # set here, consumed by sourcing scripts (build-prerequisites.sh)
 ISL_URL=https://libisl.sourceforge.io/$ISL_PACK
-export ISL_URL
+# shellcheck disable=SC2034  # set here, consumed by sourcing scripts (build-prerequisites.sh)
 EXPAT_URL=https://downloads.sourceforge.net/project/expat/expat/$EXPAT_VER/$EXPAT_PACK
-export EXPAT_URL
+# shellcheck disable=SC2034  # set here, consumed by sourcing scripts (build-prerequisites.sh)
 LIBICONV_URL=https://ftp.gnu.org/pub/gnu/libiconv/$LIBICONV_PACK
-export LIBICONV_URL
+# shellcheck disable=SC2034  # set here, consumed by sourcing scripts (build-prerequisites.sh)
 ZLIB_URL=https://www.zlib.net/fossils/$ZLIB_PACK
-export ZLIB_URL
+# shellcheck disable=SC2034  # set here, consumed by sourcing scripts (build-prerequisites.sh)
 PYTHON_WIN_URL=https://www.python.org/ftp/python/$PYTHON_WIN_VER/$PYTHON_WIN_PACK
-export PYTHON_WIN_URL
 
 TAR=tar
-export TAR
 # Set variables according to real environment to make this script can run
 # on Ubuntu and Mac OS X.
 uname_string=$(uname | sed 'y/LINUXDARWIN/linuxdarwin/')
@@ -367,11 +355,8 @@ if [ "$uname_string" == "linux" ] ; then
     BUILD="$host_arch"-linux-gnu
     HOST_NATIVE="$host_arch"-linux-gnu
     JOBS=$(grep ^processor /proc/cpuinfo|wc -l)
-    export JOBS
     GCC_CONFIG_OPTS_LCPP="--with-host-libstdcxx=-static-libgcc -Wl,-Bstatic,-lstdc++,-Bdynamic -lm"
-    export GCC_CONFIG_OPTS_LCPP
     MD5="md5sum -b"
-    export MD5
     PACKAGE_NAME_SUFFIX="${host_arch}-linux"
 elif [ "$uname_string" == "darwin" ] ; then
     BUILD=x86_64-apple-darwin10
@@ -379,14 +364,10 @@ elif [ "$uname_string" == "darwin" ] ; then
     # Disable parallel build for mac as we will randomly run into "Permission denied" issue.
     #JOBS=`sysctl -n hw.ncpu`
     JOBS=1
-    export JOBS
     GCC_CONFIG_OPTS_LCPP="--with-host-libstdcxx=-static-libgcc -Wl,-lstdc++ -lm"
-    export GCC_CONFIG_OPTS_LCPP
     MD5="md5 -r"
-    export MD5
     PACKAGE_NAME_SUFFIX=mac-$(sw_vers -productVersion)
     TAR=gtar
-    export TAR
 else
     error "Unsupported build system : $uname_string"
 fi
@@ -421,7 +402,6 @@ if [[ "${SCRIPT%%-*}" = "build" || "${SCRIPT#*_*}" = "build" ]]; then
 
     HOST_MINGW=x86_64-w64-mingw32
     HOST_MINGW_TOOL=x86_64-w64-mingw32
-    export HOST_MINGW_TOOL
     TARGET=arm-none-eabi
     ENV_CFLAGS=
     ENV_CPPFLAGS=
