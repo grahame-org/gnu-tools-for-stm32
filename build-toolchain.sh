@@ -338,7 +338,7 @@ if [ "$skip_mingw32" != "yes" ] ; then
         "--with-sysroot=$INSTALLDIR_MINGW/arm-none-eabi" \
         "--with-pkgversion=$PKGVERSION"
 
-    make "-j${JOBS}"
+    make -j"${JOBS}"
 
     make install
 
@@ -418,7 +418,7 @@ if [ "$skip_mingw32" != "yes" ] ; then
         "--with-pkgversion=$PKGVERSION" \
         "${MULTILIB_LIST}"
 
-    make "-j${JOBS}" all-gcc
+    make -j"${JOBS}" all-gcc
 
     make install-gcc
 
@@ -478,7 +478,7 @@ if [ "$skip_mingw32" != "yes" ] ; then
             '--with-gdb-datadir='\''${prefix}'\''/arm-none-eabi/share/gdb' \
             "--with-pkgversion=$PKGVERSION"
 
-        make "-j${JOBS}"
+        make -j"${JOBS}"
 
         make install
         if [ "$skip_manual" != "yes" ]; then
