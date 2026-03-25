@@ -297,47 +297,48 @@ fi  #if [ "$skip_native_build" != "yes" ] ; then
 if [ "$skip_mingw32" != "yes" ] ; then
     saveenv
     saveenvvar CC_FOR_BUILD gcc
-    saveenvvar CC $HOST_MINGW_TOOL-gcc
-    saveenvvar CXX $HOST_MINGW_TOOL-g++
-    saveenvvar AR $HOST_MINGW_TOOL-ar
-    saveenvvar RANLIB $HOST_MINGW_TOOL-ranlib
-    saveenvvar STRIP $HOST_MINGW_TOOL-strip
-    saveenvvar NM $HOST_MINGW_TOOL-nm
+    saveenvvar CC "$HOST_MINGW_TOOL-gcc"
+    saveenvvar CXX "$HOST_MINGW_TOOL-g++"
+    saveenvvar AR "$HOST_MINGW_TOOL-ar"
+    saveenvvar RANLIB "$HOST_MINGW_TOOL-ranlib"
+    saveenvvar STRIP "$HOST_MINGW_TOOL-strip"
+    saveenvvar NM "$HOST_MINGW_TOOL-nm"
 
     echo "Task [IV-0] /$HOST_MINGW/host_unpack/" | tee -a "$BUILDDIR_MINGW/.stage"
-    rm -rf $BUILDDIR_MINGW/tools-$OBJ_SUFFIX_NATIVE && mkdir $BUILDDIR_MINGW/tools-$OBJ_SUFFIX_NATIVE
-    pushd $BUILDDIR_MINGW/tools-$OBJ_SUFFIX_NATIVE
-    ln -s . $INSTALL_PACKAGE_NAME
-    tar xf $PACKAGEDIR/$PACKAGE_NAME_NATIVE.tar.bz2 ${TAR_FLAGS:-}
-    rm $INSTALL_PACKAGE_NAME
+    rm -rf "$BUILDDIR_MINGW/tools-$OBJ_SUFFIX_NATIVE" && mkdir "$BUILDDIR_MINGW/tools-$OBJ_SUFFIX_NATIVE"
+    pushd "$BUILDDIR_MINGW/tools-$OBJ_SUFFIX_NATIVE"
+    ln -s . "$INSTALL_PACKAGE_NAME"
+    # shellcheck disable=SC2086  # TAR_FLAGS is intentionally word-split (may contain multiple flags)
+    tar xf "$PACKAGEDIR/$PACKAGE_NAME_NATIVE.tar.bz2" ${TAR_FLAGS:-}
+    rm "$INSTALL_PACKAGE_NAME"
     popd
 
     echo "Task [IV-1] /$HOST_MINGW/binutils/" | tee -a "$BUILDDIR_MINGW/.stage"
-    prepend_path PATH $BUILDDIR_MINGW/tools-$OBJ_SUFFIX_NATIVE/bin
-    rm -rf $BUILDDIR_MINGW/binutils && mkdir -p $BUILDDIR_MINGW/binutils
-    pushd $BUILDDIR_MINGW/binutils
+    prepend_path PATH "$BUILDDIR_MINGW/tools-$OBJ_SUFFIX_NATIVE/bin"
+    rm -rf "$BUILDDIR_MINGW/binutils" && mkdir -p "$BUILDDIR_MINGW/binutils"
+    pushd "$BUILDDIR_MINGW/binutils"
     saveenv
     saveenvvar CFLAGS "-I$BUILDDIR_MINGW/host-libs/zlib/include -I$BUILDDIR_MINGW/host-libs/usr/include $BUILD_OPTIONS"
     saveenvvar CPPFLAGS "-I$BUILDDIR_MINGW/host-libs/zlib/include -I$BUILDDIR_MINGW/host-libs/usr/include"
     saveenvvar LDFLAGS "-L$BUILDDIR_MINGW/host-libs/zlib/lib -L$BUILDDIR_MINGW/host-libs/usr/lib -Wl,/usr/$HOST_MINGW/lib/CRT_glob.o"
     saveenvvar LDFLAGS_WRAP_FILEIO "@$BUILDDIR_MINGW/liblongpath-win32/gcc/exe.inputs"
     saveenvvar LDFLAGS_DLLWRAP_FILEIO "@$BUILDDIR_MINGW/liblongpath-win32/gcc/dll.inputs"
-    $SRCDIR/$BINUTILS/configure --build=$BUILD \
-        --host=$HOST_MINGW \
-        --target=$TARGET \
-        --prefix=$INSTALLDIR_MINGW \
-        --infodir=$INSTALLDIR_MINGW_DOC/info \
-        --mandir=$INSTALLDIR_MINGW_DOC/man \
-        --htmldir=$INSTALLDIR_MINGW_DOC/html \
-        --pdfdir=$INSTALLDIR_MINGW_DOC/pdf \
+    "$SRCDIR/$BINUTILS/configure" "--build=$BUILD" \
+        "--host=$HOST_MINGW" \
+        "--target=$TARGET" \
+        "--prefix=$INSTALLDIR_MINGW" \
+        "--infodir=$INSTALLDIR_MINGW_DOC/info" \
+        "--mandir=$INSTALLDIR_MINGW_DOC/man" \
+        "--htmldir=$INSTALLDIR_MINGW_DOC/html" \
+        "--pdfdir=$INSTALLDIR_MINGW_DOC/pdf" \
         --disable-nls \
         --disable-sim \
         --disable-gdb \
         --enable-plugins \
-        --with-sysroot=$INSTALLDIR_MINGW/arm-none-eabi \
+        "--with-sysroot=$INSTALLDIR_MINGW/arm-none-eabi" \
         "--with-pkgversion=$PKGVERSION"
 
-    make -j$JOBS
+    make -j"$JOBS"
 
     make install
 
