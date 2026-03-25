@@ -451,15 +451,15 @@ if [ "$skip_mingw32" != "yes" ] ; then
         saveenvvar LDFLAGS "-L$BUILDDIR_MINGW/host-libs/zlib/lib -Wl,/usr/$HOST_MINGW/lib/CRT_glob.o"
         saveenvvar LDFLAGS_WRAP_FILEIO "@$BUILDDIR_MINGW/liblongpath-win32/gcc/exe.inputs"
         saveenvvar LDFLAGS_DLLWRAP_FILEIO "@$BUILDDIR_MINGW/liblongpath-win32/gcc/dll.inputs"
-        # shellcheck disable=SC2016
-        $SRCDIR/$GDB/configure --build=$BUILD \
-            --host=$HOST_MINGW \
-            --target=$TARGET \
-            --prefix=$INSTALLDIR_MINGW \
-            --infodir=$INSTALLDIR_MINGW_DOC/info \
-            --mandir=$INSTALLDIR_MINGW_DOC/man \
-            --htmldir=$INSTALLDIR_MINGW_DOC/html \
-            --pdfdir=$INSTALLDIR_MINGW_DOC/pdf \
+        # shellcheck disable=SC2016,SC2086 # SC2016: ${prefix} deferred expansion; SC2086: $MINGW_GDB_CONF_OPTS requires word splitting for configure options
+        "$SRCDIR/$GDB/configure" "--build=$BUILD" \
+            "--host=$HOST_MINGW" \
+            "--target=$TARGET" \
+            "--prefix=$INSTALLDIR_MINGW" \
+            "--infodir=$INSTALLDIR_MINGW_DOC/info" \
+            "--mandir=$INSTALLDIR_MINGW_DOC/man" \
+            "--htmldir=$INSTALLDIR_MINGW_DOC/html" \
+            "--pdfdir=$INSTALLDIR_MINGW_DOC/pdf" \
             --disable-nls \
             --disable-sim \
             --disable-gas \
@@ -469,20 +469,20 @@ if [ "$skip_mingw32" != "yes" ] ; then
             --with-lzma=no \
             $MINGW_GDB_CONF_OPTS \
             --with-libexpat \
-            --with-libexpat-prefix=$BUILDDIR_MINGW/host-libs/usr \
-            --with-libiconv-prefix=$BUILDDIR_MINGW/host-libs/usr \
-            --with-gmp=$BUILDDIR_MINGW/host-libs/usr \
-            --with-mpfr=$BUILDDIR_MINGW/host-libs/usr \
-            --with-system-gdbinit=$INSTALLDIR_MINGW/$HOST_MINGW/arm-none-eabi/lib/gdbinit \
+            "--with-libexpat-prefix=$BUILDDIR_MINGW/host-libs/usr" \
+            "--with-libiconv-prefix=$BUILDDIR_MINGW/host-libs/usr" \
+            "--with-gmp=$BUILDDIR_MINGW/host-libs/usr" \
+            "--with-mpfr=$BUILDDIR_MINGW/host-libs/usr" \
+            "--with-system-gdbinit=$INSTALLDIR_MINGW/$HOST_MINGW/arm-none-eabi/lib/gdbinit" \
             '--with-gdb-datadir='\''${prefix}'\''/arm-none-eabi/share/gdb' \
             "--with-pkgversion=$PKGVERSION"
 
-        make -j$JOBS
+        make -j"$JOBS"
 
         make install
         if [ "$skip_manual" != "yes" ]; then
             make install-html install-pdf
-            rm -v $INSTALLDIR_MINGW_DOC/html/gdb/qMemTags.html
+            rm -v "$INSTALLDIR_MINGW_DOC/html/gdb/qMemTags.html"
         fi
 
         restoreenv
@@ -498,31 +498,31 @@ if [ "$skip_mingw32" != "yes" ] ; then
     fi
 
     echo "Task [IV-5] /$HOST_MINGW/pretidy/" | tee -a "$BUILDDIR_MINGW/.stage"
-    pushd $INSTALLDIR_MINGW
+    pushd "$INSTALLDIR_MINGW"
     rm -rf ./lib/libiberty.a
-    rm -rf $INSTALLDIR_MINGW_DOC/info
-    rm -rf $INSTALLDIR_MINGW_DOC/man
+    rm -rf "$INSTALLDIR_MINGW_DOC/info"
+    rm -rf "$INSTALLDIR_MINGW_DOC/man"
 
-    find $INSTALLDIR_MINGW -name '*.la' -exec rm '{}' ';'
+    find "$INSTALLDIR_MINGW" -name '*.la' -exec rm '{}' ';'
 
     echo "Task [IV-6] /Validate executables/"
-    $SRCDIR/liblongpath-win32/helper.py --validate $INSTALLDIR_MINGW  --triplet $HOST_MINGW_TOOL
+    "$SRCDIR/liblongpath-win32/helper.py" --validate "$INSTALLDIR_MINGW"  --triplet "$HOST_MINGW_TOOL"
 
     echo "Task [IV-6] /$HOST_MINGW/strip_host_objects/" | tee -a "$BUILDDIR_MINGW/.stage"
-    STRIP_BINARIES=$(find $INSTALLDIR_MINGW/bin/ -name arm-none-eabi-\*.exe)
+    STRIP_BINARIES=$(find "$INSTALLDIR_MINGW/bin/" -name 'arm-none-eabi-*.exe')
     if [ "$is_debug_build" == "no" ] ; then
         for bin in $STRIP_BINARIES ; do
-            strip_binary $HOST_MINGW_TOOL-strip $bin
+            strip_binary "$HOST_MINGW_TOOL-strip" "$bin"
         done
 
-        STRIP_BINARIES=$(find $INSTALLDIR_MINGW/arm-none-eabi/bin/ -maxdepth 1 -mindepth 1 -name \*.exe)
+        STRIP_BINARIES=$(find "$INSTALLDIR_MINGW/arm-none-eabi/bin/" -maxdepth 1 -mindepth 1 -name '*.exe')
         for bin in $STRIP_BINARIES ; do
-            strip_binary $HOST_MINGW_TOOL-strip $bin
+            strip_binary "$HOST_MINGW_TOOL-strip" "$bin"
         done
 
-        STRIP_BINARIES=$(find $INSTALLDIR_MINGW/lib/gcc/arm-none-eabi/$GCC_VER/ -name \*.exe)
+        STRIP_BINARIES=$(find "$INSTALLDIR_MINGW/lib/gcc/arm-none-eabi/$GCC_VER/" -name '*.exe')
         for bin in $STRIP_BINARIES ; do
-            strip_binary $HOST_MINGW_TOOL-strip $bin
+            strip_binary "$HOST_MINGW_TOOL-strip" "$bin"
         done
     fi
 
