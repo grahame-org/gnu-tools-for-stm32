@@ -221,9 +221,9 @@ if [ "$skip_native_build" != "yes" ] ; then
     if stage_is_skipped "gcc-final"; then
         echo "Skipping stage: specs (depends on gcc-final)"
     elif [ -x "$INSTALLDIR_NATIVE/bin/arm-none-eabi-gcc" ]; then
-        pushd $BUILDDIR_NATIVE
-        $INSTALLDIR_NATIVE/bin/arm-none-eabi-gcc -print-multi-lib | cut -d';' -f 1 | while read dir; do
-          cp -v $SRCDIR/specs/{nano_c_standard_cpp,standard_c_nano_cpp}.specs $INSTALLDIR_NATIVE/arm-none-eabi/lib/$dir/
+        pushd "$BUILDDIR_NATIVE"
+        "$INSTALLDIR_NATIVE/bin/arm-none-eabi-gcc" -print-multi-lib | cut -d';' -f 1 | while read -r dir; do
+          cp -v "$SRCDIR/specs/"{nano_c_standard_cpp,standard_c_nano_cpp}.specs "$INSTALLDIR_NATIVE/arm-none-eabi/lib/$dir/"
         done
         popd
     fi
@@ -236,16 +236,16 @@ if [ "$skip_native_build" != "yes" ] ; then
     echo "Task [III-12] /$HOST_NATIVE/package_tbz2/" | tee -a "$BUILDDIR_NATIVE/.stage"
 
     # Copy release.txt into share.
-    mkdir -p $INSTALLDIR_NATIVE_DOC
-    cp $ROOT/$LICENSE_FILE $INSTALLDIR_NATIVE_DOC/
+    mkdir -p "$INSTALLDIR_NATIVE_DOC"
+    cp "$ROOT/$LICENSE_FILE" "$INSTALLDIR_NATIVE_DOC/"
 
     # Cleanup any pre-existing state.
-    rm -f $PACKAGEDIR/$PACKAGE_NAME_NATIVE.tar.bz2
-    rm -f $BUILDDIR_NATIVE/$INSTALL_PACKAGE_NAME
+    rm -f "$PACKAGEDIR/$PACKAGE_NAME_NATIVE.tar.bz2"
+    rm -f "$BUILDDIR_NATIVE/$INSTALL_PACKAGE_NAME"
 
     # Start making the package.
-    pushd $BUILDDIR_NATIVE
-    ln -s $INSTALLDIR_NATIVE $INSTALL_PACKAGE_NAME
+    pushd "$BUILDDIR_NATIVE"
+    ln -s "$INSTALLDIR_NATIVE" "$INSTALL_PACKAGE_NAME"
 
     # Make the package tarball (only include subdirs that exist; some may be
     # absent in partial/per-stage builds, e.g. lib is removed after binutils).
@@ -255,21 +255,21 @@ if [ "$skip_native_build" != "yes" ] ; then
             tar_dirs+=("$INSTALL_PACKAGE_NAME/$_dir")
         fi
     done
-    ${TAR} cjf $PACKAGEDIR/$PACKAGE_NAME_NATIVE.tar.bz2   \
-        --exclude=host-$HOST_NATIVE             \
-        --exclude=host-$HOST_MINGW              \
+    "${TAR}" cjf "$PACKAGEDIR/$PACKAGE_NAME_NATIVE.tar.bz2"   \
+        --exclude="host-$HOST_NATIVE"             \
+        --exclude="host-$HOST_MINGW"              \
         "${tar_dirs[@]}"
 
     # Remove stale links.
-    rm -f $INSTALL_PACKAGE_NAME
+    rm -f "$INSTALL_PACKAGE_NAME"
     popd
 
     # shellcheck disable=SC2154  # set by parse_toolchain_args() in build-toolchain-args.sh
     if [ "$skip_package_bins" != "yes" ]; then
         echo "Task [III-13] /Package toolchain in ST version/"
-        pushd $ROOT
-        time ${TAR} czf $PACKAGEDIR/${PACKAGE_NAME_NATIVE}-build.tar.gz --owner=0 --group=0 build-native/
-        time ${TAR} czf $PACKAGEDIR/${PACKAGE_NAME_NATIVE}-install.tar.gz --owner=0 --group=0 install-native/
+        pushd "$ROOT"
+        time "${TAR}" czf "$PACKAGEDIR/${PACKAGE_NAME_NATIVE}-build.tar.gz" --owner=0 --group=0 build-native/
+        time "${TAR}" czf "$PACKAGEDIR/${PACKAGE_NAME_NATIVE}-install.tar.gz" --owner=0 --group=0 install-native/
         popd
     fi
 
@@ -278,12 +278,12 @@ if [ "$skip_native_build" != "yes" ] ; then
         echo "Task [III-14] /Validate tool dependencies/"
         invalid=()
         # shellcheck disable=SC2046,SC2038
-        while read line; do
+        while read -r line; do
           if objdump -macho --dylibs-used "$line" | grep -q '/usr/local/'; then
             # shellcheck disable=SC2206
             invalid+=($line)
           fi
-        done <<< $(find $INSTALLDIR_NATIVE/ -type f |  xargs file | grep "Mach-O " | cut -d: -f1)
+        done <<< $(find "$INSTALLDIR_NATIVE/" -type f |  xargs file | grep "Mach-O " | cut -d: -f1)
 
         if [ ${#invalid[@]} -ne 0 ]; then
           echo -e "Illegal dependency detected!${invalid[*]/#/\\n}\nAborting..."
