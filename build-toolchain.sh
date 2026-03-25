@@ -88,28 +88,28 @@ fi
 #Building mingw gdb with python support requires python windows package and
 #a special config file. If any of them is missing, we skip the build of
 #mingw gdb with python support.
-if [ ! -d $SRCDIR/$PYTHON_WIN ] \
-     || [ ! -x $script_path/python-config.sh ]; then
+if [ ! -d "$SRCDIR/$PYTHON_WIN" ] \
+     || [ ! -x "$script_path/python-config.sh" ]; then
     skip_mingw32_gdb_with_python=yes
 fi
 
 # shellcheck disable=SC2154  # set by parse_toolchain_args() in build-toolchain-args.sh
 if [ "$skip_native_build" != "yes" ] ; then
-    mkdir -p $BUILDDIR_NATIVE
+    mkdir -p "$BUILDDIR_NATIVE"
     if [ -z "$skip_stages" ]; then
-        rm -rf $INSTALLDIR_NATIVE && mkdir -p $INSTALLDIR_NATIVE
+        rm -rf "$INSTALLDIR_NATIVE" && mkdir -p "$INSTALLDIR_NATIVE"
     else
-        mkdir -p $INSTALLDIR_NATIVE
+        mkdir -p "$INSTALLDIR_NATIVE"
     fi
-    rm -rf $PACKAGEDIR && mkdir -p $PACKAGEDIR
+    rm -rf "$PACKAGEDIR" && mkdir -p "$PACKAGEDIR"
 fi
 
 if [ "$skip_mingw32" != "yes" ] ; then
-    mkdir -p $BUILDDIR_MINGW
-    rm -rf $INSTALLDIR_MINGW && mkdir -p $INSTALLDIR_MINGW
+    mkdir -p "$BUILDDIR_MINGW"
+    rm -rf "$INSTALLDIR_MINGW" && mkdir -p "$INSTALLDIR_MINGW"
 fi
 
-cd $SRCDIR
+cd "$SRCDIR"
 
 if [ "$skip_native_build" != "yes" ] ; then
     if stage_is_skipped "binutils"; then
@@ -155,63 +155,63 @@ if [ "$skip_native_build" != "yes" ] ; then
     fi  # gdb stage
 
     echo "Task [III-8] /$HOST_NATIVE/pretidy/" | tee -a "$BUILDDIR_NATIVE/.stage"
-    rm -rf $INSTALLDIR_NATIVE/lib/libiberty.a
-    find $INSTALLDIR_NATIVE -name '*.la' -exec rm '{}' ';'
+    rm -rf "$INSTALLDIR_NATIVE/lib/libiberty.a"
+    find "$INSTALLDIR_NATIVE" -name '*.la' -exec rm '{}' ';'
 
     echo "Task [III-9] /$HOST_NATIVE/strip_host_objects/" | tee -a "$BUILDDIR_NATIVE/.stage"
     # shellcheck disable=SC2154  # set by parse_toolchain_args() in build-toolchain-args.sh
     if [ "$is_debug_build" == "no" ] ; then
-        STRIP_BINARIES=$(find $INSTALLDIR_NATIVE/bin/ -name arm-none-eabi-\*)
+        STRIP_BINARIES=$(find "$INSTALLDIR_NATIVE/bin/" -name arm-none-eabi-\*)
         for bin in $STRIP_BINARIES ; do
-            strip_binary strip $bin
+            strip_binary strip "$bin"
         done
 
-        STRIP_BINARIES=$(find $INSTALLDIR_NATIVE/arm-none-eabi/bin/ -maxdepth 1 -mindepth 1 -name \*)
+        STRIP_BINARIES=$(find "$INSTALLDIR_NATIVE/arm-none-eabi/bin/" -maxdepth 1 -mindepth 1 -name \*)
         for bin in $STRIP_BINARIES ; do
-            strip_binary strip $bin
+            strip_binary strip "$bin"
         done
 
         if [ -d "$INSTALLDIR_NATIVE/lib/gcc/arm-none-eabi/$GCC_VER" ]; then
             if [ "$BUILD" == "x86_64-apple-darwin10" ]; then
-                STRIP_BINARIES=$(find $INSTALLDIR_NATIVE/lib/gcc/arm-none-eabi/$GCC_VER/ -maxdepth 1 -name \* -perm +111 -and ! -type d)
+                STRIP_BINARIES=$(find "$INSTALLDIR_NATIVE/lib/gcc/arm-none-eabi/$GCC_VER/" -maxdepth 1 -name \* -perm +111 -and ! -type d)
             else
-                STRIP_BINARIES=$(find $INSTALLDIR_NATIVE/lib/gcc/arm-none-eabi/$GCC_VER/ -maxdepth 1 -name \* -perm /111 -and ! -type d)
+                STRIP_BINARIES=$(find "$INSTALLDIR_NATIVE/lib/gcc/arm-none-eabi/$GCC_VER/" -maxdepth 1 -name \* -perm /111 -and ! -type d)
             fi
             for bin in $STRIP_BINARIES ; do
-                strip_binary strip $bin
+                strip_binary strip "$bin"
             done
         fi
     fi
 
     echo "Task [III-10] /$HOST_NATIVE/strip_target_objects/" | tee -a "$BUILDDIR_NATIVE/.stage"
     saveenv
-    prepend_path PATH $INSTALLDIR_NATIVE/bin
+    prepend_path PATH "$INSTALLDIR_NATIVE/bin"
 
     # shellcheck disable=SC2154  # set by parse_toolchain_args() in build-toolchain-args.sh
     if [ "$skip_strip_target_libraries" == "no" ] ; then
-        TARGET_LIBRARIES=$(find $INSTALLDIR_NATIVE/arm-none-eabi/lib -name libg.a -or -name libg_nano.a)
+        TARGET_LIBRARIES=$(find "$INSTALLDIR_NATIVE/arm-none-eabi/lib" -name libg.a -or -name libg_nano.a)
         for target_lib in $TARGET_LIBRARIES ; do
             break_hardlink "$target_lib"
         done
-        TARGET_LIBRARIES=$(find $INSTALLDIR_NATIVE/arm-none-eabi/lib -name \*.a ! -name libg.a ! -name libg_nano.a)
+        TARGET_LIBRARIES=$(find "$INSTALLDIR_NATIVE/arm-none-eabi/lib" -name \*.a ! -name libg.a ! -name libg_nano.a)
         for target_lib in $TARGET_LIBRARIES ; do
-            arm-none-eabi-strip --remove-section=.comment --remove-section=.note --strip-debug --enable-deterministic-archives --keep-section=.debug_frame $target_lib || true
+            arm-none-eabi-strip --remove-section=.comment --remove-section=.note --strip-debug --enable-deterministic-archives --keep-section=.debug_frame "$target_lib" || true
         done
 
-        TARGET_OBJECTS=$(find $INSTALLDIR_NATIVE/arm-none-eabi/lib -name \*.o)
+        TARGET_OBJECTS=$(find "$INSTALLDIR_NATIVE/arm-none-eabi/lib" -name \*.o)
         for target_obj in $TARGET_OBJECTS ; do
-            arm-none-eabi-strip --remove-section=.comment --remove-section=.note --strip-debug --enable-deterministic-archives --keep-section=.debug_frame $target_obj || true
+            arm-none-eabi-strip --remove-section=.comment --remove-section=.note --strip-debug --enable-deterministic-archives --keep-section=.debug_frame "$target_obj" || true
         done
 
         if [ -d "$INSTALLDIR_NATIVE/lib/gcc/arm-none-eabi/$GCC_VER" ]; then
-            TARGET_LIBRARIES=$(find $INSTALLDIR_NATIVE/lib/gcc/arm-none-eabi/$GCC_VER -name \*.a)
+            TARGET_LIBRARIES=$(find "$INSTALLDIR_NATIVE/lib/gcc/arm-none-eabi/$GCC_VER" -name \*.a)
             for target_lib in $TARGET_LIBRARIES ; do
-                arm-none-eabi-strip --remove-section=.comment --remove-section=.note --strip-debug --enable-deterministic-archives --keep-section=.debug_frame $target_lib || true
+                arm-none-eabi-strip --remove-section=.comment --remove-section=.note --strip-debug --enable-deterministic-archives --keep-section=.debug_frame "$target_lib" || true
             done
 
-            TARGET_OBJECTS=$(find $INSTALLDIR_NATIVE/lib/gcc/arm-none-eabi/$GCC_VER -name \*.o)
+            TARGET_OBJECTS=$(find "$INSTALLDIR_NATIVE/lib/gcc/arm-none-eabi/$GCC_VER" -name \*.o)
             for target_obj in $TARGET_OBJECTS ; do
-                arm-none-eabi-strip --remove-section=.comment --remove-section=.note --strip-debug --enable-deterministic-archives --keep-section=.debug_frame $target_obj || true
+                arm-none-eabi-strip --remove-section=.comment --remove-section=.note --strip-debug --enable-deterministic-archives --keep-section=.debug_frame "$target_obj" || true
             done
         fi
     fi
