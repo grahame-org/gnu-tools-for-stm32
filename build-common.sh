@@ -62,18 +62,16 @@ copy_dir_clean() {
 # Create source package excluding source control information
 #   parameter 1: base dir of the source tree
 #   parameter 2: dirname of the source tree
-#   parameter 3: target package name
-#   parameter 4-10: additional excluding
+#   parameter 3: output archive path (including filename)
+#   parameter 4+: additional --exclude arguments (optional, any number)
 # This function will create bz2 package for files under param1/param2,
-# excluding unnecessary parts, and create package named param2.
+# excluding unnecessary parts, and write the package to the path given in param3.
 pack_dir_clean() {
-    set +u
     tar cjfh "$3" \
         --exclude=CVS --exclude=.svn --exclude=.git --exclude=.pc \
         --exclude="*~" --exclude=".#*" \
-        --exclude="*.orig" --exclude="*.rej" ${4:+"$4"} ${5:+"$5"} ${6:+"$6"} ${7:+"$7"} ${8:+"$8"} ${9:+"$9"} ${10:+"${10}"} \
+        --exclude="*.orig" --exclude="*.rej" "${@:4}" \
         -C "$1" "$2"
-    set -u
 }
 
 # Clean all global shell variables except for those needed by build scripts
