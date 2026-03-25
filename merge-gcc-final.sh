@@ -162,7 +162,9 @@ if [ -z "$gcc_final_build_dir" ]; then
     gcc_final_build_dir="${script_path}/build-native/gcc-final"
 fi
 
-# Refuse to operate if output-dir coincides with either input.
+# Refuse to operate if output-dir coincides with, or is contained inside,
+# either input directory.  Such configurations would corrupt the source tree
+# while it is being read (tar traversing its own destination).
 mkdir -p "$output_dir"
 output_dir=$(cd "$output_dir" && pwd -P)
 
@@ -170,6 +172,23 @@ output_dir=$(cd "$output_dir" && pwd -P)
     _die "output-dir must not be the same as rmprofile-dir"
 [ "$output_dir" != "$aprofile_dir" ] || \
     _die "output-dir must not be the same as aprofile-dir"
+
+# Reject when output-dir is nested inside either input dir.
+case "$output_dir/" in
+    "$rmprofile_dir"/*)
+        _die "output-dir must not be inside rmprofile-dir" ;;
+    "$aprofile_dir"/*)
+        _die "output-dir must not be inside aprofile-dir" ;;
+esac
+
+# Ensure output-dir is empty so that a re-run does not leave stale files from
+# a previous invocation.  We clean by removing the contents rather than the
+# directory itself so that any bind-mounts or directory metadata set by the
+# caller are preserved.
+if [ -n "$(ls -A "$output_dir" 2>/dev/null)" ]; then
+    echo "merge-gcc-final: output-dir is non-empty; removing contents before merge"
+    find "$output_dir" -mindepth 1 -delete
+fi
 
 set -x
 
@@ -185,9 +204,7 @@ echo "merge-gcc-final: Step 1 – copying rmprofile tree to output-dir"
 #
 # aprofile uniquely contributes Cortex-A multilib variants located under
 # arm-none-eabi/lib/thumb/.  We overlay every directory whose name starts
-# with "armv7-a" or "armv8-a" from the aprofile tree, together with any
-# non-multilib files at the arm-none-eabi/lib/ top level that rmprofile does
-# not already provide (e.g. Cortex-A crt objects).
+# with "armv7-a" or "armv8-a" from the aprofile tree.
 #
 # We deliberately do NOT overlay:
 #   - Compiler binaries  (bin/)
