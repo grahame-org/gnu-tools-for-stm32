@@ -31,15 +31,15 @@ set -x
 set -u
 set -o pipefail
 
+# shellcheck disable=SC2016 # intentional: single quotes defer expansion to trace-print time
 PS4='+$(date -u +%Y-%m-%d:%H:%M:%S) (${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
 
 umask 022
 
 exec < /dev/null
 
-# shellcheck disable=SC2046
-script_path=$(cd $(dirname $0) && pwd -P)
-. $script_path/build-common.sh
+script_path=$(cd "$(dirname "$0")" && pwd -P)
+. "$script_path/build-common.sh"
 
 # This file contains the sequence of commands used to build the
 # GNU Tools Arm Embedded toolchain.
@@ -236,6 +236,7 @@ if [ "$skip_native_build" != "yes" ] ; then
     echo "Task [III-12] /$HOST_NATIVE/package_tbz2/" | tee -a "$BUILDDIR_NATIVE/.stage"
 
     # Copy release.txt into share.
+    mkdir -p $INSTALLDIR_NATIVE_DOC
     cp $ROOT/$LICENSE_FILE $INSTALLDIR_NATIVE_DOC/
 
     # Cleanup any pre-existing state.
@@ -450,6 +451,7 @@ if [ "$skip_mingw32" != "yes" ] ; then
         saveenvvar LDFLAGS "-L$BUILDDIR_MINGW/host-libs/zlib/lib -Wl,/usr/$HOST_MINGW/lib/CRT_glob.o"
         saveenvvar LDFLAGS_WRAP_FILEIO "@$BUILDDIR_MINGW/liblongpath-win32/gcc/exe.inputs"
         saveenvvar LDFLAGS_DLLWRAP_FILEIO "@$BUILDDIR_MINGW/liblongpath-win32/gcc/dll.inputs"
+        # shellcheck disable=SC2016
         $SRCDIR/$GDB/configure --build=$BUILD \
             --host=$HOST_MINGW \
             --target=$TARGET \
@@ -528,6 +530,7 @@ if [ "$skip_mingw32" != "yes" ] ; then
     rm -f $PACKAGEDIR/$PACKAGE_NAME_MINGW.exe
     pushd $BUILDDIR_MINGW
     rm -f $INSTALL_PACKAGE_NAME
+    mkdir -p $INSTALLDIR_MINGW_DOC
     cp $ROOT/$LICENSE_FILE $INSTALLDIR_MINGW_DOC/
     flip -m -b $INSTALLDIR_MINGW_DOC/$LICENSE_FILE
     rm -rf $INSTALLDIR_MINGW/include

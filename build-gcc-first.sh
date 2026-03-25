@@ -46,16 +46,16 @@ set -x
 set -u
 set -o pipefail
 
+# shellcheck disable=SC2016 # intentional: single quotes defer expansion to trace-print time
 PS4='+$(date -u +%Y-%m-%d:%H:%M:%S) (${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
 
 umask 022
 
 exec < /dev/null
 
-# shellcheck disable=SC2046
-script_path=$(cd $(dirname $0) && pwd -P)
+script_path=$(cd "$(dirname "$0")" && pwd -P)
 cd "$script_path"
-. $script_path/build-common.sh
+. "$script_path/build-common.sh"
 
 . "$script_path/build-toolchain-args.sh"
 parse_toolchain_args "$@"
@@ -73,24 +73,25 @@ if [ "x$is_ppa_release" != "xyes" ]; then
 fi
 
 if [ "x$skip_native_build" != "xyes" ] ; then
-    mkdir -p $BUILDDIR_NATIVE
-    mkdir -p $INSTALLDIR_NATIVE
-    mkdir -p $PACKAGEDIR
+    mkdir -p "$BUILDDIR_NATIVE"
+    mkdir -p "$INSTALLDIR_NATIVE"
+    mkdir -p "$PACKAGEDIR"
 fi
 
-cd $SRCDIR
+cd "$SRCDIR"
 
 if [ "x$skip_native_build" != "xyes" ] ; then
-    echo Task [III-1] /$HOST_NATIVE/gcc-first/ | tee -a "$BUILDDIR_NATIVE/.stage"
-    rm -rf $BUILDDIR_NATIVE/gcc-first && mkdir -p $BUILDDIR_NATIVE/gcc-first
-    pushd $BUILDDIR_NATIVE/gcc-first
-    $SRCDIR/$GCC/configure --target=$TARGET \
-        --prefix=$INSTALLDIR_NATIVE \
-        --libexecdir=$INSTALLDIR_NATIVE/lib \
-        --infodir=$INSTALLDIR_NATIVE_DOC/info \
-        --mandir=$INSTALLDIR_NATIVE_DOC/man \
-        --htmldir=$INSTALLDIR_NATIVE_DOC/html \
-        --pdfdir=$INSTALLDIR_NATIVE_DOC/pdf \
+    echo "Task [III-1] /$HOST_NATIVE/gcc-first/" | tee -a "$BUILDDIR_NATIVE/.stage"
+    rm -rf "$BUILDDIR_NATIVE/gcc-first" && mkdir -p "$BUILDDIR_NATIVE/gcc-first"
+    pushd "$BUILDDIR_NATIVE/gcc-first"
+    # shellcheck disable=SC2086 # GCC_CONFIG_OPTS is an intentionally word-split list of configure flags
+    "$SRCDIR/$GCC/configure" --target="$TARGET" \
+        --prefix="$INSTALLDIR_NATIVE" \
+        --libexecdir="$INSTALLDIR_NATIVE/lib" \
+        --infodir="$INSTALLDIR_NATIVE_DOC/info" \
+        --mandir="$INSTALLDIR_NATIVE_DOC/man" \
+        --htmldir="$INSTALLDIR_NATIVE_DOC/html" \
+        --pdfdir="$INSTALLDIR_NATIVE_DOC/pdf" \
         --enable-checking=release \
         --enable-languages=c \
         --disable-decimal-float \
@@ -111,20 +112,20 @@ if [ "x$skip_native_build" != "xyes" ] ; then
         --with-gnu-as \
         --with-gnu-ld \
         --with-python-dir=share/gcc-arm-none-eabi \
-        --with-sysroot=$INSTALLDIR_NATIVE/arm-none-eabi \
+        --with-sysroot="$INSTALLDIR_NATIVE/arm-none-eabi" \
         --with-zstd=no \
         ${GCC_CONFIG_OPTS}                              \
         "${GCC_CONFIG_OPTS_LCPP}"                              \
         "--with-pkgversion=$PKGVERSION" \
-        ${MULTILIB_LIST}
+        "${MULTILIB_LIST}"
 
-    make -j$JOBS CXXFLAGS="$BUILD_OPTIONS" all-gcc
+    make -j"$JOBS" CXXFLAGS="$BUILD_OPTIONS" all-gcc
 
     make install-gcc
 
     popd
 
-    pushd $INSTALLDIR_NATIVE
+    pushd "$INSTALLDIR_NATIVE"
     rm -rf bin/arm-none-eabi-gccbug
     rm -rf ./lib/libiberty.a
     rm -rf  include

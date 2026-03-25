@@ -8,42 +8,13 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
+# shellcheck source=test-helpers.sh
+. "$SCRIPT_DIR/test-helpers.sh"
+
 # Source build-toolchain-args.sh to get parse_toolchain_args() and
 # _toolchain_usage().  This does NOT trigger any build steps.
 # shellcheck source=../build-toolchain-args.sh
 . "$REPO_ROOT/build-toolchain-args.sh"
-
-# ---------------------------------------------------------------------------
-# Minimal test harness (same pattern as test-build-common.sh)
-# ---------------------------------------------------------------------------
-
-_PASS=0
-_FAIL=0
-
-assert_eq() {
-    local desc="$1" expected="$2" actual="$3"
-    if [ "$expected" = "$actual" ]; then
-        _PASS=$((_PASS + 1))
-        echo "  PASS: $desc"
-    else
-        _FAIL=$((_FAIL + 1))
-        echo "  FAIL: $desc"
-        echo "        expected: [$expected]"
-        echo "        actual:   [$actual]"
-    fi
-}
-
-assert_nonzero_exit() {
-    local desc="$1"
-    shift
-    if "$@" 2>/dev/null; then
-        _FAIL=$((_FAIL + 1))
-        echo "  FAIL: $desc (expected non-zero exit)"
-    else
-        _PASS=$((_PASS + 1))
-        echo "  PASS: $desc"
-    fi
-}
 
 # ---------------------------------------------------------------------------
 # Test group 1: --skip_steps parsing
@@ -183,6 +154,10 @@ parse_toolchain_args --with-multilib-list=rmprofile,aprofile
 assert_eq "--with-multilib-list=rmprofile,aprofile preserves comma" \
     "--with-multilib-list=rmprofile,aprofile" "$MULTILIB_LIST"
 
+parse_toolchain_args --with-multilib-list=aprofile
+assert_eq "--with-multilib-list=aprofile (single profile) sets MULTILIB_LIST" \
+    "--with-multilib-list=aprofile" "$MULTILIB_LIST"
+
 # ---------------------------------------------------------------------------
 # Test group 6: multiple flags combined
 # ---------------------------------------------------------------------------
@@ -295,9 +270,4 @@ assert_eq "ppa build keeps skip_mingw32_gdb_with_python=yes" "yes" "$skip_mingw3
 # Summary
 # ---------------------------------------------------------------------------
 
-echo ""
-echo "Results: $_PASS passed, $_FAIL failed"
-
-if [ $_FAIL -ne 0 ]; then
-    exit 1
-fi
+print_test_results

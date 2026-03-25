@@ -25,6 +25,9 @@
 >
 > Common types: `feat`, `fix`, `docs`, `chore`, `refactor`, `test`, `ci`, `build`, `perf`, `style`, `revert`
 >
+> [!NOTE]
+> description **must not** start with uppercase letter
+> 
 > Examples: `feat: add ARMv8-M support`, `fix: correct stack calculation`, `docs: update build instructions`
 >
 > Individual commits **within** the PR do **not** need to follow this format.

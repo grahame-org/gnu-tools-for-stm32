@@ -68,11 +68,11 @@ copy_dir_clean() {
 # excluding unnecessary parts, and create package named param2.
 pack_dir_clean() {
     set +u
-    tar cjfh $3 \
+    tar cjfh "$3" \
         --exclude=CVS --exclude=.svn --exclude=.git --exclude=.pc \
         --exclude="*~" --exclude=".#*" \
-        --exclude="*.orig" --exclude="*.rej" $4 $5 $6 $7 $8 $9 ${10} \
-        -C $1 $2
+        --exclude="*.orig" --exclude="*.rej" ${4:+"$4"} ${5:+"$5"} ${6:+"$6"} ${7:+"$7"} ${8:+"$8"} ${9:+"$9"} ${10:+"${10}"} \
+        -C "$1" "$2"
     set -u
 }
 
@@ -109,7 +109,8 @@ clean_env () {
 saveenv () {
     set +u
     # Force expr return 0 to avoid script fail
-    stack_level=$(expr $stack_level \+ 1 || true)
+    stack_level=$(expr "$stack_level" \+ 1 || true)
+    # shellcheck disable=SC2086 # $stack_level is an integer forming a dynamic variable name in eval
     eval stack_list_$stack_level=
     set -u
 }
@@ -121,29 +122,31 @@ saveenv () {
 # $2: new variable value
 saveenvvar () {
     set +u
-    if [ $stack_level -le 0 ]; then
+    if [ "$stack_level" -le 0 ]; then
         error Must call saveenv before calling saveenvvar
     fi
     local varname="$1"
     local newval="$2"
-    # shellcheck disable=SC1083 # \${$varname} intentionally uses literal braces: eval resolves the dynamic variable name at runtime
+    # shellcheck disable=SC1083,SC2086 # \${$varname} uses literal braces for eval dynamic variable lookup; $varname is a shell identifier (no word-splitting risk)
     eval local oldval=\"\${$varname}\"
-    # shellcheck disable=SC1083 # \${level_saved_…} intentionally uses literal braces: eval resolves the dynamic variable name at runtime
+    # shellcheck disable=SC1083,SC2086 # \${level_saved_…} uses literal braces for eval dynamic variable lookup; $stack_level/$varname are integer/identifier (no word-splitting risk)
     eval local saved=\"\${level_saved_${stack_level}_${varname}}\"
     # shellcheck disable=SC2154
     if [ "$saved" = "" ]; then
         # The variable wasn't saved in the level before. Save it
-        # shellcheck disable=SC1083 # \${stack_list_…} intentionally uses literal braces: eval resolves the dynamic variable name at runtime
+        # shellcheck disable=SC1083,SC2086 # \${stack_list_…} uses literal braces for eval dynamic variable lookup; $stack_level is an integer (no word-splitting risk)
         eval local temp=\"\${stack_list_$stack_level}\"
-        # shellcheck disable=SC2154
+        # shellcheck disable=SC2086,SC2154 # $stack_level/$varname/$temp build a dynamic variable name and space-separated list in eval; all are safe identifiers/integers
         eval stack_list_$stack_level=\"$varname $temp\"
-        # shellcheck disable=SC2154
+        # shellcheck disable=SC2154,SC2086 # $stack_level/$varname build a dynamic variable name in eval; both are safe integer/identifier values
         eval save_level_${stack_level}_$varname=\"$oldval\"
+        # shellcheck disable=SC2086 # $stack_level/$varname build a dynamic variable name in eval; both are safe integer/identifier values
         eval level_saved_${stack_level}_$varname="yes"
-        # shellcheck disable=SC1083 # \${$varname+set} intentionally uses literal braces: eval resolves the dynamic variable name and +set modifier at runtime
+        # shellcheck disable=SC1083,SC2086 # \${$varname+set} uses literal braces for eval dynamic variable lookup; $stack_level/$varname are integer/identifier (no word-splitting risk)
         eval level_preset_${stack_level}_${varname}=\"\${$varname+set}\"
         #echo Save $varname: \"$oldval\"
     fi
+    # shellcheck disable=SC2086 # $varname/$newval form a dynamic export in eval; $varname is a shell identifier (no word-splitting risk)
     eval export $varname=\"$newval\"
     #echo $varname set to \"$newval\"
     set -u
@@ -152,34 +155,36 @@ saveenvvar () {
 # Restore all variables that have been saved in current stack level
 restoreenv () {
     set +u
-    if [ $stack_level -le 0 ]; then
+    if [ "$stack_level" -le 0 ]; then
         error "Trying to restore from an empty stack"
     fi
 
-    # shellcheck disable=SC1083 # \${stack_list_…} intentionally uses literal braces: eval resolves the dynamic variable name at runtime
+    # shellcheck disable=SC1083,SC2086 # \${stack_list_…} uses literal braces for eval dynamic variable lookup; $stack_level is an integer (no word-splitting risk)
     eval local list=\"\${stack_list_$stack_level}\"
     local varname
     # shellcheck disable=SC2154
     for varname in $list; do
-        # shellcheck disable=SC1083 # \${level_preset_…} intentionally uses literal braces: eval resolves the dynamic variable name at runtime
+        # shellcheck disable=SC1083,SC2086 # \${level_preset_…} uses literal braces for eval dynamic variable lookup; $stack_level/$varname are integer/identifier (no word-splitting risk)
         eval local varname_preset=\"\${level_preset_${stack_level}_${varname}}\"
         # shellcheck disable=SC2154
         if [ "$varname_preset" = "set" ] ; then
-            # shellcheck disable=SC1083 # \${save_level_…} intentionally uses literal braces: eval resolves the dynamic variable name at runtime
+            # shellcheck disable=SC1083,SC2086 # \${save_level_…} uses literal braces for eval dynamic variable lookup; $varname/$stack_level are identifier/integer (no word-splitting risk)
             eval $varname=\"\${save_level_${stack_level}_$varname}\"
         else
-            unset $varname
+            unset "$varname"
         fi
+        # shellcheck disable=SC2086 # $stack_level/$varname build a dynamic variable name in eval; both are safe integer/identifier values
         eval level_saved_${stack_level}_$varname=
         # eval echo $varname restore to \\\"\"\${$varname}\"\\\"
     done
     # Force expr return 0 to avoid script fail
-    stack_level=$(expr $stack_level \- 1 || true)
+    stack_level=$(expr "$stack_level" \- 1 || true)
     set -u
 }
 
 prependenvvar() {
     set +u
+    # shellcheck disable=SC2086 # \$$1 is an indirect variable reference in eval; $1 is a shell identifier (no word-splitting risk)
     eval local oldval=\"\$$1\"
     saveenvvar "$1" "$2$oldval"
     set -u
@@ -230,9 +235,8 @@ strip_binary() {
     local strip="$1"
     local bin="$2"
 
-    file $bin | grep -q -e "\bELF\b" -e "\bPE\b" -e "\bPE32\b" -e "\bMach-O\b"
-    if [ $? -eq 0 ]; then
-        $strip $bin 2>/dev/null || true
+    if file "$bin" | grep -q -e "\bELF\b" -e "\bPE\b" -e "\bPE32\b" -e "\bMach-O\b"; then
+        "$strip" "$bin" 2>/dev/null || true
     fi
 
     set -e
@@ -280,13 +284,20 @@ ROOT=$(pwd)
 SRCDIR=$ROOT/src
 
 BUILDDIR_NATIVE=$ROOT/build-native
+export BUILDDIR_NATIVE
 BUILDDIR_MINGW=$ROOT/build-mingw
+export BUILDDIR_MINGW
 INSTALLDIR_NATIVE=$ROOT/install-native
+export INSTALLDIR_NATIVE
 INSTALLDIR_NATIVE_DOC=$ROOT/install-native/share/doc/gcc-arm-none-eabi
+export INSTALLDIR_NATIVE_DOC
 INSTALLDIR_MINGW=$ROOT/install-mingw
+export INSTALLDIR_MINGW
 INSTALLDIR_MINGW_DOC=$ROOT/install-mingw/share/doc/gcc-arm-none-eabi
+export INSTALLDIR_MINGW_DOC
 
 PACKAGEDIR=$ROOT/pkg
+export PACKAGEDIR
 
 GMP_VER=6.2.1
 export GMP_VER
@@ -303,10 +314,14 @@ ZLIB_VER=1.2.12
 PYTHON_WIN_VER=2.7.13
 
 BINUTILS=binutils
+export BINUTILS
 GCC=gcc
 NEWLIB=newlib
+export NEWLIB
 NEWLIB_NANO=newlib
+export NEWLIB_NANO
 GDB=gdb
+export GDB
 GMP=gmp
 MPFR=mpfr
 MPC=mpc
@@ -342,6 +357,7 @@ export ZLIB_URL
 PYTHON_WIN_URL=https://www.python.org/ftp/python/$PYTHON_WIN_VER/$PYTHON_WIN_PACK
 export PYTHON_WIN_URL
 
+# shellcheck disable=SC2034  # consumed by build-toolchain.sh
 TAR=tar
 # Set variables according to real environment to make this script can run
 # on Ubuntu and Mac OS X.
@@ -350,24 +366,26 @@ host_arch=$(uname -m | sed 'y/XI/xi/')
 if [ "$uname_string" == "linux" ] ; then
     BUILD="$host_arch"-linux-gnu
     HOST_NATIVE="$host_arch"-linux-gnu
-    READLINK=readlink
+    # shellcheck disable=SC2034  # consumed by build-toolchain.sh and build-prerequisites.sh
     JOBS=$(grep ^processor /proc/cpuinfo|wc -l)
+    # shellcheck disable=SC2034  # consumed by build-gcc-first.sh, build-gcc-final.sh, build-gcc-size-libstdcxx.sh
     GCC_CONFIG_OPTS_LCPP="--with-host-libstdcxx=-static-libgcc -Wl,-Bstatic,-lstdc++,-Bdynamic -lm"
+    # shellcheck disable=SC2034  # consumed by build-toolchain.sh
     MD5="md5sum -b"
     PACKAGE_NAME_SUFFIX="${host_arch}-linux"
-    WGET="wget -q"
 elif [ "$uname_string" == "darwin" ] ; then
     BUILD=x86_64-apple-darwin10
     HOST_NATIVE=x86_64-apple-darwin10
-    READLINK=greadlink
     # Disable parallel build for mac as we will randomly run into "Permission denied" issue.
     #JOBS=`sysctl -n hw.ncpu`
+    # shellcheck disable=SC2034  # consumed by build-toolchain.sh and build-prerequisites.sh
     JOBS=1
+    # shellcheck disable=SC2034  # consumed by build-gcc-first.sh, build-gcc-final.sh, build-gcc-size-libstdcxx.sh
     GCC_CONFIG_OPTS_LCPP="--with-host-libstdcxx=-static-libgcc -Wl,-lstdc++ -lm"
+    # shellcheck disable=SC2034  # consumed by build-toolchain.sh
     MD5="md5 -r"
     PACKAGE_NAME_SUFFIX=mac-$(sw_vers -productVersion)
-    #Redefine wget command to curl as MacOS does not have wget by default
-    WGET="curl -OLs"
+    # shellcheck disable=SC2034  # consumed by build-toolchain.sh
     TAR=gtar
 else
     error "Unsupported build system : $uname_string"
@@ -380,8 +398,10 @@ PREREQS="$SRC_PREREQS"
 if [ "$BUILD" != "x86_64-apple-darwin10" ]; then
     PREREQS="$SRC_PREREQS $WIN_PREREQS"
 fi
+# PREREQS is assigned for documentation; consuming scripts iterate SRC_PREREQS directly
+: "$PREREQS"
 
-SCRIPT=$(basename $0)
+SCRIPT=$(basename "$0")
 
 RELEASEDATE=20230728
 RELEASEVER=Rel1
@@ -395,18 +415,12 @@ if [[ "${SCRIPT%%-*}" = "build" || "${SCRIPT#*_*}" = "build" ]]; then
     stack_level=0
 
     LICENSE_FILE=license.txt
-    GCC_VER=$(cat $SRCDIR/$GCC/gcc/BASE-VER)
-    GCC_VER_DISPLAY=$(cut -d'.' -f1,2 $SRCDIR/$GCC/gcc/BASE-VER)
+    GCC_VER=$(cat "$SRCDIR/$GCC/gcc/BASE-VER")
+    GCC_VER_DISPLAY=$(cut -d'.' -f1,2 "$SRCDIR/$GCC/gcc/BASE-VER")
     STM32_TOOLS_VER=$(git describe --tags 2>/dev/null || echo "$GCC_VER_DISPLAY-$RELEASEVER~$(git rev-parse --verify HEAD)")
 
-    # sed -r doesn't exist in Darwin
-    if [[ $(uname -s) == "Darwin" ]]
-    then
-        SEDOPTION='-E'
-    else
-        SEDOPTION='-r'
-    fi
     HOST_MINGW=x86_64-w64-mingw32
+    # shellcheck disable=SC2034  # consumed by build-toolchain.sh and build-prerequisites.sh
     HOST_MINGW_TOOL=x86_64-w64-mingw32
     TARGET=arm-none-eabi
     ENV_CFLAGS=
