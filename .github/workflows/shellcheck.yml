@@ -29,6 +29,7 @@ jobs:
               - 'build-binutils.sh'
               - 'build-cache-budget-check.sh'
               - 'build-common.sh'
+              - 'build-gcc-final.sh'
               - 'build-gcc-first.sh'
               - 'build-newlib.sh'
               - 'build-newlib-nano.sh'
@@ -61,6 +62,7 @@ jobs:
           shellcheck --severity=warning \
           build-binutils.sh \
           build-common.sh \
+          build-gcc-final.sh \
           build-gcc-first.sh \
           build-newlib.sh \
           build-newlib-nano.sh \
