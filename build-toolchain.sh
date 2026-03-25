@@ -349,43 +349,43 @@ if [ "$skip_mingw32" != "yes" ] ; then
     restoreenv
     popd
 
-    pushd $INSTALLDIR_MINGW
+    pushd "$INSTALLDIR_MINGW"
     rm -rf ./lib
     popd
 
     echo "Task [IV-2] /$HOST_MINGW/copy_libs/" | tee -a "$BUILDDIR_MINGW/.stage"
     if [ "$skip_manual" != "yes" ]; then
-        copy_dir $BUILDDIR_MINGW/tools-$OBJ_SUFFIX_NATIVE/share/doc/gcc-arm-none-eabi/html $INSTALLDIR_MINGW_DOC/html
-        copy_dir $BUILDDIR_MINGW/tools-$OBJ_SUFFIX_NATIVE/share/doc/gcc-arm-none-eabi/pdf $INSTALLDIR_MINGW_DOC/pdf
+        copy_dir "$BUILDDIR_MINGW/tools-$OBJ_SUFFIX_NATIVE/share/doc/gcc-arm-none-eabi/html" "$INSTALLDIR_MINGW_DOC/html"
+        copy_dir "$BUILDDIR_MINGW/tools-$OBJ_SUFFIX_NATIVE/share/doc/gcc-arm-none-eabi/pdf" "$INSTALLDIR_MINGW_DOC/pdf"
     fi
-    copy_dir $BUILDDIR_MINGW/tools-$OBJ_SUFFIX_NATIVE/arm-none-eabi/lib $INSTALLDIR_MINGW/arm-none-eabi/lib
-    copy_dir $BUILDDIR_MINGW/tools-$OBJ_SUFFIX_NATIVE/arm-none-eabi/include $INSTALLDIR_MINGW/arm-none-eabi/include
-    copy_dir $BUILDDIR_MINGW/tools-$OBJ_SUFFIX_NATIVE/arm-none-eabi/include/c++ $INSTALLDIR_MINGW/arm-none-eabi/include/c++
-    copy_dir $BUILDDIR_MINGW/tools-$OBJ_SUFFIX_NATIVE/lib/gcc/arm-none-eabi $INSTALLDIR_MINGW/lib/gcc/arm-none-eabi
+    copy_dir "$BUILDDIR_MINGW/tools-$OBJ_SUFFIX_NATIVE/arm-none-eabi/lib" "$INSTALLDIR_MINGW/arm-none-eabi/lib"
+    copy_dir "$BUILDDIR_MINGW/tools-$OBJ_SUFFIX_NATIVE/arm-none-eabi/include" "$INSTALLDIR_MINGW/arm-none-eabi/include"
+    copy_dir "$BUILDDIR_MINGW/tools-$OBJ_SUFFIX_NATIVE/arm-none-eabi/include/c++" "$INSTALLDIR_MINGW/arm-none-eabi/include/c++"
+    copy_dir "$BUILDDIR_MINGW/tools-$OBJ_SUFFIX_NATIVE/lib/gcc/arm-none-eabi" "$INSTALLDIR_MINGW/lib/gcc/arm-none-eabi"
 
     echo "Task [IV-3] /$HOST_MINGW/gcc-final/" | tee -a "$BUILDDIR_MINGW/.stage"
     saveenv
-    saveenvvar AR_FOR_TARGET $TARGET-ar
-    saveenvvar NM_FOR_TARGET $TARGET-nm
-    saveenvvar OBJDUMP_FOR_TARET $TARGET-objdump
-    saveenvvar STRIP_FOR_TARGET $TARGET-strip
-    saveenvvar CC_FOR_TARGET $TARGET-gcc
-    saveenvvar GCC_FOR_TARGET $TARGET-gcc
-    saveenvvar CXX_FOR_TARGET $TARGET-g++
+    saveenvvar AR_FOR_TARGET "$TARGET-ar"
+    saveenvvar NM_FOR_TARGET "$TARGET-nm"
+    saveenvvar OBJDUMP_FOR_TARET "$TARGET-objdump"
+    saveenvvar STRIP_FOR_TARGET "$TARGET-strip"
+    saveenvvar CC_FOR_TARGET "$TARGET-gcc"
+    saveenvvar GCC_FOR_TARGET "$TARGET-gcc"
+    saveenvvar CXX_FOR_TARGET "$TARGET-g++"
     saveenvvar LDFLAGS_WRAP_FILEIO "@$BUILDDIR_MINGW/liblongpath-win32/gcc/exe.inputs"
     saveenvvar LDFLAGS_DLLWRAP_FILEIO "@$BUILDDIR_MINGW/liblongpath-win32/gcc/dll.inputs"
 
-    pushd $INSTALLDIR_MINGW/arm-none-eabi/
+    pushd "$INSTALLDIR_MINGW/arm-none-eabi/"
     rm -f usr
     ln -s . usr
     popd
-    rm -rf $BUILDDIR_MINGW/gcc && mkdir -p $BUILDDIR_MINGW/gcc
-    pushd $BUILDDIR_MINGW/gcc
+    rm -rf "$BUILDDIR_MINGW/gcc" && mkdir -p "$BUILDDIR_MINGW/gcc"
+    pushd "$BUILDDIR_MINGW/gcc"
     saveenvvar CFLAGS "$BUILD_OPTIONS"
-    $SRCDIR/$GCC/configure --build=$BUILD --host=$HOST_MINGW --target=$TARGET \
-        --prefix=$INSTALLDIR_MINGW \
-        --libexecdir=$INSTALLDIR_MINGW/lib \
-        --infodir=$INSTALLDIR_MINGW_DOC/info \
+    "$SRCDIR/$GCC/configure" --build="$BUILD" --host="$HOST_MINGW" --target="$TARGET" \
+        --prefix="$INSTALLDIR_MINGW" \
+        --libexecdir="$INSTALLDIR_MINGW/lib" \
+        --infodir="$INSTALLDIR_MINGW_DOC/info" \
         --mandir=$INSTALLDIR_MINGW_DOC/man \
         --htmldir=$INSTALLDIR_MINGW_DOC/html \
         --pdfdir=$INSTALLDIR_MINGW_DOC/pdf \
