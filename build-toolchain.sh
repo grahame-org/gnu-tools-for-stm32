@@ -361,7 +361,7 @@ if [ "$skip_mingw32" != "yes" ] ; then
     copy_dir $BUILDDIR_MINGW/tools-$OBJ_SUFFIX_NATIVE/arm-none-eabi/lib $INSTALLDIR_MINGW/arm-none-eabi/lib
     copy_dir $BUILDDIR_MINGW/tools-$OBJ_SUFFIX_NATIVE/arm-none-eabi/include $INSTALLDIR_MINGW/arm-none-eabi/include
     copy_dir $BUILDDIR_MINGW/tools-$OBJ_SUFFIX_NATIVE/arm-none-eabi/include/c++ $INSTALLDIR_MINGW/arm-none-eabi/include/c++
-    copy_dir $BUILDDIR_MINGW/tools-$OBJ_SUFFIX_NATIVE/lib/gcc/arm-none-eabi $INSTALLDIR_MINGW/lib/gcc/arm-none-eabi
+    copy_dir "$BUILDDIR_MINGW/tools-$OBJ_SUFFIX_NATIVE/lib/gcc/arm-none-eabi" "$INSTALLDIR_MINGW/lib/gcc/arm-none-eabi"
 
     echo "Task [IV-3] /$HOST_MINGW/gcc-final/" | tee -a "$BUILDDIR_MINGW/.stage"
     saveenv
@@ -386,9 +386,9 @@ if [ "$skip_mingw32" != "yes" ] ; then
         --prefix=$INSTALLDIR_MINGW \
         --libexecdir=$INSTALLDIR_MINGW/lib \
         --infodir=$INSTALLDIR_MINGW_DOC/info \
-        --mandir=$INSTALLDIR_MINGW_DOC/man \
-        --htmldir=$INSTALLDIR_MINGW_DOC/html \
-        --pdfdir=$INSTALLDIR_MINGW_DOC/pdf \
+        "--mandir=$INSTALLDIR_MINGW_DOC/man" \
+        "--htmldir=$INSTALLDIR_MINGW_DOC/html" \
+        "--pdfdir=$INSTALLDIR_MINGW_DOC/pdf" \
         --enable-languages=c,c++ \
         --enable-mingw-wildcard \
         --disable-decimal-float \
@@ -407,17 +407,17 @@ if [ "$skip_mingw32" != "yes" ] ; then
         --with-headers=yes \
         --with-newlib \
         --with-python-dir=share/gcc-arm-none-eabi \
-        --with-sysroot=$INSTALLDIR_MINGW/arm-none-eabi \
-        --with-libiconv-prefix=$BUILDDIR_MINGW/host-libs/usr \
-        --with-gmp=$BUILDDIR_MINGW/host-libs/usr \
-        --with-mpfr=$BUILDDIR_MINGW/host-libs/usr \
-        --with-mpc=$BUILDDIR_MINGW/host-libs/usr \
-        --with-isl=$BUILDDIR_MINGW/host-libs/usr \
+        "--with-sysroot=$INSTALLDIR_MINGW/arm-none-eabi" \
+        "--with-libiconv-prefix=$BUILDDIR_MINGW/host-libs/usr" \
+        "--with-gmp=$BUILDDIR_MINGW/host-libs/usr" \
+        "--with-mpfr=$BUILDDIR_MINGW/host-libs/usr" \
+        "--with-mpc=$BUILDDIR_MINGW/host-libs/usr" \
+        "--with-isl=$BUILDDIR_MINGW/host-libs/usr" \
         "--with-host-libstdcxx=-static-libgcc -Wl,-Bstatic,-lstdc++,-Bdynamic -lm" \
         "--with-pkgversion=$PKGVERSION" \
-        ${MULTILIB_LIST}
+        "${MULTILIB_LIST}"
 
-    make -j$JOBS all-gcc
+    make -j"$JOBS" all-gcc
 
     make install-gcc
 
@@ -426,25 +426,25 @@ if [ "$skip_mingw32" != "yes" ] ; then
     fi
     popd
 
-    pushd $INSTALLDIR_MINGW
+    pushd "$INSTALLDIR_MINGW"
     rm -rf bin/arm-none-eabi-gccbug
     rm -rf  include
     popd
 
-    copy_dir $BUILDDIR_MINGW/tools-$OBJ_SUFFIX_NATIVE/lib/gcc/arm-none-eabi $INSTALLDIR_MINGW/lib/gcc/arm-none-eabi
-    rm -rf $INSTALLDIR_MINGW/arm-none-eabi/usr
-    rm -rf $INSTALLDIR_MINGW/lib/gcc/arm-none-eabi/*/plugin
-    find $INSTALLDIR_MINGW -executable -and -not -type d -and -not -name \*.exe \
+    copy_dir "$BUILDDIR_MINGW/tools-$OBJ_SUFFIX_NATIVE/lib/gcc/arm-none-eabi" "$INSTALLDIR_MINGW/lib/gcc/arm-none-eabi"
+    rm -rf "$INSTALLDIR_MINGW/arm-none-eabi/usr"
+    rm -rf "$INSTALLDIR_MINGW"/lib/gcc/arm-none-eabi/*/plugin
+    find "$INSTALLDIR_MINGW" -executable -and -not -type d -and -not -name \*.exe \
       -and -not -name liblto_plugin.dll -exec rm -vf \{\} \;
-    find $INSTALLDIR_MINGW -name 'liblto_plugin.so*' -exec rm -vf \{\} \;
+    find "$INSTALLDIR_MINGW" -name 'liblto_plugin.so*' -exec rm -vf \{\} \;
     restoreenv
 
     echo "Task [IV-4] /$HOST_MINGW/gdb/" | tee -a "$BUILDDIR_MINGW/.stage"
     build_mingw_gdb()
     {
         MINGW_GDB_CONF_OPTS=$1
-        rm -rf $BUILDDIR_MINGW/gdb && mkdir -p $BUILDDIR_MINGW/gdb
-        pushd $BUILDDIR_MINGW/gdb
+        rm -rf "$BUILDDIR_MINGW/gdb" && mkdir -p "$BUILDDIR_MINGW/gdb"
+        pushd "$BUILDDIR_MINGW/gdb"
         saveenv
         saveenvvar CFLAGS "-I$BUILDDIR_MINGW/host-libs/zlib/include $BUILD_OPTIONS"
         saveenvvar CPPFLAGS "-I$BUILDDIR_MINGW/host-libs/zlib/include"
