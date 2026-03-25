@@ -88,28 +88,28 @@ fi
 #Building mingw gdb with python support requires python windows package and
 #a special config file. If any of them is missing, we skip the build of
 #mingw gdb with python support.
-if [ ! -d $SRCDIR/$PYTHON_WIN ] \
-     || [ ! -x $script_path/python-config.sh ]; then
+if [ ! -d "$SRCDIR/$PYTHON_WIN" ] \
+     || [ ! -x "$script_path/python-config.sh" ]; then
     skip_mingw32_gdb_with_python=yes
 fi
 
 # shellcheck disable=SC2154  # set by parse_toolchain_args() in build-toolchain-args.sh
 if [ "$skip_native_build" != "yes" ] ; then
-    mkdir -p $BUILDDIR_NATIVE
+    mkdir -p "$BUILDDIR_NATIVE"
     if [ -z "$skip_stages" ]; then
-        rm -rf $INSTALLDIR_NATIVE && mkdir -p $INSTALLDIR_NATIVE
+        rm -rf "$INSTALLDIR_NATIVE" && mkdir -p "$INSTALLDIR_NATIVE"
     else
-        mkdir -p $INSTALLDIR_NATIVE
+        mkdir -p "$INSTALLDIR_NATIVE"
     fi
-    rm -rf $PACKAGEDIR && mkdir -p $PACKAGEDIR
+    rm -rf "$PACKAGEDIR" && mkdir -p "$PACKAGEDIR"
 fi
 
 if [ "$skip_mingw32" != "yes" ] ; then
-    mkdir -p $BUILDDIR_MINGW
-    rm -rf $INSTALLDIR_MINGW && mkdir -p $INSTALLDIR_MINGW
+    mkdir -p "$BUILDDIR_MINGW"
+    rm -rf "$INSTALLDIR_MINGW" && mkdir -p "$INSTALLDIR_MINGW"
 fi
 
-cd $SRCDIR
+cd "$SRCDIR"
 
 if [ "$skip_native_build" != "yes" ] ; then
     if stage_is_skipped "binutils"; then
@@ -155,63 +155,63 @@ if [ "$skip_native_build" != "yes" ] ; then
     fi  # gdb stage
 
     echo "Task [III-8] /$HOST_NATIVE/pretidy/" | tee -a "$BUILDDIR_NATIVE/.stage"
-    rm -rf $INSTALLDIR_NATIVE/lib/libiberty.a
-    find $INSTALLDIR_NATIVE -name '*.la' -exec rm '{}' ';'
+    rm -rf "$INSTALLDIR_NATIVE/lib/libiberty.a"
+    find "$INSTALLDIR_NATIVE" -name '*.la' -exec rm '{}' ';'
 
     echo "Task [III-9] /$HOST_NATIVE/strip_host_objects/" | tee -a "$BUILDDIR_NATIVE/.stage"
     # shellcheck disable=SC2154  # set by parse_toolchain_args() in build-toolchain-args.sh
     if [ "$is_debug_build" == "no" ] ; then
-        STRIP_BINARIES=$(find $INSTALLDIR_NATIVE/bin/ -name arm-none-eabi-\*)
+        STRIP_BINARIES=$(find "$INSTALLDIR_NATIVE/bin/" -name arm-none-eabi-\*)
         for bin in $STRIP_BINARIES ; do
-            strip_binary strip $bin
+            strip_binary strip "$bin"
         done
 
-        STRIP_BINARIES=$(find $INSTALLDIR_NATIVE/arm-none-eabi/bin/ -maxdepth 1 -mindepth 1 -name \*)
+        STRIP_BINARIES=$(find "$INSTALLDIR_NATIVE/arm-none-eabi/bin/" -maxdepth 1 -mindepth 1 -name \*)
         for bin in $STRIP_BINARIES ; do
-            strip_binary strip $bin
+            strip_binary strip "$bin"
         done
 
         if [ -d "$INSTALLDIR_NATIVE/lib/gcc/arm-none-eabi/$GCC_VER" ]; then
             if [ "$BUILD" == "x86_64-apple-darwin10" ]; then
-                STRIP_BINARIES=$(find $INSTALLDIR_NATIVE/lib/gcc/arm-none-eabi/$GCC_VER/ -maxdepth 1 -name \* -perm +111 -and ! -type d)
+                STRIP_BINARIES=$(find "$INSTALLDIR_NATIVE/lib/gcc/arm-none-eabi/$GCC_VER/" -maxdepth 1 -name \* -perm +111 -and ! -type d)
             else
-                STRIP_BINARIES=$(find $INSTALLDIR_NATIVE/lib/gcc/arm-none-eabi/$GCC_VER/ -maxdepth 1 -name \* -perm /111 -and ! -type d)
+                STRIP_BINARIES=$(find "$INSTALLDIR_NATIVE/lib/gcc/arm-none-eabi/$GCC_VER/" -maxdepth 1 -name \* -perm /111 -and ! -type d)
             fi
             for bin in $STRIP_BINARIES ; do
-                strip_binary strip $bin
+                strip_binary strip "$bin"
             done
         fi
     fi
 
     echo "Task [III-10] /$HOST_NATIVE/strip_target_objects/" | tee -a "$BUILDDIR_NATIVE/.stage"
     saveenv
-    prepend_path PATH $INSTALLDIR_NATIVE/bin
+    prepend_path PATH "$INSTALLDIR_NATIVE/bin"
 
     # shellcheck disable=SC2154  # set by parse_toolchain_args() in build-toolchain-args.sh
     if [ "$skip_strip_target_libraries" == "no" ] ; then
-        TARGET_LIBRARIES=$(find $INSTALLDIR_NATIVE/arm-none-eabi/lib -name libg.a -or -name libg_nano.a)
+        TARGET_LIBRARIES=$(find "$INSTALLDIR_NATIVE/arm-none-eabi/lib" -name libg.a -or -name libg_nano.a)
         for target_lib in $TARGET_LIBRARIES ; do
             break_hardlink "$target_lib"
         done
-        TARGET_LIBRARIES=$(find $INSTALLDIR_NATIVE/arm-none-eabi/lib -name \*.a ! -name libg.a ! -name libg_nano.a)
+        TARGET_LIBRARIES=$(find "$INSTALLDIR_NATIVE/arm-none-eabi/lib" -name \*.a ! -name libg.a ! -name libg_nano.a)
         for target_lib in $TARGET_LIBRARIES ; do
-            arm-none-eabi-strip --remove-section=.comment --remove-section=.note --strip-debug --enable-deterministic-archives --keep-section=.debug_frame $target_lib || true
+            arm-none-eabi-strip --remove-section=.comment --remove-section=.note --strip-debug --enable-deterministic-archives --keep-section=.debug_frame "$target_lib" || true
         done
 
-        TARGET_OBJECTS=$(find $INSTALLDIR_NATIVE/arm-none-eabi/lib -name \*.o)
+        TARGET_OBJECTS=$(find "$INSTALLDIR_NATIVE/arm-none-eabi/lib" -name \*.o)
         for target_obj in $TARGET_OBJECTS ; do
-            arm-none-eabi-strip --remove-section=.comment --remove-section=.note --strip-debug --enable-deterministic-archives --keep-section=.debug_frame $target_obj || true
+            arm-none-eabi-strip --remove-section=.comment --remove-section=.note --strip-debug --enable-deterministic-archives --keep-section=.debug_frame "$target_obj" || true
         done
 
         if [ -d "$INSTALLDIR_NATIVE/lib/gcc/arm-none-eabi/$GCC_VER" ]; then
-            TARGET_LIBRARIES=$(find $INSTALLDIR_NATIVE/lib/gcc/arm-none-eabi/$GCC_VER -name \*.a)
+            TARGET_LIBRARIES=$(find "$INSTALLDIR_NATIVE/lib/gcc/arm-none-eabi/$GCC_VER" -name \*.a)
             for target_lib in $TARGET_LIBRARIES ; do
-                arm-none-eabi-strip --remove-section=.comment --remove-section=.note --strip-debug --enable-deterministic-archives --keep-section=.debug_frame $target_lib || true
+                arm-none-eabi-strip --remove-section=.comment --remove-section=.note --strip-debug --enable-deterministic-archives --keep-section=.debug_frame "$target_lib" || true
             done
 
-            TARGET_OBJECTS=$(find $INSTALLDIR_NATIVE/lib/gcc/arm-none-eabi/$GCC_VER -name \*.o)
+            TARGET_OBJECTS=$(find "$INSTALLDIR_NATIVE/lib/gcc/arm-none-eabi/$GCC_VER" -name \*.o)
             for target_obj in $TARGET_OBJECTS ; do
-                arm-none-eabi-strip --remove-section=.comment --remove-section=.note --strip-debug --enable-deterministic-archives --keep-section=.debug_frame $target_obj || true
+                arm-none-eabi-strip --remove-section=.comment --remove-section=.note --strip-debug --enable-deterministic-archives --keep-section=.debug_frame "$target_obj" || true
             done
         fi
     fi
@@ -221,9 +221,9 @@ if [ "$skip_native_build" != "yes" ] ; then
     if stage_is_skipped "gcc-final"; then
         echo "Skipping stage: specs (depends on gcc-final)"
     elif [ -x "$INSTALLDIR_NATIVE/bin/arm-none-eabi-gcc" ]; then
-        pushd $BUILDDIR_NATIVE
-        $INSTALLDIR_NATIVE/bin/arm-none-eabi-gcc -print-multi-lib | cut -d';' -f 1 | while read dir; do
-          cp -v $SRCDIR/specs/{nano_c_standard_cpp,standard_c_nano_cpp}.specs $INSTALLDIR_NATIVE/arm-none-eabi/lib/$dir/
+        pushd "$BUILDDIR_NATIVE"
+        "$INSTALLDIR_NATIVE/bin/arm-none-eabi-gcc" -print-multi-lib | cut -d';' -f 1 | while read dir; do
+          cp -v "$SRCDIR/specs/nano_c_standard_cpp.specs" "$SRCDIR/specs/standard_c_nano_cpp.specs" "$INSTALLDIR_NATIVE/arm-none-eabi/lib/$dir/"
         done
         popd
     fi
@@ -236,16 +236,16 @@ if [ "$skip_native_build" != "yes" ] ; then
     echo "Task [III-12] /$HOST_NATIVE/package_tbz2/" | tee -a "$BUILDDIR_NATIVE/.stage"
 
     # Copy release.txt into share.
-    mkdir -p $INSTALLDIR_NATIVE_DOC
-    cp $ROOT/$LICENSE_FILE $INSTALLDIR_NATIVE_DOC/
+    mkdir -p "$INSTALLDIR_NATIVE_DOC"
+    cp "$ROOT/$LICENSE_FILE" "$INSTALLDIR_NATIVE_DOC/"
 
     # Cleanup any pre-existing state.
-    rm -f $PACKAGEDIR/$PACKAGE_NAME_NATIVE.tar.bz2
-    rm -f $BUILDDIR_NATIVE/$INSTALL_PACKAGE_NAME
+    rm -f "$PACKAGEDIR/$PACKAGE_NAME_NATIVE.tar.bz2"
+    rm -f "$BUILDDIR_NATIVE/$INSTALL_PACKAGE_NAME"
 
     # Start making the package.
-    pushd $BUILDDIR_NATIVE
-    ln -s $INSTALLDIR_NATIVE $INSTALL_PACKAGE_NAME
+    pushd "$BUILDDIR_NATIVE"
+    ln -s "$INSTALLDIR_NATIVE" "$INSTALL_PACKAGE_NAME"
 
     # Make the package tarball (only include subdirs that exist; some may be
     # absent in partial/per-stage builds, e.g. lib is removed after binutils).
@@ -255,21 +255,21 @@ if [ "$skip_native_build" != "yes" ] ; then
             tar_dirs+=("$INSTALL_PACKAGE_NAME/$_dir")
         fi
     done
-    ${TAR} cjf $PACKAGEDIR/$PACKAGE_NAME_NATIVE.tar.bz2   \
-        --exclude=host-$HOST_NATIVE             \
-        --exclude=host-$HOST_MINGW              \
+    ${TAR} cjf "$PACKAGEDIR/$PACKAGE_NAME_NATIVE.tar.bz2"   \
+        "--exclude=host-$HOST_NATIVE"             \
+        "--exclude=host-$HOST_MINGW"              \
         "${tar_dirs[@]}"
 
     # Remove stale links.
-    rm -f $INSTALL_PACKAGE_NAME
+    rm -f "$INSTALL_PACKAGE_NAME"
     popd
 
     # shellcheck disable=SC2154  # set by parse_toolchain_args() in build-toolchain-args.sh
     if [ "$skip_package_bins" != "yes" ]; then
         echo "Task [III-13] /Package toolchain in ST version/"
-        pushd $ROOT
-        time ${TAR} czf $PACKAGEDIR/${PACKAGE_NAME_NATIVE}-build.tar.gz --owner=0 --group=0 build-native/
-        time ${TAR} czf $PACKAGEDIR/${PACKAGE_NAME_NATIVE}-install.tar.gz --owner=0 --group=0 install-native/
+        pushd "$ROOT"
+        time ${TAR} czf "$PACKAGEDIR/${PACKAGE_NAME_NATIVE}-build.tar.gz" --owner=0 --group=0 build-native/
+        time ${TAR} czf "$PACKAGEDIR/${PACKAGE_NAME_NATIVE}-install.tar.gz" --owner=0 --group=0 install-native/
         popd
     fi
 
@@ -283,7 +283,7 @@ if [ "$skip_native_build" != "yes" ] ; then
             # shellcheck disable=SC2206
             invalid+=($line)
           fi
-        done <<< $(find $INSTALLDIR_NATIVE/ -type f |  xargs file | grep "Mach-O " | cut -d: -f1)
+        done <<< $(find "$INSTALLDIR_NATIVE/" -type f |  xargs file | grep "Mach-O " | cut -d: -f1)
 
         if [ ${#invalid[@]} -ne 0 ]; then
           echo -e "Illegal dependency detected!${invalid[*]/#/\\n}\nAborting..."
@@ -297,47 +297,48 @@ fi  #if [ "$skip_native_build" != "yes" ] ; then
 if [ "$skip_mingw32" != "yes" ] ; then
     saveenv
     saveenvvar CC_FOR_BUILD gcc
-    saveenvvar CC $HOST_MINGW_TOOL-gcc
-    saveenvvar CXX $HOST_MINGW_TOOL-g++
-    saveenvvar AR $HOST_MINGW_TOOL-ar
-    saveenvvar RANLIB $HOST_MINGW_TOOL-ranlib
-    saveenvvar STRIP $HOST_MINGW_TOOL-strip
-    saveenvvar NM $HOST_MINGW_TOOL-nm
+    saveenvvar CC "$HOST_MINGW_TOOL-gcc"
+    saveenvvar CXX "$HOST_MINGW_TOOL-g++"
+    saveenvvar AR "$HOST_MINGW_TOOL-ar"
+    saveenvvar RANLIB "$HOST_MINGW_TOOL-ranlib"
+    saveenvvar STRIP "$HOST_MINGW_TOOL-strip"
+    saveenvvar NM "$HOST_MINGW_TOOL-nm"
 
     echo "Task [IV-0] /$HOST_MINGW/host_unpack/" | tee -a "$BUILDDIR_MINGW/.stage"
-    rm -rf $BUILDDIR_MINGW/tools-$OBJ_SUFFIX_NATIVE && mkdir $BUILDDIR_MINGW/tools-$OBJ_SUFFIX_NATIVE
-    pushd $BUILDDIR_MINGW/tools-$OBJ_SUFFIX_NATIVE
-    ln -s . $INSTALL_PACKAGE_NAME
-    tar xf $PACKAGEDIR/$PACKAGE_NAME_NATIVE.tar.bz2 ${TAR_FLAGS:-}
-    rm $INSTALL_PACKAGE_NAME
+    rm -rf "$BUILDDIR_MINGW/tools-$OBJ_SUFFIX_NATIVE" && mkdir "$BUILDDIR_MINGW/tools-$OBJ_SUFFIX_NATIVE"
+    pushd "$BUILDDIR_MINGW/tools-$OBJ_SUFFIX_NATIVE"
+    ln -s . "$INSTALL_PACKAGE_NAME"
+    # shellcheck disable=SC2086  # TAR_FLAGS is intentionally word-split (extra tar options)
+    tar xf "$PACKAGEDIR/$PACKAGE_NAME_NATIVE.tar.bz2" ${TAR_FLAGS:-}
+    rm "$INSTALL_PACKAGE_NAME"
     popd
 
     echo "Task [IV-1] /$HOST_MINGW/binutils/" | tee -a "$BUILDDIR_MINGW/.stage"
-    prepend_path PATH $BUILDDIR_MINGW/tools-$OBJ_SUFFIX_NATIVE/bin
-    rm -rf $BUILDDIR_MINGW/binutils && mkdir -p $BUILDDIR_MINGW/binutils
-    pushd $BUILDDIR_MINGW/binutils
+    prepend_path PATH "$BUILDDIR_MINGW/tools-$OBJ_SUFFIX_NATIVE/bin"
+    rm -rf "$BUILDDIR_MINGW/binutils" && mkdir -p "$BUILDDIR_MINGW/binutils"
+    pushd "$BUILDDIR_MINGW/binutils"
     saveenv
     saveenvvar CFLAGS "-I$BUILDDIR_MINGW/host-libs/zlib/include -I$BUILDDIR_MINGW/host-libs/usr/include $BUILD_OPTIONS"
     saveenvvar CPPFLAGS "-I$BUILDDIR_MINGW/host-libs/zlib/include -I$BUILDDIR_MINGW/host-libs/usr/include"
     saveenvvar LDFLAGS "-L$BUILDDIR_MINGW/host-libs/zlib/lib -L$BUILDDIR_MINGW/host-libs/usr/lib -Wl,/usr/$HOST_MINGW/lib/CRT_glob.o"
     saveenvvar LDFLAGS_WRAP_FILEIO "@$BUILDDIR_MINGW/liblongpath-win32/gcc/exe.inputs"
     saveenvvar LDFLAGS_DLLWRAP_FILEIO "@$BUILDDIR_MINGW/liblongpath-win32/gcc/dll.inputs"
-    $SRCDIR/$BINUTILS/configure --build=$BUILD \
-        --host=$HOST_MINGW \
-        --target=$TARGET \
-        --prefix=$INSTALLDIR_MINGW \
-        --infodir=$INSTALLDIR_MINGW_DOC/info \
-        --mandir=$INSTALLDIR_MINGW_DOC/man \
-        --htmldir=$INSTALLDIR_MINGW_DOC/html \
-        --pdfdir=$INSTALLDIR_MINGW_DOC/pdf \
+    "$SRCDIR/$BINUTILS/configure" "--build=$BUILD" \
+        "--host=$HOST_MINGW" \
+        "--target=$TARGET" \
+        "--prefix=$INSTALLDIR_MINGW" \
+        "--infodir=$INSTALLDIR_MINGW_DOC/info" \
+        "--mandir=$INSTALLDIR_MINGW_DOC/man" \
+        "--htmldir=$INSTALLDIR_MINGW_DOC/html" \
+        "--pdfdir=$INSTALLDIR_MINGW_DOC/pdf" \
         --disable-nls \
         --disable-sim \
         --disable-gdb \
         --enable-plugins \
-        --with-sysroot=$INSTALLDIR_MINGW/arm-none-eabi \
+        "--with-sysroot=$INSTALLDIR_MINGW/arm-none-eabi" \
         "--with-pkgversion=$PKGVERSION"
 
-    make -j$JOBS
+    make -j"${JOBS}"
 
     make install
 
@@ -349,46 +350,46 @@ if [ "$skip_mingw32" != "yes" ] ; then
     restoreenv
     popd
 
-    pushd $INSTALLDIR_MINGW
+    pushd "$INSTALLDIR_MINGW"
     rm -rf ./lib
     popd
 
     echo "Task [IV-2] /$HOST_MINGW/copy_libs/" | tee -a "$BUILDDIR_MINGW/.stage"
     if [ "$skip_manual" != "yes" ]; then
-        copy_dir $BUILDDIR_MINGW/tools-$OBJ_SUFFIX_NATIVE/share/doc/gcc-arm-none-eabi/html $INSTALLDIR_MINGW_DOC/html
-        copy_dir $BUILDDIR_MINGW/tools-$OBJ_SUFFIX_NATIVE/share/doc/gcc-arm-none-eabi/pdf $INSTALLDIR_MINGW_DOC/pdf
+        copy_dir "$BUILDDIR_MINGW/tools-$OBJ_SUFFIX_NATIVE/share/doc/gcc-arm-none-eabi/html" "$INSTALLDIR_MINGW_DOC/html"
+        copy_dir "$BUILDDIR_MINGW/tools-$OBJ_SUFFIX_NATIVE/share/doc/gcc-arm-none-eabi/pdf" "$INSTALLDIR_MINGW_DOC/pdf"
     fi
-    copy_dir $BUILDDIR_MINGW/tools-$OBJ_SUFFIX_NATIVE/arm-none-eabi/lib $INSTALLDIR_MINGW/arm-none-eabi/lib
-    copy_dir $BUILDDIR_MINGW/tools-$OBJ_SUFFIX_NATIVE/arm-none-eabi/include $INSTALLDIR_MINGW/arm-none-eabi/include
-    copy_dir $BUILDDIR_MINGW/tools-$OBJ_SUFFIX_NATIVE/arm-none-eabi/include/c++ $INSTALLDIR_MINGW/arm-none-eabi/include/c++
-    copy_dir $BUILDDIR_MINGW/tools-$OBJ_SUFFIX_NATIVE/lib/gcc/arm-none-eabi $INSTALLDIR_MINGW/lib/gcc/arm-none-eabi
+    copy_dir "$BUILDDIR_MINGW/tools-$OBJ_SUFFIX_NATIVE/arm-none-eabi/lib" "$INSTALLDIR_MINGW/arm-none-eabi/lib"
+    copy_dir "$BUILDDIR_MINGW/tools-$OBJ_SUFFIX_NATIVE/arm-none-eabi/include" "$INSTALLDIR_MINGW/arm-none-eabi/include"
+    copy_dir "$BUILDDIR_MINGW/tools-$OBJ_SUFFIX_NATIVE/arm-none-eabi/include/c++" "$INSTALLDIR_MINGW/arm-none-eabi/include/c++"
+    copy_dir "$BUILDDIR_MINGW/tools-$OBJ_SUFFIX_NATIVE/lib/gcc/arm-none-eabi" "$INSTALLDIR_MINGW/lib/gcc/arm-none-eabi"
 
     echo "Task [IV-3] /$HOST_MINGW/gcc-final/" | tee -a "$BUILDDIR_MINGW/.stage"
     saveenv
-    saveenvvar AR_FOR_TARGET $TARGET-ar
-    saveenvvar NM_FOR_TARGET $TARGET-nm
-    saveenvvar OBJDUMP_FOR_TARET $TARGET-objdump
-    saveenvvar STRIP_FOR_TARGET $TARGET-strip
-    saveenvvar CC_FOR_TARGET $TARGET-gcc
-    saveenvvar GCC_FOR_TARGET $TARGET-gcc
-    saveenvvar CXX_FOR_TARGET $TARGET-g++
+    saveenvvar AR_FOR_TARGET "$TARGET-ar"
+    saveenvvar NM_FOR_TARGET "$TARGET-nm"
+    saveenvvar OBJDUMP_FOR_TARET "$TARGET-objdump"
+    saveenvvar STRIP_FOR_TARGET "$TARGET-strip"
+    saveenvvar CC_FOR_TARGET "$TARGET-gcc"
+    saveenvvar GCC_FOR_TARGET "$TARGET-gcc"
+    saveenvvar CXX_FOR_TARGET "$TARGET-g++"
     saveenvvar LDFLAGS_WRAP_FILEIO "@$BUILDDIR_MINGW/liblongpath-win32/gcc/exe.inputs"
     saveenvvar LDFLAGS_DLLWRAP_FILEIO "@$BUILDDIR_MINGW/liblongpath-win32/gcc/dll.inputs"
 
-    pushd $INSTALLDIR_MINGW/arm-none-eabi/
+    pushd "$INSTALLDIR_MINGW/arm-none-eabi/"
     rm -f usr
     ln -s . usr
     popd
-    rm -rf $BUILDDIR_MINGW/gcc && mkdir -p $BUILDDIR_MINGW/gcc
-    pushd $BUILDDIR_MINGW/gcc
+    rm -rf "$BUILDDIR_MINGW/gcc" && mkdir -p "$BUILDDIR_MINGW/gcc"
+    pushd "$BUILDDIR_MINGW/gcc"
     saveenvvar CFLAGS "$BUILD_OPTIONS"
-    $SRCDIR/$GCC/configure --build=$BUILD --host=$HOST_MINGW --target=$TARGET \
-        --prefix=$INSTALLDIR_MINGW \
-        --libexecdir=$INSTALLDIR_MINGW/lib \
-        --infodir=$INSTALLDIR_MINGW_DOC/info \
-        --mandir=$INSTALLDIR_MINGW_DOC/man \
-        --htmldir=$INSTALLDIR_MINGW_DOC/html \
-        --pdfdir=$INSTALLDIR_MINGW_DOC/pdf \
+    "$SRCDIR/$GCC/configure" "--build=$BUILD" "--host=$HOST_MINGW" "--target=$TARGET" \
+        "--prefix=$INSTALLDIR_MINGW" \
+        "--libexecdir=$INSTALLDIR_MINGW/lib" \
+        "--infodir=$INSTALLDIR_MINGW_DOC/info" \
+        "--mandir=$INSTALLDIR_MINGW_DOC/man" \
+        "--htmldir=$INSTALLDIR_MINGW_DOC/html" \
+        "--pdfdir=$INSTALLDIR_MINGW_DOC/pdf" \
         --enable-languages=c,c++ \
         --enable-mingw-wildcard \
         --disable-decimal-float \
@@ -407,17 +408,17 @@ if [ "$skip_mingw32" != "yes" ] ; then
         --with-headers=yes \
         --with-newlib \
         --with-python-dir=share/gcc-arm-none-eabi \
-        --with-sysroot=$INSTALLDIR_MINGW/arm-none-eabi \
-        --with-libiconv-prefix=$BUILDDIR_MINGW/host-libs/usr \
-        --with-gmp=$BUILDDIR_MINGW/host-libs/usr \
-        --with-mpfr=$BUILDDIR_MINGW/host-libs/usr \
-        --with-mpc=$BUILDDIR_MINGW/host-libs/usr \
-        --with-isl=$BUILDDIR_MINGW/host-libs/usr \
+        "--with-sysroot=$INSTALLDIR_MINGW/arm-none-eabi" \
+        "--with-libiconv-prefix=$BUILDDIR_MINGW/host-libs/usr" \
+        "--with-gmp=$BUILDDIR_MINGW/host-libs/usr" \
+        "--with-mpfr=$BUILDDIR_MINGW/host-libs/usr" \
+        "--with-mpc=$BUILDDIR_MINGW/host-libs/usr" \
+        "--with-isl=$BUILDDIR_MINGW/host-libs/usr" \
         "--with-host-libstdcxx=-static-libgcc -Wl,-Bstatic,-lstdc++,-Bdynamic -lm" \
         "--with-pkgversion=$PKGVERSION" \
-        ${MULTILIB_LIST}
+        "${MULTILIB_LIST}"
 
-    make -j$JOBS all-gcc
+    make -j"${JOBS}" all-gcc
 
     make install-gcc
 
@@ -426,25 +427,25 @@ if [ "$skip_mingw32" != "yes" ] ; then
     fi
     popd
 
-    pushd $INSTALLDIR_MINGW
+    pushd "$INSTALLDIR_MINGW"
     rm -rf bin/arm-none-eabi-gccbug
     rm -rf  include
     popd
 
-    copy_dir $BUILDDIR_MINGW/tools-$OBJ_SUFFIX_NATIVE/lib/gcc/arm-none-eabi $INSTALLDIR_MINGW/lib/gcc/arm-none-eabi
-    rm -rf $INSTALLDIR_MINGW/arm-none-eabi/usr
-    rm -rf $INSTALLDIR_MINGW/lib/gcc/arm-none-eabi/*/plugin
-    find $INSTALLDIR_MINGW -executable -and -not -type d -and -not -name \*.exe \
+    copy_dir "$BUILDDIR_MINGW/tools-$OBJ_SUFFIX_NATIVE/lib/gcc/arm-none-eabi" "$INSTALLDIR_MINGW/lib/gcc/arm-none-eabi"
+    rm -rf "$INSTALLDIR_MINGW/arm-none-eabi/usr"
+    rm -rf "$INSTALLDIR_MINGW"/lib/gcc/arm-none-eabi/*/plugin
+    find "$INSTALLDIR_MINGW" -executable -and -not -type d -and -not -name \*.exe \
       -and -not -name liblto_plugin.dll -exec rm -vf \{\} \;
-    find $INSTALLDIR_MINGW -name 'liblto_plugin.so*' -exec rm -vf \{\} \;
+    find "$INSTALLDIR_MINGW" -name 'liblto_plugin.so*' -exec rm -vf \{\} \;
     restoreenv
 
     echo "Task [IV-4] /$HOST_MINGW/gdb/" | tee -a "$BUILDDIR_MINGW/.stage"
     build_mingw_gdb()
     {
         MINGW_GDB_CONF_OPTS=$1
-        rm -rf $BUILDDIR_MINGW/gdb && mkdir -p $BUILDDIR_MINGW/gdb
-        pushd $BUILDDIR_MINGW/gdb
+        rm -rf "$BUILDDIR_MINGW/gdb" && mkdir -p "$BUILDDIR_MINGW/gdb"
+        pushd "$BUILDDIR_MINGW/gdb"
         saveenv
         saveenvvar CFLAGS "-I$BUILDDIR_MINGW/host-libs/zlib/include $BUILD_OPTIONS"
         saveenvvar CPPFLAGS "-I$BUILDDIR_MINGW/host-libs/zlib/include"
@@ -467,7 +468,7 @@ if [ "$skip_mingw32" != "yes" ] ; then
             --disable-ld \
             --disable-gprof \
             --with-lzma=no \
-            $MINGW_GDB_CONF_OPTS \
+            ${MINGW_GDB_CONF_OPTS} \
             --with-libexpat \
             "--with-libexpat-prefix=$BUILDDIR_MINGW/host-libs/usr" \
             "--with-libiconv-prefix=$BUILDDIR_MINGW/host-libs/usr" \
@@ -527,31 +528,29 @@ if [ "$skip_mingw32" != "yes" ] ; then
     fi
 
     echo "Task [IV-7] /$HOST_MINGW/installation/" | tee -a "$BUILDDIR_MINGW/.stage"
-    rm -f $PACKAGEDIR/$PACKAGE_NAME_MINGW.exe
-    pushd $BUILDDIR_MINGW
-    rm -f $INSTALL_PACKAGE_NAME
-    mkdir -p $INSTALLDIR_MINGW_DOC
-    cp $ROOT/$LICENSE_FILE $INSTALLDIR_MINGW_DOC/
-    flip -m -b $INSTALLDIR_MINGW_DOC/$LICENSE_FILE
-    rm -rf $INSTALLDIR_MINGW/include
+    rm -f "$PACKAGEDIR/$PACKAGE_NAME_MINGW.exe"
+    pushd "$BUILDDIR_MINGW"
+    rm -f "$INSTALL_PACKAGE_NAME"
+    mkdir -p "$INSTALLDIR_MINGW_DOC"
+    cp "$ROOT/$LICENSE_FILE" "$INSTALLDIR_MINGW_DOC/"
+    flip -m -b "$INSTALLDIR_MINGW_DOC/$LICENSE_FILE"
+    rm -rf "$INSTALLDIR_MINGW/include"
     popd
     restoreenv
 
     echo "Task [IV-8] /Package toolchain in zip format/"
-    # shellcheck disable=SC2046
-    pushd $(dirname $INSTALLDIR_MINGW)
-    # shellcheck disable=SC2046
-    ln -s $(basename $INSTALLDIR_MINGW) $PACKAGE_NAME
-    rm -f $PACKAGEDIR/$PACKAGE_NAME_MINGW.zip
-    zip -r9 $PACKAGEDIR/$PACKAGE_NAME_MINGW.zip $PACKAGE_NAME
-    rm $PACKAGE_NAME
+    pushd "$(dirname "$INSTALLDIR_MINGW")"
+    ln -s "$(basename "$INSTALLDIR_MINGW")" "$PACKAGE_NAME"
+    rm -f "$PACKAGEDIR/$PACKAGE_NAME_MINGW.zip"
+    zip -r9 "$PACKAGEDIR/$PACKAGE_NAME_MINGW.zip" "$PACKAGE_NAME"
+    rm "$PACKAGE_NAME"
     popd
 
     if [ "$skip_package_bins" != "yes" ]; then
         echo "Task [IV-10] /Package toolchain in ST version/"
-        pushd $ROOT
-        time ${TAR} czf $PACKAGEDIR/${PACKAGE_NAME_MINGW}-build.tar.gz --owner=0 --group=0 build-mingw/
-        time ${TAR} czf $PACKAGEDIR/${PACKAGE_NAME_MINGW}-install.tar.gz --owner=0 --group=0 install-mingw/
+        pushd "$ROOT"
+        time ${TAR} czf "$PACKAGEDIR/${PACKAGE_NAME_MINGW}-build.tar.gz" --owner=0 --group=0 build-mingw/
+        time ${TAR} czf "$PACKAGEDIR/${PACKAGE_NAME_MINGW}-install.tar.gz" --owner=0 --group=0 install-mingw/
         popd
     fi
 fi #end of if [ "$skip_mingw32" != "yes" ] ;
@@ -592,6 +591,7 @@ if [ "$skip_package_sources" != "yes" ]; then
         cp "$script_path/build.sh" "$PACKAGE_NAME/"
     fi
 
+    # shellcheck disable=SC2086  # TAR_FLAGS is intentionally word-split (extra tar options)
     tar cf "$PACKAGE_NAME-src.tar.bz2" "$PACKAGE_NAME" ${TAR_FLAGS:-}
     rm -rf "$PACKAGE_NAME"
     popd
