@@ -62,18 +62,16 @@ copy_dir_clean() {
 # Create source package excluding source control information
 #   parameter 1: base dir of the source tree
 #   parameter 2: dirname of the source tree
-#   parameter 3: target package name
-#   parameter 4-10: additional excluding
+#   parameter 3: output archive path (including filename)
+#   parameter 4+: additional --exclude arguments (optional, any number)
 # This function will create bz2 package for files under param1/param2,
-# excluding unnecessary parts, and create package named param2.
+# excluding unnecessary parts, and write the package to the path given in param3.
 pack_dir_clean() {
-    set +u
     tar cjfh "$3" \
         --exclude=CVS --exclude=.svn --exclude=.git --exclude=.pc \
         --exclude="*~" --exclude=".#*" \
-        --exclude="*.orig" --exclude="*.rej" ${4:+"$4"} ${5:+"$5"} ${6:+"$6"} ${7:+"$7"} ${8:+"$8"} ${9:+"$9"} ${10:+"${10}"} \
+        --exclude="*.orig" --exclude="*.rej" "${@:4}" \
         -C "$1" "$2"
-    set -u
 }
 
 # Clean all global shell variables except for those needed by build scripts
@@ -401,7 +399,9 @@ if [[ "${SCRIPT%%-*}" = "build" || "${SCRIPT#*_*}" = "build" ]]; then
 
     stack_level=0
 
+    # shellcheck disable=SC2034  # initialized when sourced; consumed by build-toolchain.sh and build-prerequisites.sh
     LICENSE_FILE=license.txt
+    # shellcheck disable=SC2034  # initialized when sourced; consumed by build-toolchain.sh and build-prerequisites.sh
     GCC_VER=$(cat "$SRCDIR/$GCC/gcc/BASE-VER")
     GCC_VER_DISPLAY=$(cut -d'.' -f1,2 "$SRCDIR/$GCC/gcc/BASE-VER")
     STM32_TOOLS_VER=$(git describe --tags 2>/dev/null || echo "$GCC_VER_DISPLAY-$RELEASEVER~$(git rev-parse --verify HEAD)")
@@ -410,24 +410,36 @@ if [[ "${SCRIPT%%-*}" = "build" || "${SCRIPT#*_*}" = "build" ]]; then
     # shellcheck disable=SC2034  # consumed by build-toolchain.sh and build-prerequisites.sh
     HOST_MINGW_TOOL=x86_64-w64-mingw32
     TARGET=arm-none-eabi
+    # shellcheck disable=SC2034  # initialized when sourced; overridden and consumed by build-toolchain.sh and build-prerequisites.sh
     ENV_CFLAGS=
+    # shellcheck disable=SC2034  # initialized when sourced; overridden and consumed by build-toolchain.sh and build-prerequisites.sh
     ENV_CPPFLAGS=
+    # shellcheck disable=SC2034  # initialized when sourced; overridden and consumed by build-toolchain.sh and build-prerequisites.sh
     ENV_LDFLAGS=
+    # shellcheck disable=SC2034  # initialized when sourced; overridden and consumed by build-toolchain.sh and build-prerequisites.sh
     BINUTILS_CONFIG_OPTS=
+    # shellcheck disable=SC2034  # initialized when sourced; overridden and consumed by build-toolchain.sh and build-prerequisites.sh
     GCC_CONFIG_OPTS=
+    # shellcheck disable=SC2034  # initialized when sourced; overridden and consumed by build-toolchain.sh and build-prerequisites.sh
     GDB_CONFIG_OPTS=
+    # shellcheck disable=SC2034  # initialized when sourced; overridden and consumed by build-toolchain.sh and build-prerequisites.sh
     NEWLIB_CONFIG_OPTS=
 
 
     PKGROOTNAME="GNU Tools for STM32"
+    # shellcheck disable=SC2034  # initialized when sourced; consumed by build-toolchain.sh and build-prerequisites.sh
     PKGVERSION="$PKGROOTNAME $STM32_TOOLS_VER"
-    BUGURL="https://developer.arm.com/open-source/gnu-toolchain/gnu-rm"
 
+    # shellcheck disable=SC2034  # initialized when sourced; consumed by build-toolchain.sh and build-prerequisites.sh
     OBJ_SUFFIX_MINGW=$TARGET-$RELEASEDATE-$HOST_MINGW
+    # shellcheck disable=SC2034  # initialized when sourced; consumed by build-toolchain.sh and build-prerequisites.sh
     OBJ_SUFFIX_NATIVE=$TARGET-$RELEASEDATE-$HOST_NATIVE
     PACKAGE_NAME=gnu-tools-for-stm32-$STM32_TOOLS_VER
+    # shellcheck disable=SC2034  # initialized when sourced; consumed by build-toolchain.sh and build-prerequisites.sh
     PACKAGE_NAME_NATIVE=$PACKAGE_NAME-$PACKAGE_NAME_SUFFIX
+    # shellcheck disable=SC2034  # initialized when sourced; consumed by build-toolchain.sh and build-prerequisites.sh
     PACKAGE_NAME_MINGW=$PACKAGE_NAME-win32
+    # shellcheck disable=SC2034  # initialized when sourced; consumed by build-toolchain.sh and build-prerequisites.sh
     INSTALL_PACKAGE_NAME=$PACKAGE_NAME
 
 fi # not a build script
