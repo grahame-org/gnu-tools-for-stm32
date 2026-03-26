@@ -76,33 +76,34 @@ if [ "x$is_ppa_release" != "xyes" ]; then
 fi
 
 if [ "x$skip_native_build" != "xyes" ] ; then
-    mkdir -p $BUILDDIR_NATIVE
-    mkdir -p $INSTALLDIR_NATIVE
-    mkdir -p $PACKAGEDIR
+    mkdir -p "$BUILDDIR_NATIVE"
+    mkdir -p "$INSTALLDIR_NATIVE"
+    mkdir -p "$PACKAGEDIR"
 fi
 
-cd $SRCDIR
+cd "$SRCDIR"
 
 if [ "x$skip_native_build" != "xyes" ] ; then
-    echo Task [III-6] /$HOST_NATIVE/gdb/ | tee -a "$BUILDDIR_NATIVE/.stage"
+    echo "Task [III-6] /$HOST_NATIVE/gdb/" | tee -a "$BUILDDIR_NATIVE/.stage"
     build_gdb()
     {
         GDB_EXTRA_CONFIG_OPTS=$1
 
-        rm -rf $BUILDDIR_NATIVE/gdb && mkdir -p $BUILDDIR_NATIVE/gdb
-        pushd $BUILDDIR_NATIVE/gdb
+        rm -rf "$BUILDDIR_NATIVE/gdb" && mkdir -p "$BUILDDIR_NATIVE/gdb"
+        pushd "$BUILDDIR_NATIVE/gdb"
         saveenv
         saveenvvar CFLAGS "$ENV_CFLAGS"
         saveenvvar CPPFLAGS "$ENV_CPPFLAGS"
         saveenvvar LDFLAGS "$ENV_LDFLAGS"
 
-        $SRCDIR/$GDB/configure  \
-            --target=$TARGET \
-            --prefix=$INSTALLDIR_NATIVE \
-            --infodir=$INSTALLDIR_NATIVE_DOC/info \
-            --mandir=$INSTALLDIR_NATIVE_DOC/man \
-            --htmldir=$INSTALLDIR_NATIVE_DOC/html \
-            --pdfdir=$INSTALLDIR_NATIVE_DOC/pdf \
+        # shellcheck disable=SC2086,SC2016 # GDB_CONFIG_OPTS and GDB_EXTRA_CONFIG_OPTS are intentionally word-split (multiple configure flags); ${prefix} is a GDB configure-level variable, not a shell variable
+        "$SRCDIR/$GDB/configure"  \
+            --target="$TARGET" \
+            --prefix="$INSTALLDIR_NATIVE" \
+            --infodir="$INSTALLDIR_NATIVE_DOC/info" \
+            --mandir="$INSTALLDIR_NATIVE_DOC/man" \
+            --htmldir="$INSTALLDIR_NATIVE_DOC/html" \
+            --pdfdir="$INSTALLDIR_NATIVE_DOC/pdf" \
             --disable-nls \
             --disable-sim \
             --disable-gas \
@@ -111,20 +112,20 @@ if [ "x$skip_native_build" != "xyes" ] ; then
             --disable-gprof \
             --with-libexpat \
             --with-lzma=no \
-            --with-system-gdbinit=$INSTALLDIR_NATIVE/$HOST_NATIVE/arm-none-eabi/lib/gdbinit \
+            --with-system-gdbinit="$INSTALLDIR_NATIVE/$HOST_NATIVE/arm-none-eabi/lib/gdbinit" \
             --with-zstd=no \
-            $GDB_CONFIG_OPTS \
-            $GDB_EXTRA_CONFIG_OPTS \
+            ${GDB_CONFIG_OPTS} \
+            ${GDB_EXTRA_CONFIG_OPTS} \
             '--with-gdb-datadir='\''${prefix}'\''/arm-none-eabi/share/gdb' \
             "--with-pkgversion=$PKGVERSION"
 
-        make -j$JOBS
+        make -j"$JOBS"
 
         make install
 
         if [ "x$skip_manual" != "xyes" ]; then
             make install-html install-pdf
-            rm -v $INSTALLDIR_NATIVE_DOC/html/gdb/qMemTags.html
+            rm -v "$INSTALLDIR_NATIVE_DOC/html/gdb/qMemTags.html"
         fi
 
         restoreenv
