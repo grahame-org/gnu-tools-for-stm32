@@ -224,8 +224,6 @@ if [ "$skip_native_build" != "yes" ] ; then
         pushd "$BUILDDIR_NATIVE"
         "$INSTALLDIR_NATIVE/bin/arm-none-eabi-gcc" -print-multi-lib | cut -d';' -f 1 | while read -r dir; do
           cp -v "$SRCDIR/specs/"{nano_c_standard_cpp,standard_c_nano_cpp}.specs "$INSTALLDIR_NATIVE/arm-none-eabi/lib/$dir/"
-        "$INSTALLDIR_NATIVE/bin/arm-none-eabi-gcc" -print-multi-lib | cut -d';' -f 1 | while read dir; do
-          cp -v "$SRCDIR/specs/nano_c_standard_cpp.specs" "$SRCDIR/specs/standard_c_nano_cpp.specs" "$INSTALLDIR_NATIVE/arm-none-eabi/lib/$dir/"
         done
         popd
     fi
@@ -285,7 +283,6 @@ if [ "$skip_native_build" != "yes" ] ; then
             invalid+=("$line")
           fi
         done < <(find "$INSTALLDIR_NATIVE/" -type f | xargs file | grep "Mach-O " | cut -d: -f1)
-        done <<< $(find "$INSTALLDIR_NATIVE/" -type f |  xargs file | grep "Mach-O " | cut -d: -f1)
 
         if [ ${#invalid[@]} -ne 0 ]; then
           echo -e "Illegal dependency detected!${invalid[*]/#/\\n}\nAborting..."
