@@ -309,7 +309,7 @@ if [ "$skip_mingw32" != "yes" ] ; then
     pushd "$BUILDDIR_MINGW/tools-$OBJ_SUFFIX_NATIVE"
     ln -s . "$INSTALL_PACKAGE_NAME"
     # shellcheck disable=SC2086  # TAR_FLAGS is intentionally word-split (may contain multiple flags)
-    tar xf "$PACKAGEDIR/$PACKAGE_NAME_NATIVE.tar.bz2" ${TAR_FLAGS:-}
+    ${TAR} xf "$PACKAGEDIR/$PACKAGE_NAME_NATIVE.tar.bz2" ${TAR_FLAGS:-}
     rm "$INSTALL_PACKAGE_NAME"
     popd
 
