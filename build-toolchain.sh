@@ -418,7 +418,7 @@ if [ "$skip_mingw32" != "yes" ] ; then
         "--with-pkgversion=$PKGVERSION" \
         "${MULTILIB_LIST}"
 
-    make -j"${JOBS}" all-gcc
+    make -j"$JOBS" all-gcc
 
     make install-gcc
 
