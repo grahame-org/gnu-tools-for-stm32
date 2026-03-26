@@ -1178,14 +1178,15 @@ jobs:
           {
             echo "CCACHE_DIR=$HOME/.ccache"
             echo "CCACHE_MAXSIZE=5G"
-            # CCACHE_SLOPPINESS prevents false cache misses from non-deterministic
-            # compiler inputs that do not affect the final binary output:
+            # CCACHE_SLOPPINESS relaxes cache keys for certain non-deterministic
+            # compiler inputs that we intentionally treat as non-cache-affecting
+            # in this workflow:
             #   file_macro  — ignores __FILE__ path differences (absolute vs relative)
             #   locale      — ignores locale/encoding differences between runs
             #   time_macros — allows caching objects that use __TIME__/__DATE__
-            # These settings preserve byte-for-byte reproducibility of the .bin
-            # artifact produced by test_project: the raw load-segment dump is
-            # identical whether ccache serves a hit or compiles from scratch.
+            # These macros can affect object bytes in general, but here overall
+            # correctness is enforced by the downstream .bin byte-for-byte
+            # comparison in build-final rather than by ccache keys alone.
             echo "CCACHE_SLOPPINESS=file_macro,locale,time_macros"
             echo "CCACHE_COMPRESS=1"
             echo "CC=ccache gcc"
@@ -1394,14 +1395,15 @@ jobs:
           {
             echo "CCACHE_DIR=$HOME/.ccache"
             echo "CCACHE_MAXSIZE=5G"
-            # CCACHE_SLOPPINESS prevents false cache misses from non-deterministic
-            # compiler inputs that do not affect the final binary output:
+            # CCACHE_SLOPPINESS relaxes cache keys for certain non-deterministic or
+            # environment-dependent compiler inputs to reduce unnecessary cache misses:
             #   file_macro  — ignores __FILE__ path differences (absolute vs relative)
             #   locale      — ignores locale/encoding differences between runs
             #   time_macros — allows caching objects that use __TIME__/__DATE__
-            # These settings preserve byte-for-byte reproducibility of the .bin
-            # artifact produced by test_project: the raw load-segment dump is
-            # identical whether ccache serves a hit or compiles from scratch.
+            # These are deliberate cache tradeoffs: if such inputs are used in code,
+            # they can change the compiled object, but we rely on the later .bin
+            # byte-for-byte comparison in test_project to validate that the final
+            # firmware image remains deterministic across builds and cache hits.
             echo "CCACHE_SLOPPINESS=file_macro,locale,time_macros"
             echo "CCACHE_COMPRESS=1"
             echo "CC=ccache gcc"
