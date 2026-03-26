@@ -381,6 +381,16 @@ assert_eq "pack_dir_clean excludes *.rej files" \
 assert_eq "pack_dir_clean excludes .#* emacs lock files" \
     "" "$(echo "$_PDC_CONTENTS" | grep "\.#lockfile" || true)"
 
+# Test that extra --exclude args (params 4+) are forwarded to tar
+_PDC_EXTRA_ARCHIVE="$_PDC_TMPDIR/out-extra.tar.bz2"
+echo "extra-excluded" > "$_PDC_TMPDIR/src/extra.txt"
+pack_dir_clean "$_PDC_TMPDIR" "src" "$_PDC_EXTRA_ARCHIVE" --exclude="extra.txt"
+_PDC_EXTRA_CONTENTS=$(tar tjf "$_PDC_EXTRA_ARCHIVE")
+assert_eq "pack_dir_clean forwards extra --exclude args" \
+    "" "$(echo "$_PDC_EXTRA_CONTENTS" | grep -Fx "src/extra.txt" || true)"
+assert_eq "pack_dir_clean still archives normal files with extra excludes" \
+    "src/normal.txt" "$(echo "$_PDC_EXTRA_CONTENTS" | grep -Fx "src/normal.txt" || true)"
+
 rm -rf "$_PDC_TMPDIR"
 
 # ---------------------------------------------------------------------------
