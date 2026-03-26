@@ -120,7 +120,7 @@ if [ "x$skip_native_build" != "xyes" ] ; then
     echo "[timing] gcc-size-libstdcxx configure end: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
     echo "[timing] gcc-size-libstdcxx make start: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
-    make -j"$JOBS" CCXXFLAGS="$BUILD_OPTIONS" \
+    make -j"$JOBS" CXXFLAGS="$BUILD_OPTIONS" \
             LDFLAGS_FOR_TARGET="--specs=nosys.specs" \
             CXXFLAGS_FOR_TARGET="-g -Os -ffunction-sections -fdata-sections -fno-exceptions"
     echo "[timing] gcc-size-libstdcxx make end: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
