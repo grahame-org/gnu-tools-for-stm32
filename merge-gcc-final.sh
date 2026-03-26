@@ -299,9 +299,15 @@ if ! echo "$multilib_output" | grep -q "thumb/v7e-m+fp/hard"; then
     _die "verification failed: rmprofile variant 'thumb/v7e-m+fp/hard' not found in --print-multi-lib output"
 fi
 
-# Check for representative aprofile variant (Cortex-A, soft-float).
-if ! echo "$multilib_output" | grep -q "thumb/armv7-a"; then
-    _die "verification failed: aprofile variant 'thumb/armv7-a' not found in --print-multi-lib output"
+# Check for representative aprofile variant by verifying the physical library
+# directories exist in the merged tree.  We cannot use --print-multi-lib here
+# because multilib.h reflects only the rmprofile configuration when the
+# gcc-final build directory is absent (e.g. in the CI merge job), meaning
+# --print-multi-lib will never report Cortex-A variants in that context.
+aprofile_thumb="${output_dir}/arm-none-eabi/lib/thumb"
+if [ -z "$(find "$aprofile_thumb" -maxdepth 1 -type d \
+        \( -name 'armv7-a*' -o -name 'armv8-a*' \) -print -quit 2>/dev/null)" ]; then
+    _die "verification failed: no aprofile library directories (armv7-a*/armv8-a*) found under arm-none-eabi/lib/thumb/"
 fi
 
 echo "merge-gcc-final: merge complete and verified successfully"
