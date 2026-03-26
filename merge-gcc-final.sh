@@ -151,8 +151,8 @@ done
 [ -n "$output_dir"    ] || { _usage; _die "--output-dir is required";    }
 
 # Validate input directories exist before resolving absolute paths.
-[ -d "$rmprofile_dir" ] || _die "rmprofile-dir does not exist: $rmprofile_dir"
-[ -d "$aprofile_dir"  ] || _die "aprofile-dir does not exist: $aprofile_dir"
+[ -d "$rmprofile_dir" ] || _die "rmprofile-dir is not a directory: $rmprofile_dir"
+[ -d "$aprofile_dir"  ] || _die "aprofile-dir is not a directory: $aprofile_dir"
 
 # Resolve to absolute paths so the rest of the script is path-independent.
 rmprofile_dir=$(cd "$rmprofile_dir" && pwd -P)
