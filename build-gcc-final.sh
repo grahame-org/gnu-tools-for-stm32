@@ -46,6 +46,7 @@ set -x
 set -u
 set -o pipefail
 
+# shellcheck disable=SC2016 # intentional: single quotes defer expansion to trace-print time
 PS4='+$(date -u +%Y-%m-%d:%H:%M:%S) (${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
 
 umask 022
@@ -72,28 +73,29 @@ if [ "x$is_ppa_release" != "xyes" ]; then
 fi
 
 if [ "x$skip_native_build" != "xyes" ] ; then
-    mkdir -p $BUILDDIR_NATIVE
-    mkdir -p $INSTALLDIR_NATIVE
-    mkdir -p $PACKAGEDIR
+    mkdir -p "$BUILDDIR_NATIVE"
+    mkdir -p "$INSTALLDIR_NATIVE"
+    mkdir -p "$PACKAGEDIR"
 fi
 
-cd $SRCDIR
+cd "$SRCDIR"
 
 if [ "x$skip_native_build" != "xyes" ] ; then
-    echo Task [III-4] /$HOST_NATIVE/gcc-final/ | tee -a "$BUILDDIR_NATIVE/.stage"
-    rm -f $INSTALLDIR_NATIVE/arm-none-eabi/usr
-    ln -s . $INSTALLDIR_NATIVE/arm-none-eabi/usr
+    echo "Task [III-4] /$HOST_NATIVE/gcc-final/" | tee -a "$BUILDDIR_NATIVE/.stage"
+    rm -f "$INSTALLDIR_NATIVE/arm-none-eabi/usr"
+    ln -s . "$INSTALLDIR_NATIVE/arm-none-eabi/usr"
 
-    rm -rf $BUILDDIR_NATIVE/gcc-final && mkdir -p $BUILDDIR_NATIVE/gcc-final
-    pushd $BUILDDIR_NATIVE/gcc-final
+    rm -rf "$BUILDDIR_NATIVE/gcc-final" && mkdir -p "$BUILDDIR_NATIVE/gcc-final"
+    pushd "$BUILDDIR_NATIVE/gcc-final"
 
-    $SRCDIR/$GCC/configure --target=$TARGET \
-        --prefix=$INSTALLDIR_NATIVE \
-        --libexecdir=$INSTALLDIR_NATIVE/lib \
-        --infodir=$INSTALLDIR_NATIVE_DOC/info \
-        --mandir=$INSTALLDIR_NATIVE_DOC/man \
-        --htmldir=$INSTALLDIR_NATIVE_DOC/html \
-        --pdfdir=$INSTALLDIR_NATIVE_DOC/pdf \
+    # shellcheck disable=SC2086 # GCC_CONFIG_OPTS is an intentionally word-split list of configure flags
+    "$SRCDIR/$GCC/configure" --target="$TARGET" \
+        --prefix="$INSTALLDIR_NATIVE" \
+        --libexecdir="$INSTALLDIR_NATIVE/lib" \
+        --infodir="$INSTALLDIR_NATIVE_DOC/info" \
+        --mandir="$INSTALLDIR_NATIVE_DOC/man" \
+        --htmldir="$INSTALLDIR_NATIVE_DOC/html" \
+        --pdfdir="$INSTALLDIR_NATIVE_DOC/pdf" \
         --enable-checking=release \
         --enable-languages=c,c++ \
         --enable-plugins \
@@ -113,18 +115,18 @@ if [ "x$skip_native_build" != "xyes" ] ; then
         --with-newlib \
         --with-headers=yes \
         --with-python-dir=share/gcc-arm-none-eabi \
-        --with-sysroot=$INSTALLDIR_NATIVE/arm-none-eabi \
+        --with-sysroot="$INSTALLDIR_NATIVE/arm-none-eabi" \
         --with-zstd=no \
-        $GCC_CONFIG_OPTS                                \
+        ${GCC_CONFIG_OPTS}                                \
         "${GCC_CONFIG_OPTS_LCPP}"                              \
         "--with-pkgversion=$PKGVERSION" \
-        ${MULTILIB_LIST}  # accepts a single profile (e.g. rmprofile) or a comma-separated list (e.g. rmprofile,aprofile)
+        "${MULTILIB_LIST}"  # accepts a single profile (e.g. rmprofile) or a comma-separated list (e.g. rmprofile,aprofile)
 
     # Passing USE_TM_CLONE_REGISTRY=0 via INHIBIT_LIBC_CFLAGS to disable
     # transactional memory related code in crtbegin.o.
     # This is a workaround. Better approach is have a t-* to set this flag via
     # CRTSTUFF_T_CFLAGS
-    make -j$JOBS CXXFLAGS="$BUILD_OPTIONS" \
+    make -j"$JOBS" CXXFLAGS="$BUILD_OPTIONS" \
             LDFLAGS_FOR_TARGET="--specs=nosys.specs" \
             INHIBIT_LIBC_CFLAGS="-DUSE_TM_CLONE_REGISTRY=0"
 
@@ -134,16 +136,16 @@ if [ "x$skip_native_build" != "xyes" ] ; then
         make install-html install-pdf
     fi
 
-    pushd $INSTALLDIR_NATIVE
+    pushd "$INSTALLDIR_NATIVE"
     rm -rf bin/arm-none-eabi-gccbug
-    LIBIBERTY_LIBRARIES=$(find $INSTALLDIR_NATIVE/arm-none-eabi/lib -name libiberty.a)
+    LIBIBERTY_LIBRARIES=$(find "$INSTALLDIR_NATIVE/arm-none-eabi/lib" -name libiberty.a)
     for libiberty_lib in $LIBIBERTY_LIBRARIES ; do
-        rm -rf $libiberty_lib
+        rm -rf "$libiberty_lib"
     done
     rm -rf ./lib/libiberty.a
     rm -rf  include
     popd
 
-    rm -f $INSTALLDIR_NATIVE/arm-none-eabi/usr
+    rm -f "$INSTALLDIR_NATIVE/arm-none-eabi/usr"
     popd
 fi
