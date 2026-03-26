@@ -150,12 +150,13 @@ done
 [ -n "$aprofile_dir"  ] || { _usage; _die "--aprofile-dir is required";  }
 [ -n "$output_dir"    ] || { _usage; _die "--output-dir is required";    }
 
+# Validate input directories exist before resolving absolute paths.
+[ -d "$rmprofile_dir" ] || _die "rmprofile-dir does not exist: $rmprofile_dir"
+[ -d "$aprofile_dir"  ] || _die "aprofile-dir does not exist: $aprofile_dir"
+
 # Resolve to absolute paths so the rest of the script is path-independent.
 rmprofile_dir=$(cd "$rmprofile_dir" && pwd -P)
 aprofile_dir=$(cd "$aprofile_dir"   && pwd -P)
-
-[ -d "$rmprofile_dir" ] || _die "rmprofile-dir does not exist: $rmprofile_dir"
-[ -d "$aprofile_dir"  ] || _die "aprofile-dir does not exist: $aprofile_dir"
 
 # Default gcc-final build dir relative to the script.
 if [ -z "$gcc_final_build_dir" ]; then
