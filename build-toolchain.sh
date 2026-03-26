@@ -310,8 +310,6 @@ if [ "$skip_mingw32" != "yes" ] ; then
     ln -s . "$INSTALL_PACKAGE_NAME"
     # shellcheck disable=SC2086  # TAR_FLAGS is intentionally word-split (may contain multiple flags)
     ${TAR} xf "$PACKAGEDIR/$PACKAGE_NAME_NATIVE.tar.bz2" ${TAR_FLAGS:-}
-    # shellcheck disable=SC2086  # TAR_FLAGS is intentionally word-split (extra tar options)
-    tar xf "$PACKAGEDIR/$PACKAGE_NAME_NATIVE.tar.bz2" ${TAR_FLAGS:-}
     rm "$INSTALL_PACKAGE_NAME"
     popd
 
