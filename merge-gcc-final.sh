@@ -36,8 +36,9 @@
 #   stay within GitHub Actions cache-size limits, each job produces a partial
 #   install-native/ tree.  The rmprofile tree contains the compiler binary,
 #   shared headers, and all Cortex-M/R multilib variants.  The aprofile tree
-#   contains only the Cortex-A multilib library directories (armv7-a, armv8-a
-#   variants under arm-none-eabi/lib/thumb/).
+#   contains only the Cortex-A multilib library directories (v7-a*, v7ve*,
+#   v8-a* variants under arm-none-eabi/lib/thumb/, per MULTI_ARCH_DIRS_A in
+#   gcc/config/arm/t-aprofile).
 #
 #   The multilib.h header is generated from the --with-multilib-list value
 #   used at configure time; it therefore differs between the two trees and
@@ -204,8 +205,10 @@ echo "merge-gcc-final: Step 1 – copying rmprofile tree to output-dir"
 # Step 2: Overlay aprofile multilib library directories
 #
 # aprofile uniquely contributes Cortex-A multilib variants located under
-# arm-none-eabi/lib/thumb/.  We overlay every directory whose name starts
-# with "armv7-a" or "armv8-a" from the aprofile tree.
+# arm-none-eabi/lib/thumb/.  Per MULTI_ARCH_DIRS_A in gcc/config/arm/t-aprofile,
+# the directory names are: v7-a, v7-a+fp, v7-a+simd, v7ve+simd, v8-a, v8-a+simd.
+# We overlay every immediate subdirectory of thumb/ whose name starts with
+# "v7-a", "v7ve", or "v8-a" from the aprofile tree.
 #
 # We deliberately do NOT overlay:
 #   - Compiler binaries  (bin/)
@@ -223,11 +226,11 @@ if [ ! -d "$aprofile_lib_root" ]; then
     _die "aprofile tree is missing arm-none-eabi/lib/: $aprofile_lib_root"
 fi
 
-# Overlay thumb/armv7-a* and thumb/armv8-a* subtrees.
-# Find all immediate children of thumb/ whose names begin with "armv7-a" or
-# "armv8-a" (e.g. armv7-a, armv7-a+fp, armv8-a, armv8-a+simd, etc.) and copy
-# each one — including its full sub-tree — into the corresponding location of
-# the output tree.
+# Overlay thumb/v7-a*, thumb/v7ve*, and thumb/v8-a* subtrees.
+# Find all immediate children of thumb/ whose names match the aprofile
+# MULTI_ARCH_DIRS_A patterns (v7-a*, v7ve*, v8-a*) and copy each one —
+# including its full sub-tree — into the corresponding location of the
+# output tree.
 while IFS= read -r -d '' src_dir; do
     rel="${src_dir#"$aprofile_lib_root/"}"
     dst_dir="${output_lib_root}/${rel}"
@@ -235,7 +238,7 @@ while IFS= read -r -d '' src_dir; do
     mkdir -p "$dst_dir"
     (cd "$src_dir" && tar cf - .) | (cd "$dst_dir" && tar xf -)
 done < <(find "${aprofile_lib_root}/thumb" -mindepth 1 -maxdepth 1 -type d \
-             \( -name 'armv7-a*' -o -name 'armv8-a*' \) -print0 2>/dev/null)
+             \( -name 'v7-a*' -o -name 'v7ve*' -o -name 'v8-a*' \) -print0 2>/dev/null)
 
 # ---------------------------------------------------------------------------
 # Step 3: Regenerate multilib.h for the combined profile
@@ -304,10 +307,12 @@ fi
 # because multilib.h reflects only the rmprofile configuration when the
 # gcc-final build directory is absent (e.g. in the CI merge job), meaning
 # --print-multi-lib will never report Cortex-A variants in that context.
+# The directory names match MULTI_ARCH_DIRS_A in gcc/config/arm/t-aprofile:
+# v7-a*, v7ve*, v8-a*.
 aprofile_thumb="${output_dir}/arm-none-eabi/lib/thumb"
 if [ -z "$(find "$aprofile_thumb" -maxdepth 1 -type d \
-        \( -name 'armv7-a*' -o -name 'armv8-a*' \) -print -quit 2>/dev/null)" ]; then
-    _die "verification failed: no aprofile library directories (armv7-a*/armv8-a*) found under arm-none-eabi/lib/thumb/"
+        \( -name 'v7-a*' -o -name 'v7ve*' -o -name 'v8-a*' \) -print -quit 2>/dev/null)" ]; then
+    _die "verification failed: no aprofile library directories (v7-a*/v7ve*/v8-a*) found under arm-none-eabi/lib/thumb/"
 fi
 
 echo "merge-gcc-final: merge complete and verified successfully"
