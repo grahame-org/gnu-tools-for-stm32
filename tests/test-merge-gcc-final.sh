@@ -65,6 +65,13 @@ assert_nonzero_exit "non-existent rmprofile-dir: exits non-zero" \
         --aprofile-dir="$_APDIR3" \
         --output-dir="$_OUTDIR3"
 
+_err3_rm=$(bash "$SCRIPT" \
+    --rmprofile-dir="$_TMPDIR/no_such_rmprofile" \
+    --aprofile-dir="$_APDIR3" \
+    --output-dir="$_OUTDIR3" 2>&1 || true)
+assert_contains "non-existent rmprofile-dir: error message names the path" \
+    "$_err3_rm" "error: rmprofile-dir is not a directory: $_TMPDIR/no_such_rmprofile"
+
 _RMDIR3="$_TMPDIR/rm3"
 mkdir -p "$_RMDIR3"
 
@@ -73,6 +80,13 @@ assert_nonzero_exit "non-existent aprofile-dir: exits non-zero" \
         --rmprofile-dir="$_RMDIR3" \
         --aprofile-dir="$_TMPDIR/no_such_aprofile" \
         --output-dir="$_OUTDIR3"
+
+_err3_ap=$(bash "$SCRIPT" \
+    --rmprofile-dir="$_RMDIR3" \
+    --aprofile-dir="$_TMPDIR/no_such_aprofile" \
+    --output-dir="$_OUTDIR3" 2>&1 || true)
+assert_contains "non-existent aprofile-dir: error message names the path" \
+    "$_err3_ap" "error: aprofile-dir is not a directory: $_TMPDIR/no_such_aprofile"
 
 # ---------------------------------------------------------------------------
 # Test group 4: Output dir = input dir, or nested inside input dir → non-zero
