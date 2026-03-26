@@ -30,6 +30,7 @@ jobs:
               - 'build-cache-budget-check.sh'
               - 'build-common.sh'
               - 'build-gcc-first.sh'
+              - 'build-gcc-size-libstdcxx.sh'
               - 'build-gdb.sh'
               - 'build-newlib.sh'
               - 'build-newlib-nano.sh'
@@ -66,6 +67,7 @@ jobs:
           build-binutils.sh \
           build-common.sh \
           build-gcc-first.sh \
+          build-gcc-size-libstdcxx.sh \
           build-gdb.sh \
           build-newlib.sh \
           build-newlib-nano.sh \

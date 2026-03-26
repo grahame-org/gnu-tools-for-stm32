@@ -74,24 +74,25 @@ if [ "x$is_ppa_release" != "xyes" ]; then
 fi
 
 if [ "x$skip_native_build" != "xyes" ] ; then
-    mkdir -p $BUILDDIR_NATIVE
-    mkdir -p $INSTALLDIR_NATIVE
-    mkdir -p $PACKAGEDIR
+    mkdir -p "$BUILDDIR_NATIVE"
+    mkdir -p "$INSTALLDIR_NATIVE"
+    mkdir -p "$PACKAGEDIR"
 fi
 
-cd $SRCDIR
+cd "$SRCDIR"
 
 if [ "x$skip_native_build" != "xyes" ] ; then
-    echo Task [III-5] /$HOST_NATIVE/gcc-size-libstdcxx/ | tee -a "$BUILDDIR_NATIVE/.stage"
-    rm -f $BUILDDIR_NATIVE/target-libs/arm-none-eabi/usr
-    ln -s . $BUILDDIR_NATIVE/target-libs/arm-none-eabi/usr
+    echo "Task [III-5] /$HOST_NATIVE/gcc-size-libstdcxx/" | tee -a "$BUILDDIR_NATIVE/.stage"
+    rm -f "$BUILDDIR_NATIVE/target-libs/arm-none-eabi/usr"
+    ln -s . "$BUILDDIR_NATIVE/target-libs/arm-none-eabi/usr"
 
-    rm -rf $BUILDDIR_NATIVE/gcc-size-libstdcxx && mkdir -p $BUILDDIR_NATIVE/gcc-size-libstdcxx
-    pushd $BUILDDIR_NATIVE/gcc-size-libstdcxx
+    rm -rf "$BUILDDIR_NATIVE/gcc-size-libstdcxx" && mkdir -p "$BUILDDIR_NATIVE/gcc-size-libstdcxx"
+    pushd "$BUILDDIR_NATIVE/gcc-size-libstdcxx"
 
     echo "[timing] gcc-size-libstdcxx configure start: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
-    $SRCDIR/$GCC/configure --target=$TARGET \
-        --prefix=$BUILDDIR_NATIVE/target-libs \
+    # shellcheck disable=SC2086 # GCC_CONFIG_OPTS is an intentionally word-split list of configure flags
+    "$SRCDIR/$GCC/configure" --target="$TARGET" \
+        --prefix="$BUILDDIR_NATIVE/target-libs" \
         --enable-languages=c,c++ \
         --disable-decimal-float \
         --disable-libffi \
@@ -110,16 +111,16 @@ if [ "x$skip_native_build" != "xyes" ] ; then
         --with-newlib \
         --with-headers=yes \
         --with-python-dir=share/gcc-arm-none-eabi \
-        --with-sysroot=$BUILDDIR_NATIVE/target-libs/arm-none-eabi \
+        --with-sysroot="$BUILDDIR_NATIVE/target-libs/arm-none-eabi" \
         --with-zstd=no \
-        $GCC_CONFIG_OPTS \
+        ${GCC_CONFIG_OPTS} \
         "${GCC_CONFIG_OPTS_LCPP}"                              \
         "--with-pkgversion=$PKGVERSION" \
-        ${MULTILIB_LIST}
+        "${MULTILIB_LIST}"
     echo "[timing] gcc-size-libstdcxx configure end: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
     echo "[timing] gcc-size-libstdcxx make start: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
-    make -j$JOBS CCXXFLAGS="$BUILD_OPTIONS" \
+    make -j"$JOBS" CXXFLAGS="$BUILD_OPTIONS" \
             LDFLAGS_FOR_TARGET="--specs=nosys.specs" \
             CXXFLAGS_FOR_TARGET="-g -Os -ffunction-sections -fdata-sections -fno-exceptions"
     echo "[timing] gcc-size-libstdcxx make end: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
@@ -134,9 +135,9 @@ if [ "x$skip_native_build" != "xyes" ] ; then
 
     # Copy the nano configured newlib.h file into the location that nano.specs
     # expects it to be.
-    mkdir -p $INSTALLDIR_NATIVE/arm-none-eabi/include/newlib-nano
-    cp -f $BUILDDIR_NATIVE/target-libs/arm-none-eabi/include/newlib.h \
-          $INSTALLDIR_NATIVE/arm-none-eabi/include/newlib-nano/newlib.h
+    mkdir -p "$INSTALLDIR_NATIVE/arm-none-eabi/include/newlib-nano"
+    cp -f "$BUILDDIR_NATIVE/target-libs/arm-none-eabi/include/newlib.h" \
+          "$INSTALLDIR_NATIVE/arm-none-eabi/include/newlib-nano/newlib.h"
 
     popd
 fi
