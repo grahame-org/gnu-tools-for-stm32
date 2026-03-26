@@ -30,6 +30,7 @@ jobs:
               - 'build-cache-budget-check.sh'
               - 'build-common.sh'
               - 'build-gcc-first.sh'
+              - 'build-gdb.sh'
               - 'build-newlib.sh'
               - 'build-newlib-nano.sh'
               - 'build-pre-cache-clean.sh'
@@ -37,10 +38,13 @@ jobs:
               - 'build-toolchain-args.sh'
               - 'build-toolchain.sh'
               - 'measure-cache-compressed-size.sh'
+              - 'merge-gcc-final.sh'
               - '.github/actions/build-stage/*.sh'
               - 'tests/test-build-stage-action.sh'
               - 'tests/test-build-stage-scripts.sh'
               - 'tests/test-helpers.sh'
+              - 'tests/test-measure-cache-compressed-size.sh'
+              - 'tests/test-merge-gcc-final.sh'
               - '.shellcheckrc'
               - '.github/workflows/shellcheck.yml'
 
@@ -62,6 +66,7 @@ jobs:
           build-binutils.sh \
           build-common.sh \
           build-gcc-first.sh \
+          build-gdb.sh \
           build-newlib.sh \
           build-newlib-nano.sh \
           build-pre-cache-clean.sh \
@@ -70,9 +75,12 @@ jobs:
           build-toolchain.sh \
           build-cache-budget-check.sh \
           measure-cache-compressed-size.sh \
+          merge-gcc-final.sh \
           tests/test-build-stage-action.sh \
           tests/test-build-stage-scripts.sh \
           tests/test-helpers.sh \
+          tests/test-measure-cache-compressed-size.sh \
+          tests/test-merge-gcc-final.sh \
           .github/actions/build-stage/clean-before-cache-save.sh \
           .github/actions/build-stage/compute-cache-miss.sh \
           .github/actions/build-stage/run-build-stage.sh \
