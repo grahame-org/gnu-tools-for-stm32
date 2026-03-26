@@ -179,25 +179,6 @@ if [ "$skip_native_build" != "yes" ] ; then
                     strip_binary strip "$bin"
                 done < <(find "$INSTALLDIR_NATIVE/lib/gcc/arm-none-eabi/$GCC_VER/" -maxdepth 1 -name \* -perm /111 -and ! -type d -print0)
             fi
-        STRIP_BINARIES=$(find "$INSTALLDIR_NATIVE/bin/" -name arm-none-eabi-\*)
-        for bin in $STRIP_BINARIES ; do
-            strip_binary strip "$bin"
-        done
-
-        STRIP_BINARIES=$(find "$INSTALLDIR_NATIVE/arm-none-eabi/bin/" -maxdepth 1 -mindepth 1 -name \*)
-        for bin in $STRIP_BINARIES ; do
-            strip_binary strip "$bin"
-        done
-
-        if [ -d "$INSTALLDIR_NATIVE/lib/gcc/arm-none-eabi/$GCC_VER" ]; then
-            if [ "$BUILD" == "x86_64-apple-darwin10" ]; then
-                STRIP_BINARIES=$(find "$INSTALLDIR_NATIVE/lib/gcc/arm-none-eabi/$GCC_VER/" -maxdepth 1 -name \* -perm +111 -and ! -type d)
-            else
-                STRIP_BINARIES=$(find "$INSTALLDIR_NATIVE/lib/gcc/arm-none-eabi/$GCC_VER/" -maxdepth 1 -name \* -perm /111 -and ! -type d)
-            fi
-            for bin in $STRIP_BINARIES ; do
-                strip_binary strip "$bin"
-            done
         fi
     fi
 
@@ -226,30 +207,6 @@ if [ "$skip_native_build" != "yes" ] ; then
             while IFS= read -r -d '' target_obj; do
                 arm-none-eabi-strip --remove-section=.comment --remove-section=.note --strip-debug --enable-deterministic-archives --keep-section=.debug_frame "$target_obj" || true
             done < <(find "$INSTALLDIR_NATIVE/lib/gcc/arm-none-eabi/$GCC_VER" -name \*.o -print0)
-        TARGET_LIBRARIES=$(find "$INSTALLDIR_NATIVE/arm-none-eabi/lib" -name libg.a -or -name libg_nano.a)
-        for target_lib in $TARGET_LIBRARIES ; do
-            break_hardlink "$target_lib"
-        done
-        TARGET_LIBRARIES=$(find "$INSTALLDIR_NATIVE/arm-none-eabi/lib" -name \*.a ! -name libg.a ! -name libg_nano.a)
-        for target_lib in $TARGET_LIBRARIES ; do
-            arm-none-eabi-strip --remove-section=.comment --remove-section=.note --strip-debug --enable-deterministic-archives --keep-section=.debug_frame "$target_lib" || true
-        done
-
-        TARGET_OBJECTS=$(find "$INSTALLDIR_NATIVE/arm-none-eabi/lib" -name \*.o)
-        for target_obj in $TARGET_OBJECTS ; do
-            arm-none-eabi-strip --remove-section=.comment --remove-section=.note --strip-debug --enable-deterministic-archives --keep-section=.debug_frame "$target_obj" || true
-        done
-
-        if [ -d "$INSTALLDIR_NATIVE/lib/gcc/arm-none-eabi/$GCC_VER" ]; then
-            TARGET_LIBRARIES=$(find "$INSTALLDIR_NATIVE/lib/gcc/arm-none-eabi/$GCC_VER" -name \*.a)
-            for target_lib in $TARGET_LIBRARIES ; do
-                arm-none-eabi-strip --remove-section=.comment --remove-section=.note --strip-debug --enable-deterministic-archives --keep-section=.debug_frame "$target_lib" || true
-            done
-
-            TARGET_OBJECTS=$(find "$INSTALLDIR_NATIVE/lib/gcc/arm-none-eabi/$GCC_VER" -name \*.o)
-            for target_obj in $TARGET_OBJECTS ; do
-                arm-none-eabi-strip --remove-section=.comment --remove-section=.note --strip-debug --enable-deterministic-archives --keep-section=.debug_frame "$target_obj" || true
-            done
         fi
     fi
     restoreenv
@@ -259,8 +216,6 @@ if [ "$skip_native_build" != "yes" ] ; then
         echo "Skipping stage: specs (depends on gcc-final)"
     elif [ -x "$INSTALLDIR_NATIVE/bin/arm-none-eabi-gcc" ]; then
         pushd "$BUILDDIR_NATIVE"
-        $INSTALLDIR_NATIVE/bin/arm-none-eabi-gcc -print-multi-lib | cut -d';' -f 1 | while read dir; do
-          cp -v $SRCDIR/specs/{nano_c_standard_cpp,standard_c_nano_cpp}.specs $INSTALLDIR_NATIVE/arm-none-eabi/lib/$dir/
         "$INSTALLDIR_NATIVE/bin/arm-none-eabi-gcc" -print-multi-lib | cut -d';' -f 1 | while read dir; do
           cp -v "$SRCDIR/specs/nano_c_standard_cpp.specs" "$SRCDIR/specs/standard_c_nano_cpp.specs" "$INSTALLDIR_NATIVE/arm-none-eabi/lib/$dir/"
         done
