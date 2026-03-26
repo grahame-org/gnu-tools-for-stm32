@@ -161,25 +161,24 @@ if [ "$skip_native_build" != "yes" ] ; then
     echo "Task [III-9] /$HOST_NATIVE/strip_host_objects/" | tee -a "$BUILDDIR_NATIVE/.stage"
     # shellcheck disable=SC2154  # set by parse_toolchain_args() in build-toolchain-args.sh
     if [ "$is_debug_build" == "no" ] ; then
-        STRIP_BINARIES=$(find "$INSTALLDIR_NATIVE/bin/" -name arm-none-eabi-\*)
-        for bin in $STRIP_BINARIES ; do
+        while IFS= read -r -d '' bin; do
             strip_binary strip "$bin"
-        done
+        done < <(find "$INSTALLDIR_NATIVE/bin/" -name arm-none-eabi-\* -print0)
 
-        STRIP_BINARIES=$(find "$INSTALLDIR_NATIVE/arm-none-eabi/bin/" -maxdepth 1 -mindepth 1 -name \*)
-        for bin in $STRIP_BINARIES ; do
+        while IFS= read -r -d '' bin; do
             strip_binary strip "$bin"
-        done
+        done < <(find "$INSTALLDIR_NATIVE/arm-none-eabi/bin/" -maxdepth 1 -mindepth 1 -name \* -print0)
 
         if [ -d "$INSTALLDIR_NATIVE/lib/gcc/arm-none-eabi/$GCC_VER" ]; then
             if [ "$BUILD" == "x86_64-apple-darwin10" ]; then
-                STRIP_BINARIES=$(find "$INSTALLDIR_NATIVE/lib/gcc/arm-none-eabi/$GCC_VER/" -maxdepth 1 -name \* -perm +111 -and ! -type d)
+                while IFS= read -r -d '' bin; do
+                    strip_binary strip "$bin"
+                done < <(find "$INSTALLDIR_NATIVE/lib/gcc/arm-none-eabi/$GCC_VER/" -maxdepth 1 -name \* -perm +111 -and ! -type d -print0)
             else
-                STRIP_BINARIES=$(find "$INSTALLDIR_NATIVE/lib/gcc/arm-none-eabi/$GCC_VER/" -maxdepth 1 -name \* -perm /111 -and ! -type d)
+                while IFS= read -r -d '' bin; do
+                    strip_binary strip "$bin"
+                done < <(find "$INSTALLDIR_NATIVE/lib/gcc/arm-none-eabi/$GCC_VER/" -maxdepth 1 -name \* -perm /111 -and ! -type d -print0)
             fi
-            for bin in $STRIP_BINARIES ; do
-                strip_binary strip "$bin"
-            done
         fi
     fi
 
@@ -189,30 +188,25 @@ if [ "$skip_native_build" != "yes" ] ; then
 
     # shellcheck disable=SC2154  # set by parse_toolchain_args() in build-toolchain-args.sh
     if [ "$skip_strip_target_libraries" == "no" ] ; then
-        TARGET_LIBRARIES=$(find "$INSTALLDIR_NATIVE/arm-none-eabi/lib" -name libg.a -or -name libg_nano.a)
-        for target_lib in $TARGET_LIBRARIES ; do
+        while IFS= read -r -d '' target_lib; do
             break_hardlink "$target_lib"
-        done
-        TARGET_LIBRARIES=$(find "$INSTALLDIR_NATIVE/arm-none-eabi/lib" -name \*.a ! -name libg.a ! -name libg_nano.a)
-        for target_lib in $TARGET_LIBRARIES ; do
+        done < <(find "$INSTALLDIR_NATIVE/arm-none-eabi/lib" \( -name libg.a -or -name libg_nano.a \) -print0)
+        while IFS= read -r -d '' target_lib; do
             arm-none-eabi-strip --remove-section=.comment --remove-section=.note --strip-debug --enable-deterministic-archives --keep-section=.debug_frame "$target_lib" || true
-        done
+        done < <(find "$INSTALLDIR_NATIVE/arm-none-eabi/lib" -name \*.a ! -name libg.a ! -name libg_nano.a -print0)
 
-        TARGET_OBJECTS=$(find "$INSTALLDIR_NATIVE/arm-none-eabi/lib" -name \*.o)
-        for target_obj in $TARGET_OBJECTS ; do
+        while IFS= read -r -d '' target_obj; do
             arm-none-eabi-strip --remove-section=.comment --remove-section=.note --strip-debug --enable-deterministic-archives --keep-section=.debug_frame "$target_obj" || true
-        done
+        done < <(find "$INSTALLDIR_NATIVE/arm-none-eabi/lib" -name \*.o -print0)
 
         if [ -d "$INSTALLDIR_NATIVE/lib/gcc/arm-none-eabi/$GCC_VER" ]; then
-            TARGET_LIBRARIES=$(find "$INSTALLDIR_NATIVE/lib/gcc/arm-none-eabi/$GCC_VER" -name \*.a)
-            for target_lib in $TARGET_LIBRARIES ; do
+            while IFS= read -r -d '' target_lib; do
                 arm-none-eabi-strip --remove-section=.comment --remove-section=.note --strip-debug --enable-deterministic-archives --keep-section=.debug_frame "$target_lib" || true
-            done
+            done < <(find "$INSTALLDIR_NATIVE/lib/gcc/arm-none-eabi/$GCC_VER" -name \*.a -print0)
 
-            TARGET_OBJECTS=$(find "$INSTALLDIR_NATIVE/lib/gcc/arm-none-eabi/$GCC_VER" -name \*.o)
-            for target_obj in $TARGET_OBJECTS ; do
+            while IFS= read -r -d '' target_obj; do
                 arm-none-eabi-strip --remove-section=.comment --remove-section=.note --strip-debug --enable-deterministic-archives --keep-section=.debug_frame "$target_obj" || true
-            done
+            done < <(find "$INSTALLDIR_NATIVE/lib/gcc/arm-none-eabi/$GCC_VER" -name \*.o -print0)
         fi
     fi
     restoreenv
