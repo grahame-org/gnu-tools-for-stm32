@@ -280,10 +280,9 @@ if [ "$skip_native_build" != "yes" ] ; then
         # shellcheck disable=SC2046,SC2038
         while read -r line; do
           if objdump -macho --dylibs-used "$line" | grep -q '/usr/local/'; then
-            # shellcheck disable=SC2206
-            invalid+=($line)
+            invalid+=("$line")
           fi
-        done <<< $(find "$INSTALLDIR_NATIVE/" -type f |  xargs file | grep "Mach-O " | cut -d: -f1)
+        done < <(find "$INSTALLDIR_NATIVE/" -type f | xargs file | grep "Mach-O " | cut -d: -f1)
 
         if [ ${#invalid[@]} -ne 0 ]; then
           echo -e "Illegal dependency detected!${invalid[*]/#/\\n}\nAborting..."
