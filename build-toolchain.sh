@@ -362,7 +362,7 @@ if [ "$skip_mingw32" != "yes" ] ; then
     saveenv
     saveenvvar AR_FOR_TARGET "$TARGET-ar"
     saveenvvar NM_FOR_TARGET "$TARGET-nm"
-    saveenvvar OBJDUMP_FOR_TARET "$TARGET-objdump"
+    saveenvvar OBJDUMP_FOR_TARGET "$TARGET-objdump"
     saveenvvar STRIP_FOR_TARGET "$TARGET-strip"
     saveenvvar CC_FOR_TARGET "$TARGET-gcc"
     saveenvvar GCC_FOR_TARGET "$TARGET-gcc"
