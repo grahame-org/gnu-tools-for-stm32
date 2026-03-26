@@ -159,10 +159,14 @@ jobs:
           # invalidate the other profile's cache.
           key_gcc_final_rmprofile=$(printf '%s' "${{ runner.os }}-stage-gcc-final-${gcc_final_scripts_hash}-${key_newlib}-${gcc_src}-rmprofile" | sha256sum | cut -d' ' -f1)
           key_gcc_final_aprofile=$(printf '%s' "${{ runner.os }}-stage-gcc-final-${gcc_final_scripts_hash}-${key_newlib}-${gcc_src}-aprofile" | sha256sum | cut -d' ' -f1)
-          # Merged gcc-final key: combines both profile keys so the merge job's
-          # cache is invalidated when either profile changes.
-          key_merge_gcc_final=$(printf '%s' "${key_gcc_final_rmprofile}${key_gcc_final_aprofile}" | sha256sum | cut -d' ' -f1)
-          key_gcc_size=$(printf '%s' "${{ runner.os }}-stage-gcc-size-libstdcxx-${gcc_size_libstdcxx_scripts_hash}-${key_gcc_final}-${key_newlib_nano}-${gcc_src}" | sha256sum | cut -d' ' -f1)
+          merge_gcc_final_script_hash=$(hash_dir merge-gcc-final.sh)
+          # Merged gcc-final key: combines both profile keys and the merge script
+          # hash so the cache is invalidated when either profile or the merge
+          # logic changes.
+          key_merge_gcc_final=$(printf '%s' "${key_gcc_final_rmprofile}${key_gcc_final_aprofile}${merge_gcc_final_script_hash}" | sha256sum | cut -d' ' -f1)
+          # gcc-size-libstdcxx depends on the merged gcc-final output, so use
+          # key_merge_gcc_final as its parent key.
+          key_gcc_size=$(printf '%s' "${{ runner.os }}-stage-gcc-size-libstdcxx-${gcc_size_libstdcxx_scripts_hash}-${key_merge_gcc_final}-${key_newlib_nano}-${gcc_src}" | sha256sum | cut -d' ' -f1)
           key_gdb=$(printf '%s' "${{ runner.os }}-stage-gdb-${gdb_scripts_hash}-${key_binutils}-${gdb_src}" | sha256sum | cut -d' ' -f1)
           key_final=$(printf '%s' "${{ runner.os }}-stage-final-${final_scripts_hash}-${key_gcc_size}-${key_gdb}-${specs_src}" | sha256sum | cut -d' ' -f1)
 
@@ -1499,9 +1503,10 @@ jobs:
         uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
         with:
           path: install-native
-          key: ${{ runner.os }}-stage-v3-${{ needs.compute-hashes.outputs['gcc-final'] }}
+          key: ${{ runner.os }}-stage-v3-${{ needs.compute-hashes.outputs['merge-gcc-final'] }}
 
       - name: Restore cache – gcc-final-rmprofile
+        id: restore-rmprofile
         if: steps.pre-restore.outputs.cache-hit != 'true'
         uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
         with:
@@ -1510,9 +1515,16 @@ jobs:
 
       - name: Stage rmprofile install tree
         if: steps.pre-restore.outputs.cache-hit != 'true'
-        run: mv install-native install-native-rmprofile
+        run: |
+          set -euo pipefail
+          if [[ "${{ steps.restore-rmprofile.outputs.cache-hit }}" != "true" ]]; then
+            echo "::error::gcc-final-rmprofile cache miss; expected key: ${{ runner.os }}-stage-v3-${{ needs.compute-hashes.outputs['gcc-final-rmprofile'] }}"
+            exit 1
+          fi
+          mv install-native install-native-rmprofile
 
       - name: Restore cache – gcc-final-aprofile
+        id: restore-aprofile
         if: steps.pre-restore.outputs.cache-hit != 'true'
         uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
         with:
@@ -1521,7 +1533,13 @@ jobs:
 
       - name: Stage aprofile install tree
         if: steps.pre-restore.outputs.cache-hit != 'true'
-        run: mv install-native install-native-aprofile
+        run: |
+          set -euo pipefail
+          if [[ "${{ steps.restore-aprofile.outputs.cache-hit }}" != "true" ]]; then
+            echo "::error::gcc-final-aprofile cache miss; expected key: ${{ runner.os }}-stage-v3-${{ needs.compute-hashes.outputs['gcc-final-aprofile'] }}"
+            exit 1
+          fi
+          mv install-native install-native-aprofile
 
       - name: Merge gcc-final profiles
         id: merge
@@ -1556,7 +1574,7 @@ jobs:
         uses: actions/cache/save@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
         with:
           path: install-native
-          key: ${{ runner.os }}-stage-v3-${{ needs.compute-hashes.outputs['gcc-final'] }}
+          key: ${{ runner.os }}-stage-v3-${{ needs.compute-hashes.outputs['merge-gcc-final'] }}
 
       - name: Report cache sizes – merge-gcc-final
         id: cache-sizes-merge-gcc-final
@@ -1702,7 +1720,7 @@ jobs:
         uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
         with:
           path: install-native
-          key: ${{ runner.os }}-stage-v3-${{ needs.compute-hashes.outputs['gcc-final'] }}
+          key: ${{ runner.os }}-stage-v3-${{ needs.compute-hashes.outputs['merge-gcc-final'] }}
 
       - name: Restore cache – newlib-nano
         if: steps.pre-restore.outputs.cache-hit != 'true'
