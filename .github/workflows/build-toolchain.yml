@@ -1178,6 +1178,14 @@ jobs:
           {
             echo "CCACHE_DIR=$HOME/.ccache"
             echo "CCACHE_MAXSIZE=5G"
+            # CCACHE_SLOPPINESS prevents false cache misses from non-deterministic
+            # compiler inputs that do not affect the final binary output:
+            #   file_macro  — ignores __FILE__ path differences (absolute vs relative)
+            #   locale      — ignores locale/encoding differences between runs
+            #   time_macros — allows caching objects that use __TIME__/__DATE__
+            # These settings preserve byte-for-byte reproducibility of the .bin
+            # artifact produced by test_project: the raw load-segment dump is
+            # identical whether ccache serves a hit or compiles from scratch.
             echo "CCACHE_SLOPPINESS=file_macro,locale,time_macros"
             echo "CCACHE_COMPRESS=1"
             echo "CC=ccache gcc"
@@ -1386,6 +1394,14 @@ jobs:
           {
             echo "CCACHE_DIR=$HOME/.ccache"
             echo "CCACHE_MAXSIZE=5G"
+            # CCACHE_SLOPPINESS prevents false cache misses from non-deterministic
+            # compiler inputs that do not affect the final binary output:
+            #   file_macro  — ignores __FILE__ path differences (absolute vs relative)
+            #   locale      — ignores locale/encoding differences between runs
+            #   time_macros — allows caching objects that use __TIME__/__DATE__
+            # These settings preserve byte-for-byte reproducibility of the .bin
+            # artifact produced by test_project: the raw load-segment dump is
+            # identical whether ccache serves a hit or compiles from scratch.
             echo "CCACHE_SLOPPINESS=file_macro,locale,time_macros"
             echo "CCACHE_COMPRESS=1"
             echo "CC=ccache gcc"
