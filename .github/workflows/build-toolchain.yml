@@ -56,6 +56,9 @@ jobs:
       newlib: ${{ steps.stage-hashes.outputs.newlib }}
       newlib-nano: ${{ steps.stage-hashes.outputs.newlib-nano }}
       gcc-final: ${{ steps.stage-hashes.outputs.gcc-final }}
+      gcc-final-rmprofile: ${{ steps.stage-hashes.outputs.gcc-final-rmprofile }}
+      gcc-final-aprofile: ${{ steps.stage-hashes.outputs.gcc-final-aprofile }}
+      merge-gcc-final: ${{ steps.stage-hashes.outputs.merge-gcc-final }}
       gcc-size-libstdcxx: ${{ steps.stage-hashes.outputs.gcc-size-libstdcxx }}
       gdb: ${{ steps.stage-hashes.outputs.gdb }}
       final: ${{ steps.stage-hashes.outputs.final }}
@@ -151,6 +154,14 @@ jobs:
           key_newlib=$(printf '%s' "${{ runner.os }}-stage-newlib-${newlib_scripts_hash}-${key_gcc_first}-${newlib_src}" | sha256sum | cut -d' ' -f1)
           key_newlib_nano=$(printf '%s' "${{ runner.os }}-stage-newlib-nano-${newlib_nano_scripts_hash}-${key_gcc_first}-${newlib_src}" | sha256sum | cut -d' ' -f1)
           key_gcc_final=$(printf '%s' "${{ runner.os }}-stage-gcc-final-${gcc_final_scripts_hash}-${key_newlib}-${gcc_src}" | sha256sum | cut -d' ' -f1)
+          # Per-profile gcc-final keys: same inputs as key_gcc_final but with a
+          # profile suffix so that a change affecting only one profile does not
+          # invalidate the other profile's cache.
+          key_gcc_final_rmprofile=$(printf '%s' "${{ runner.os }}-stage-gcc-final-${gcc_final_scripts_hash}-${key_newlib}-${gcc_src}-rmprofile" | sha256sum | cut -d' ' -f1)
+          key_gcc_final_aprofile=$(printf '%s' "${{ runner.os }}-stage-gcc-final-${gcc_final_scripts_hash}-${key_newlib}-${gcc_src}-aprofile" | sha256sum | cut -d' ' -f1)
+          # Merged gcc-final key: combines both profile keys so the merge job's
+          # cache is invalidated when either profile changes.
+          key_merge_gcc_final=$(printf '%s' "${key_gcc_final_rmprofile}${key_gcc_final_aprofile}" | sha256sum | cut -d' ' -f1)
           key_gcc_size=$(printf '%s' "${{ runner.os }}-stage-gcc-size-libstdcxx-${gcc_size_libstdcxx_scripts_hash}-${key_gcc_final}-${key_newlib_nano}-${gcc_src}" | sha256sum | cut -d' ' -f1)
           key_gdb=$(printf '%s' "${{ runner.os }}-stage-gdb-${gdb_scripts_hash}-${key_binutils}-${gdb_src}" | sha256sum | cut -d' ' -f1)
           key_final=$(printf '%s' "${{ runner.os }}-stage-final-${final_scripts_hash}-${key_gcc_size}-${key_gdb}-${specs_src}" | sha256sum | cut -d' ' -f1)
@@ -161,6 +172,9 @@ jobs:
             echo "newlib=${key_newlib}"
             echo "newlib-nano=${key_newlib_nano}"
             echo "gcc-final=${key_gcc_final}"
+            echo "gcc-final-rmprofile=${key_gcc_final_rmprofile}"
+            echo "gcc-final-aprofile=${key_gcc_final_aprofile}"
+            echo "merge-gcc-final=${key_merge_gcc_final}"
             echo "gcc-size-libstdcxx=${key_gcc_size}"
             echo "gdb=${key_gdb}"
             echo "final=${key_final}"
@@ -1195,6 +1209,10 @@ jobs:
           pre-cache-hit: ${{ steps.pre-restore.outputs.cache-hit == 'true' }}
           save-in-merge-group: 'true'
 
+      - name: Report ccache statistics – gcc-final
+        if: steps.pre-restore.outputs.cache-hit != 'true' && steps.cache-gcc-final.outputs.cache-hit != 'true'
+        run: ccache -s
+
       - name: Report cache sizes – gcc-final
         id: cache-sizes-gcc-final
         if: always()
@@ -1406,6 +1424,10 @@ jobs:
           build-script: ./build-gcc-size-libstdcxx.sh
           pre-cache-hit: ${{ steps.pre-restore.outputs.cache-hit == 'true' }}
           save-in-merge-group: 'true'
+
+      - name: Report ccache statistics – gcc-size-libstdcxx
+        if: steps.pre-restore.outputs.cache-hit != 'true' && steps.cache-gcc-size-libstdcxx.outputs.cache-hit != 'true'
+        run: ccache -s
 
       - name: Audit – compute install-native delta from gcc-size-libstdcxx
         if: steps.pre-restore.outputs.cache-hit != 'true'
