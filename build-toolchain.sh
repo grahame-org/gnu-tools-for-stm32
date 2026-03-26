@@ -367,7 +367,7 @@ if [ "$skip_mingw32" != "yes" ] ; then
     saveenv
     saveenvvar AR_FOR_TARGET "$TARGET-ar"
     saveenvvar NM_FOR_TARGET "$TARGET-nm"
-    saveenvvar OBJDUMP_FOR_TARET "$TARGET-objdump"
+    saveenvvar OBJDUMP_FOR_TARGET "$TARGET-objdump"
     saveenvvar STRIP_FOR_TARGET "$TARGET-strip"
     saveenvvar CC_FOR_TARGET "$TARGET-gcc"
     saveenvvar GCC_FOR_TARGET "$TARGET-gcc"
@@ -386,9 +386,9 @@ if [ "$skip_mingw32" != "yes" ] ; then
         --prefix="$INSTALLDIR_MINGW" \
         --libexecdir="$INSTALLDIR_MINGW/lib" \
         --infodir="$INSTALLDIR_MINGW_DOC/info" \
-        --mandir=$INSTALLDIR_MINGW_DOC/man \
-        --htmldir=$INSTALLDIR_MINGW_DOC/html \
-        --pdfdir=$INSTALLDIR_MINGW_DOC/pdf \
+        --mandir="$INSTALLDIR_MINGW_DOC/man" \
+        --htmldir="$INSTALLDIR_MINGW_DOC/html" \
+        --pdfdir="$INSTALLDIR_MINGW_DOC/pdf" \
         --enable-languages=c,c++ \
         --enable-mingw-wildcard \
         --disable-decimal-float \
@@ -407,12 +407,12 @@ if [ "$skip_mingw32" != "yes" ] ; then
         --with-headers=yes \
         --with-newlib \
         --with-python-dir=share/gcc-arm-none-eabi \
-        --with-sysroot=$INSTALLDIR_MINGW/arm-none-eabi \
-        --with-libiconv-prefix=$BUILDDIR_MINGW/host-libs/usr \
-        --with-gmp=$BUILDDIR_MINGW/host-libs/usr \
-        --with-mpfr=$BUILDDIR_MINGW/host-libs/usr \
-        --with-mpc=$BUILDDIR_MINGW/host-libs/usr \
-        --with-isl=$BUILDDIR_MINGW/host-libs/usr \
+        --with-sysroot="$INSTALLDIR_MINGW/arm-none-eabi" \
+        --with-libiconv-prefix="$BUILDDIR_MINGW/host-libs/usr" \
+        --with-gmp="$BUILDDIR_MINGW/host-libs/usr" \
+        --with-mpfr="$BUILDDIR_MINGW/host-libs/usr" \
+        --with-mpc="$BUILDDIR_MINGW/host-libs/usr" \
+        --with-isl="$BUILDDIR_MINGW/host-libs/usr" \
         "--with-host-libstdcxx=-static-libgcc -Wl,-Bstatic,-lstdc++,-Bdynamic -lm" \
         "--with-pkgversion=$PKGVERSION" \
         ${MULTILIB_LIST}
