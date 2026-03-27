@@ -159,10 +159,14 @@ jobs:
           # invalidate the other profile's cache.
           key_gcc_final_rmprofile=$(printf '%s' "${{ runner.os }}-stage-gcc-final-${gcc_final_scripts_hash}-${key_newlib}-${gcc_src}-rmprofile" | sha256sum | cut -d' ' -f1)
           key_gcc_final_aprofile=$(printf '%s' "${{ runner.os }}-stage-gcc-final-${gcc_final_scripts_hash}-${key_newlib}-${gcc_src}-aprofile" | sha256sum | cut -d' ' -f1)
-          # Merged gcc-final key: combines both profile keys so the merge job's
-          # cache is invalidated when either profile changes.
-          key_merge_gcc_final=$(printf '%s' "${key_gcc_final_rmprofile}${key_gcc_final_aprofile}" | sha256sum | cut -d' ' -f1)
-          key_gcc_size=$(printf '%s' "${{ runner.os }}-stage-gcc-size-libstdcxx-${gcc_size_libstdcxx_scripts_hash}-${key_gcc_final}-${key_newlib_nano}-${gcc_src}" | sha256sum | cut -d' ' -f1)
+          merge_gcc_final_script_hash=$(hash_dir merge-gcc-final.sh)
+          # Merged gcc-final key: combines both profile keys and the merge script
+          # hash so the cache is invalidated when either profile or the merge
+          # logic changes.
+          key_merge_gcc_final=$(printf '%s' "${key_gcc_final_rmprofile}${key_gcc_final_aprofile}${merge_gcc_final_script_hash}" | sha256sum | cut -d' ' -f1)
+          # gcc-size-libstdcxx depends on the merged gcc-final output, so use
+          # key_merge_gcc_final as its parent key.
+          key_gcc_size=$(printf '%s' "${{ runner.os }}-stage-gcc-size-libstdcxx-${gcc_size_libstdcxx_scripts_hash}-${key_merge_gcc_final}-${key_newlib_nano}-${gcc_src}" | sha256sum | cut -d' ' -f1)
           key_gdb=$(printf '%s' "${{ runner.os }}-stage-gdb-${gdb_scripts_hash}-${key_binutils}-${gdb_src}" | sha256sum | cut -d' ' -f1)
           key_final=$(printf '%s' "${{ runner.os }}-stage-final-${final_scripts_hash}-${key_gcc_size}-${key_gdb}-${specs_src}" | sha256sum | cut -d' ' -f1)
 
@@ -1057,10 +1061,11 @@ jobs:
           echo "cache-size-compressed-bytes=${size_compressed}" >> "${GITHUB_OUTPUT}"
 
   # ---------------------------------------------------------------------------
-  # Job: build-gcc-final
-  # GCC final compiler (stage III-4).  Depends on build-newlib.
+  # Job: build-gcc-final-rmprofile
+  # GCC final compiler (stage III-4) — rmprofile multilib variant.
+  # Runs in parallel with build-gcc-final-aprofile.
   # ---------------------------------------------------------------------------
-  build-gcc-final:
+  build-gcc-final-rmprofile:
     needs: [check-changes, compute-hashes, build-newlib]
     if: needs.check-changes.outputs.should-build == 'true'
     runs-on: ubuntu-latest
@@ -1068,22 +1073,22 @@ jobs:
     permissions:
       contents: read
     outputs:
-      gcc-final-build-time: ${{ steps.build-gcc-final.outputs.build-time-seconds }}
-      gcc-final-cache-hit: ${{ steps.build-gcc-final.outputs.cache-hit }}
-      gcc-final-cache-sizes: ${{ steps.cache-sizes-gcc-final.outputs.cache-size-bytes }}
-      gcc-final-cache-sizes-compressed: ${{ steps.cache-sizes-gcc-final.outputs.cache-size-compressed-bytes }}
+      gcc-final-rmprofile-build-time: ${{ steps.build-gcc-final-rmprofile.outputs.build-time-seconds }}
+      gcc-final-rmprofile-cache-hit: ${{ steps.build-gcc-final-rmprofile.outputs.cache-hit }}
+      gcc-final-rmprofile-cache-sizes: ${{ steps.cache-sizes-gcc-final-rmprofile.outputs.cache-size-bytes }}
+      gcc-final-rmprofile-cache-sizes-compressed: ${{ steps.cache-sizes-gcc-final-rmprofile.outputs.cache-size-compressed-bytes }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
 
-      - name: Restore cache – gcc-final
+      - name: Restore cache – gcc-final-rmprofile
         id: pre-restore
         uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
         with:
           path: install-native
-          key: ${{ runner.os }}-stage-v3-${{ needs.compute-hashes.outputs['gcc-final'] }}
+          key: ${{ runner.os }}-stage-v3-${{ needs.compute-hashes.outputs['gcc-final-rmprofile'] }}
 
       - name: Free disk space
         if: steps.pre-restore.outputs.cache-hit != 'true'
@@ -1175,17 +1180,17 @@ jobs:
           path: install-native
           key: ${{ runner.os }}-stage-v3-${{ needs.compute-hashes.outputs.newlib }}
 
-      - name: Restore ccache – gcc-final
-        id: cache-gcc-final
+      - name: Restore ccache – gcc-final-rmprofile
+        id: cache-gcc-final-rmprofile
         if: steps.pre-restore.outputs.cache-hit != 'true'
         uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
         with:
           path: ~/.ccache
-          key: ${{ runner.os }}-ccache-gcc-final-${{ needs.compute-hashes.outputs['gcc-final'] }}
+          key: ${{ runner.os }}-ccache-gcc-final-rmprofile-${{ needs.compute-hashes.outputs['gcc-final-rmprofile'] }}
           restore-keys: |
-            ${{ runner.os }}-ccache-gcc-final-
+            ${{ runner.os }}-ccache-gcc-final-rmprofile-
 
-      - name: Configure ccache – gcc-final
+      - name: Configure ccache – gcc-final-rmprofile
         if: steps.pre-restore.outputs.cache-hit != 'true'
         run: |
           set -euo pipefail
@@ -1207,23 +1212,24 @@ jobs:
             echo "CXX=ccache g++"
           } >> "$GITHUB_ENV"
 
-      - name: Build and cache stage – gcc-final
-        id: build-gcc-final
+      - name: Build and cache stage – gcc-final-rmprofile
+        id: build-gcc-final-rmprofile
         uses: ./.github/actions/build-stage
         with:
-          stage-name: gcc-final
+          stage-name: gcc-final-rmprofile
           cache-paths: install-native
-          cache-key: ${{ runner.os }}-stage-v3-${{ needs.compute-hashes.outputs['gcc-final'] }}
+          cache-key: ${{ runner.os }}-stage-v3-${{ needs.compute-hashes.outputs['gcc-final-rmprofile'] }}
           build-script: ./build-gcc-final.sh
+          build-args: '--skip_steps=mingw,mingw-gdb-with-python,gdb-with-python,manual,package_sources --with-multilib-list=rmprofile'
           pre-cache-hit: ${{ steps.pre-restore.outputs.cache-hit == 'true' }}
           save-in-merge-group: 'true'
 
-      - name: Report ccache statistics – gcc-final
-        if: steps.pre-restore.outputs.cache-hit != 'true' && steps.cache-gcc-final.outputs.cache-hit != 'true'
+      - name: Report ccache statistics – gcc-final-rmprofile
+        if: steps.pre-restore.outputs.cache-hit != 'true' && steps.cache-gcc-final-rmprofile.outputs.cache-hit != 'true'
         run: ccache -s
 
-      - name: Report cache sizes – gcc-final
-        id: cache-sizes-gcc-final
+      - name: Report cache sizes – gcc-final-rmprofile
+        id: cache-sizes-gcc-final-rmprofile
         if: always()
         run: |
           set -euo pipefail
@@ -1239,14 +1245,14 @@ jobs:
           {
             echo "| Stage | Path | Uncompressed | Compressed bytes |"
             echo "|-------|------|-------------|-----------------|"
-            echo "| gcc-final | install-native | ${size_human} | ${size_compressed} |"
+            echo "| gcc-final-rmprofile | install-native | ${size_human} | ${size_compressed} |"
           } >> "${GITHUB_STEP_SUMMARY}"
           echo "cache-size-bytes=${size_bytes}" >> "${GITHUB_OUTPUT}"
           echo "cache-size-compressed-bytes=${size_compressed}" >> "${GITHUB_OUTPUT}"
 
-      - name: Check ccache directory – gcc-final
-        id: check-ccache-gcc-final
-        if: steps.pre-restore.outputs.cache-hit != 'true' && steps.cache-gcc-final.outputs.cache-hit != 'true' && github.event_name != 'merge_group'
+      - name: Check ccache directory – gcc-final-rmprofile
+        id: check-ccache-gcc-final-rmprofile
+        if: steps.pre-restore.outputs.cache-hit != 'true' && steps.cache-gcc-final-rmprofile.outputs.cache-hit != 'true' && github.event_name != 'merge_group'
         run: |
           if [ -d ~/.ccache ] && [ -n "$(ls -A ~/.ccache 2>/dev/null)" ]; then
             echo "non-empty=true" >> "$GITHUB_OUTPUT"
@@ -1254,20 +1260,351 @@ jobs:
             echo "non-empty=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Save ccache – gcc-final
-        if: steps.check-ccache-gcc-final.outputs.non-empty == 'true'
+      - name: Save ccache – gcc-final-rmprofile
+        if: steps.check-ccache-gcc-final-rmprofile.outputs.non-empty == 'true'
         uses: actions/cache/save@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
         with:
           path: ~/.ccache
-          key: ${{ runner.os }}-ccache-gcc-final-${{ needs.compute-hashes.outputs['gcc-final'] }}
+          key: ${{ runner.os }}-ccache-gcc-final-rmprofile-${{ needs.compute-hashes.outputs['gcc-final-rmprofile'] }}
+
+  # ---------------------------------------------------------------------------
+  # Job: build-gcc-final-aprofile
+  # GCC final compiler (stage III-4) — aprofile multilib variant.
+  # Runs in parallel with build-gcc-final-rmprofile.
+  # ---------------------------------------------------------------------------
+  build-gcc-final-aprofile:
+    needs: [check-changes, compute-hashes, build-newlib]
+    if: needs.check-changes.outputs.should-build == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    permissions:
+      contents: read
+    outputs:
+      gcc-final-aprofile-build-time: ${{ steps.build-gcc-final-aprofile.outputs.build-time-seconds }}
+      gcc-final-aprofile-cache-hit: ${{ steps.build-gcc-final-aprofile.outputs.cache-hit }}
+      gcc-final-aprofile-cache-sizes: ${{ steps.cache-sizes-gcc-final-aprofile.outputs.cache-size-bytes }}
+      gcc-final-aprofile-cache-sizes-compressed: ${{ steps.cache-sizes-gcc-final-aprofile.outputs.cache-size-compressed-bytes }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Restore cache – gcc-final-aprofile
+        id: pre-restore
+        uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        with:
+          path: install-native
+          key: ${{ runner.os }}-stage-v3-${{ needs.compute-hashes.outputs['gcc-final-aprofile'] }}
+
+      - name: Free disk space
+        if: steps.pre-restore.outputs.cache-hit != 'true'
+        run: |
+          sudo apt-get remove -y \
+            '^dotnet-.*' \
+            '^llvm-.*' \
+            'php.*' \
+            azure-cli \
+            google-chrome-stable \
+            firefox \
+            powershell \
+            mono-devel \
+            || true
+          sudo apt-get autoremove -y
+          sudo apt-get clean
+          sudo rm -rf \
+            /usr/share/dotnet \
+            /usr/local/lib/android \
+            /opt/ghc \
+            /opt/hostedtoolcache/CodeQL
+          df -h
+
+      - name: Install system dependencies
+        if: steps.pre-restore.outputs.cache-hit != 'true'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            yacc \
+            flex \
+            gcc-arm-none-eabi \
+            gdb-multiarch \
+            cmake \
+            git \
+            openocd \
+            python3 \
+            python3-pip \
+            python3-venv \
+            texi2html \
+            texinfo \
+            automake \
+            ccache
+          for version in 1.15 1.14; do
+            for tool in aclocal automake; do
+              target="/usr/bin/${tool}-1.16"
+              link="/usr/bin/${tool}-${version}"
+              if [ -e "$link" ] || [ -L "$link" ]; then
+                if [ "$(readlink -f "$link" 2>/dev/null || echo "")" != "$target" ]; then
+                  echo "ERROR: $link already exists and does not point to $target" >&2
+                  exit 1
+                fi
+              else
+                sudo ln -s "$target" "$link"
+              fi
+            done
+          done
+
+      - name: Set up Python virtual environment
+        if: steps.pre-restore.outputs.cache-hit != 'true'
+        run: |
+          STM32_VENV_PATH=/opt/stm32-venv
+          sudo mkdir -p "${STM32_VENV_PATH}"
+          sudo chown "$USER" "${STM32_VENV_PATH}"
+          python3 -m venv "${STM32_VENV_PATH}"
+          "${STM32_VENV_PATH}/bin/python3" -m pip install python-magic==0.4.27
+          echo "${STM32_VENV_PATH}/bin" >> "${GITHUB_PATH}"
+          echo "STM32_VENV_PATH=${STM32_VENV_PATH}" >> "${GITHUB_ENV}"
+
+      - name: Restore cache – prerequisites
+        id: cache-prerequisites
+        if: steps.pre-restore.outputs.cache-hit != 'true'
+        uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        with:
+          path: build-native/host-libs
+          key: ${{ runner.os }}-prerequisites-${{ hashFiles('build-prerequisites.sh', 'build-common.sh', 'src/gmp/**', 'src/mpfr/**', 'src/mpc/**', 'src/isl/**', 'src/expat/**', 'src/zlib*/**') }}
+
+      - name: Build prerequisites (cache miss)
+        if: steps.cache-prerequisites.outputs.cache-hit != 'true' && steps.pre-restore.outputs.cache-hit != 'true'
+        run: |
+          set -euo pipefail
+          JOBS="${JOBS:-$(nproc)}"
+          export JOBS
+          ./build-prerequisites.sh --skip_steps=mingw,howto,package_sources
+
+      - name: Restore cache – newlib
+        if: steps.pre-restore.outputs.cache-hit != 'true'
+        uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        with:
+          path: install-native
+          key: ${{ runner.os }}-stage-v3-${{ needs.compute-hashes.outputs.newlib }}
+
+      - name: Restore ccache – gcc-final-aprofile
+        id: cache-gcc-final-aprofile
+        if: steps.pre-restore.outputs.cache-hit != 'true'
+        uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        with:
+          path: ~/.ccache
+          key: ${{ runner.os }}-ccache-gcc-final-aprofile-${{ needs.compute-hashes.outputs['gcc-final-aprofile'] }}
+          restore-keys: |
+            ${{ runner.os }}-ccache-gcc-final-aprofile-
+
+      - name: Configure ccache – gcc-final-aprofile
+        if: steps.pre-restore.outputs.cache-hit != 'true'
+        run: |
+          set -euo pipefail
+          {
+            echo "CCACHE_DIR=$HOME/.ccache"
+            echo "CCACHE_MAXSIZE=5G"
+            # CCACHE_SLOPPINESS relaxes cache keys for certain non-deterministic
+            # compiler inputs that we intentionally treat as non-cache-affecting
+            # in this workflow:
+            #   file_macro  — ignores __FILE__ path differences (absolute vs relative)
+            #   locale      — ignores locale/encoding differences between runs
+            #   time_macros — allows caching objects that use __TIME__/__DATE__
+            # These macros can affect object bytes in general, but here overall
+            # correctness is enforced by the downstream .bin byte-for-byte
+            # comparison in build-final rather than by ccache keys alone.
+            echo "CCACHE_SLOPPINESS=file_macro,locale,time_macros"
+            echo "CCACHE_COMPRESS=1"
+            echo "CC=ccache gcc"
+            echo "CXX=ccache g++"
+          } >> "$GITHUB_ENV"
+
+      - name: Build and cache stage – gcc-final-aprofile
+        id: build-gcc-final-aprofile
+        uses: ./.github/actions/build-stage
+        with:
+          stage-name: gcc-final-aprofile
+          cache-paths: install-native
+          cache-key: ${{ runner.os }}-stage-v3-${{ needs.compute-hashes.outputs['gcc-final-aprofile'] }}
+          build-script: ./build-gcc-final.sh
+          build-args: '--skip_steps=mingw,mingw-gdb-with-python,gdb-with-python,manual,package_sources --with-multilib-list=aprofile'
+          pre-cache-hit: ${{ steps.pre-restore.outputs.cache-hit == 'true' }}
+          save-in-merge-group: 'true'
+
+      - name: Report ccache statistics – gcc-final-aprofile
+        if: steps.pre-restore.outputs.cache-hit != 'true' && steps.cache-gcc-final-aprofile.outputs.cache-hit != 'true'
+        run: ccache -s
+
+      - name: Report cache sizes – gcc-final-aprofile
+        id: cache-sizes-gcc-final-aprofile
+        if: always()
+        run: |
+          set -euo pipefail
+          if [ -d install-native ]; then
+            size_human=$(du -sh install-native | cut -f1)
+            size_bytes=$(du -sb install-native | cut -f1)
+            size_compressed=$(./measure-cache-compressed-size.sh install-native)
+          else
+            size_human="(not found)"
+            size_bytes="0"
+            size_compressed="0"
+          fi
+          {
+            echo "| Stage | Path | Uncompressed | Compressed bytes |"
+            echo "|-------|------|-------------|-----------------|"
+            echo "| gcc-final-aprofile | install-native | ${size_human} | ${size_compressed} |"
+          } >> "${GITHUB_STEP_SUMMARY}"
+          echo "cache-size-bytes=${size_bytes}" >> "${GITHUB_OUTPUT}"
+          echo "cache-size-compressed-bytes=${size_compressed}" >> "${GITHUB_OUTPUT}"
+
+      - name: Check ccache directory – gcc-final-aprofile
+        id: check-ccache-gcc-final-aprofile
+        if: steps.pre-restore.outputs.cache-hit != 'true' && steps.cache-gcc-final-aprofile.outputs.cache-hit != 'true' && github.event_name != 'merge_group'
+        run: |
+          if [ -d ~/.ccache ] && [ -n "$(ls -A ~/.ccache 2>/dev/null)" ]; then
+            echo "non-empty=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "non-empty=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Save ccache – gcc-final-aprofile
+        if: steps.check-ccache-gcc-final-aprofile.outputs.non-empty == 'true'
+        uses: actions/cache/save@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        with:
+          path: ~/.ccache
+          key: ${{ runner.os }}-ccache-gcc-final-aprofile-${{ needs.compute-hashes.outputs['gcc-final-aprofile'] }}
+
+  # ---------------------------------------------------------------------------
+  # Job: merge-gcc-final
+  # Merges the rmprofile and aprofile gcc-final staged install-native/ trees
+  # into a single combined tree equivalent to a full rmprofile,aprofile build.
+  # Depends on both build-gcc-final-rmprofile and build-gcc-final-aprofile.
+  # ---------------------------------------------------------------------------
+  merge-gcc-final:
+    needs: [check-changes, compute-hashes, build-gcc-final-rmprofile, build-gcc-final-aprofile]
+    if: needs.check-changes.outputs.should-build == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    outputs:
+      gcc-final-build-time: ${{ steps.set-outputs.outputs.build-time-seconds }}
+      gcc-final-cache-hit: ${{ steps.set-outputs.outputs.cache-hit }}
+      gcc-final-cache-sizes: ${{ steps.cache-sizes-merge-gcc-final.outputs.cache-size-bytes }}
+      gcc-final-cache-sizes-compressed: ${{ steps.cache-sizes-merge-gcc-final.outputs.cache-size-compressed-bytes }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Restore cache – merge-gcc-final
+        id: pre-restore
+        uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        with:
+          path: install-native
+          key: ${{ runner.os }}-stage-v3-${{ needs.compute-hashes.outputs['merge-gcc-final'] }}
+
+      - name: Restore cache – gcc-final-rmprofile
+        id: restore-rmprofile
+        if: steps.pre-restore.outputs.cache-hit != 'true'
+        uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        with:
+          path: install-native
+          key: ${{ runner.os }}-stage-v3-${{ needs.compute-hashes.outputs['gcc-final-rmprofile'] }}
+
+      - name: Stage rmprofile install tree
+        if: steps.pre-restore.outputs.cache-hit != 'true'
+        run: |
+          set -euo pipefail
+          if [[ "${{ steps.restore-rmprofile.outputs.cache-hit }}" != "true" ]]; then
+            echo "::error::gcc-final-rmprofile cache miss; expected key: ${{ runner.os }}-stage-v3-${{ needs.compute-hashes.outputs['gcc-final-rmprofile'] }}"
+            exit 1
+          fi
+          mv install-native install-native-rmprofile
+
+      - name: Restore cache – gcc-final-aprofile
+        id: restore-aprofile
+        if: steps.pre-restore.outputs.cache-hit != 'true'
+        uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        with:
+          path: install-native
+          key: ${{ runner.os }}-stage-v3-${{ needs.compute-hashes.outputs['gcc-final-aprofile'] }}
+
+      - name: Stage aprofile install tree
+        if: steps.pre-restore.outputs.cache-hit != 'true'
+        run: |
+          set -euo pipefail
+          if [[ "${{ steps.restore-aprofile.outputs.cache-hit }}" != "true" ]]; then
+            echo "::error::gcc-final-aprofile cache miss; expected key: ${{ runner.os }}-stage-v3-${{ needs.compute-hashes.outputs['gcc-final-aprofile'] }}"
+            exit 1
+          fi
+          mv install-native install-native-aprofile
+
+      - name: Merge gcc-final profiles
+        id: merge
+        if: steps.pre-restore.outputs.cache-hit != 'true'
+        run: |
+          set -euo pipefail
+          start=$(date +%s)
+          ./merge-gcc-final.sh \
+            --rmprofile-dir=install-native-rmprofile \
+            --aprofile-dir=install-native-aprofile \
+            --output-dir=install-native
+          echo "build-time-seconds=$(( $(date +%s) - start ))" >> "${GITHUB_OUTPUT}"
+
+      - name: Set job outputs
+        id: set-outputs
+        if: always()
+        env:
+          PRE_RESTORE_CACHE_HIT: ${{ steps.pre-restore.outputs.cache-hit }}
+          MERGE_BUILD_TIME: ${{ steps.merge.outputs.build-time-seconds }}
+        run: |
+          set -euo pipefail
+          if [[ "${PRE_RESTORE_CACHE_HIT}" == "true" ]]; then
+            echo "cache-hit=true" >> "${GITHUB_OUTPUT}"
+            echo "build-time-seconds=" >> "${GITHUB_OUTPUT}"
+          else
+            echo "cache-hit=false" >> "${GITHUB_OUTPUT}"
+            echo "build-time-seconds=${MERGE_BUILD_TIME}" >> "${GITHUB_OUTPUT}"
+          fi
+
+      - name: Save cache – merge-gcc-final
+        if: steps.pre-restore.outputs.cache-hit != 'true'
+        uses: actions/cache/save@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        with:
+          path: install-native
+          key: ${{ runner.os }}-stage-v3-${{ needs.compute-hashes.outputs['merge-gcc-final'] }}
+
+      - name: Report cache sizes – merge-gcc-final
+        id: cache-sizes-merge-gcc-final
+        if: always()
+        run: |
+          set -euo pipefail
+          if [ -d install-native ]; then
+            size_human=$(du -sh install-native | cut -f1)
+            size_bytes=$(du -sb install-native | cut -f1)
+            size_compressed=$(./measure-cache-compressed-size.sh install-native)
+          else
+            size_human="(not found)"
+            size_bytes="0"
+            size_compressed="0"
+          fi
+          {
+            echo "| Stage | Path | Uncompressed | Compressed bytes |"
+            echo "|-------|------|-------------|-----------------|"
+            echo "| merge-gcc-final | install-native | ${size_human} | ${size_compressed} |"
+          } >> "${GITHUB_STEP_SUMMARY}"
+          echo "cache-size-bytes=${size_bytes}" >> "${GITHUB_OUTPUT}"
+          echo "cache-size-compressed-bytes=${size_compressed}" >> "${GITHUB_OUTPUT}"
 
   # ---------------------------------------------------------------------------
   # Job: build-gcc-size-libstdcxx
-  # GCC size-optimised libstdc++ (stage III-5).  Depends on build-gcc-final
+  # GCC size-optimised libstdc++ (stage III-5).  Depends on merge-gcc-final
   # (for install-native/) and build-newlib-nano (for build-native/target-libs/).
   # ---------------------------------------------------------------------------
   build-gcc-size-libstdcxx:
-    needs: [check-changes, compute-hashes, build-gcc-final, build-newlib-nano]
+    needs: [check-changes, compute-hashes, merge-gcc-final, build-newlib-nano]
     if: needs.check-changes.outputs.should-build == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 360
@@ -1383,7 +1720,7 @@ jobs:
         uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
         with:
           path: install-native
-          key: ${{ runner.os }}-stage-v3-${{ needs.compute-hashes.outputs['gcc-final'] }}
+          key: ${{ runner.os }}-stage-v3-${{ needs.compute-hashes.outputs['merge-gcc-final'] }}
 
       - name: Restore cache – newlib-nano
         if: steps.pre-restore.outputs.cache-hit != 'true'
@@ -1550,7 +1887,7 @@ jobs:
   # test_project validation.
   # ---------------------------------------------------------------------------
   build-final:
-    needs: [check-changes, compute-hashes, build-binutils, build-gdb, build-gcc-first, build-newlib, build-newlib-nano, build-gcc-final, build-gcc-size-libstdcxx]
+    needs: [check-changes, compute-hashes, build-binutils, build-gdb, build-gcc-first, build-newlib, build-newlib-nano, merge-gcc-final, build-gcc-size-libstdcxx]
     if: needs.check-changes.outputs.should-build == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 120
@@ -1721,8 +2058,8 @@ jobs:
           NEWLIB_CACHE_SIZES_COMPRESSED: ${{ needs.build-newlib.outputs.newlib-cache-sizes-compressed }}
           NEWLIB_NANO_CACHE_SIZES: ${{ needs.build-newlib-nano.outputs.newlib-nano-cache-sizes }}
           NEWLIB_NANO_CACHE_SIZES_COMPRESSED: ${{ needs.build-newlib-nano.outputs.newlib-nano-cache-sizes-compressed }}
-          GCC_FINAL_CACHE_SIZES: ${{ needs.build-gcc-final.outputs.gcc-final-cache-sizes }}
-          GCC_FINAL_CACHE_SIZES_COMPRESSED: ${{ needs.build-gcc-final.outputs.gcc-final-cache-sizes-compressed }}
+          GCC_FINAL_CACHE_SIZES: ${{ needs.merge-gcc-final.outputs.gcc-final-cache-sizes }}
+          GCC_FINAL_CACHE_SIZES_COMPRESSED: ${{ needs.merge-gcc-final.outputs.gcc-final-cache-sizes-compressed }}
           GCC_SIZE_LIBSTDCXX_CACHE_SIZES_INSTALL: ${{ needs.build-gcc-size-libstdcxx.outputs.gcc-size-libstdcxx-cache-sizes-install }}
           GCC_SIZE_LIBSTDCXX_CACHE_SIZES_TARGET: ${{ needs.build-gcc-size-libstdcxx.outputs.gcc-size-libstdcxx-cache-sizes-target }}
           GCC_SIZE_LIBSTDCXX_CACHE_SIZES_COMPRESSED_INSTALL: ${{ needs.build-gcc-size-libstdcxx.outputs.gcc-size-libstdcxx-cache-sizes-compressed-install }}
@@ -1836,8 +2173,8 @@ jobs:
           NEWLIB_CACHE_HIT: ${{ needs.build-newlib.outputs.newlib-cache-hit }}
           NEWLIB_NANO_SECONDS: ${{ needs.build-newlib-nano.outputs.newlib-nano-build-time }}
           NEWLIB_NANO_CACHE_HIT: ${{ needs.build-newlib-nano.outputs.newlib-nano-cache-hit }}
-          GCC_FINAL_SECONDS: ${{ needs.build-gcc-final.outputs.gcc-final-build-time }}
-          GCC_FINAL_CACHE_HIT: ${{ needs.build-gcc-final.outputs.gcc-final-cache-hit }}
+          GCC_FINAL_SECONDS: ${{ needs.merge-gcc-final.outputs.gcc-final-build-time }}
+          GCC_FINAL_CACHE_HIT: ${{ needs.merge-gcc-final.outputs.gcc-final-cache-hit }}
           GCC_SIZE_LIBSTDCXX_SECONDS: ${{ needs.build-gcc-size-libstdcxx.outputs.gcc-size-libstdcxx-build-time }}
           GCC_SIZE_LIBSTDCXX_CACHE_HIT: ${{ needs.build-gcc-size-libstdcxx.outputs.gcc-size-libstdcxx-cache-hit }}
         run: |
@@ -1870,7 +2207,7 @@ jobs:
             echo "| \`build-gcc-first\` | III-1 gcc-first | $(format_minutes "${GCC_FIRST_SECONDS}") | $(format_cache_hit "${GCC_FIRST_SECONDS}" "${GCC_FIRST_CACHE_HIT}") |"
             echo "| \`build-newlib\` | III-2 newlib | $(format_minutes "${NEWLIB_SECONDS}") | $(format_cache_hit "${NEWLIB_SECONDS}" "${NEWLIB_CACHE_HIT}") |"
             echo "| \`build-newlib-nano\` | III-3 newlib-nano | $(format_minutes "${NEWLIB_NANO_SECONDS}") | $(format_cache_hit "${NEWLIB_NANO_SECONDS}" "${NEWLIB_NANO_CACHE_HIT}") |"
-            echo "| \`build-gcc-final\` | III-4 gcc-final | $(format_minutes "${GCC_FINAL_SECONDS}") | $(format_cache_hit "${GCC_FINAL_SECONDS}" "${GCC_FINAL_CACHE_HIT}") |"
+            echo "| \`merge-gcc-final\` | III-4 gcc-final | $(format_minutes "${GCC_FINAL_SECONDS}") | $(format_cache_hit "${GCC_FINAL_SECONDS}" "${GCC_FINAL_CACHE_HIT}") |"
             echo "| \`build-gcc-size-libstdcxx\` | III-5 gcc-size-libstdcxx | $(format_minutes "${GCC_SIZE_LIBSTDCXX_SECONDS}") | $(format_cache_hit "${GCC_SIZE_LIBSTDCXX_SECONDS}" "${GCC_SIZE_LIBSTDCXX_CACHE_HIT}") |"
           } >> "${GITHUB_STEP_SUMMARY}"
 
@@ -1879,7 +2216,7 @@ jobs:
   # ---------------------------------------------------------------------------
   build-status:
     runs-on: ubuntu-slim
-    needs: [check-changes, compute-hashes, build-binutils, build-gdb, build-gcc-first, build-newlib, build-newlib-nano, build-gcc-final, build-gcc-size-libstdcxx, build-final]
+    needs: [check-changes, compute-hashes, build-binutils, build-gdb, build-gcc-first, build-newlib, build-newlib-nano, build-gcc-final-rmprofile, build-gcc-final-aprofile, merge-gcc-final, build-gcc-size-libstdcxx, build-final]
     if: always()
     steps:
       - name: Report build status
@@ -1905,8 +2242,14 @@ jobs:
           if [[ "${{ needs.build-newlib-nano.result }}" == "failure" || "${{ needs.build-newlib-nano.result }}" == "cancelled" ]]; then
             echo "build-newlib-nano failed or was cancelled" && exit 1
           fi
-          if [[ "${{ needs.build-gcc-final.result }}" == "failure" || "${{ needs.build-gcc-final.result }}" == "cancelled" ]]; then
-            echo "build-gcc-final failed or was cancelled" && exit 1
+          if [[ "${{ needs.build-gcc-final-rmprofile.result }}" == "failure" || "${{ needs.build-gcc-final-rmprofile.result }}" == "cancelled" ]]; then
+            echo "build-gcc-final-rmprofile failed or was cancelled" && exit 1
+          fi
+          if [[ "${{ needs.build-gcc-final-aprofile.result }}" == "failure" || "${{ needs.build-gcc-final-aprofile.result }}" == "cancelled" ]]; then
+            echo "build-gcc-final-aprofile failed or was cancelled" && exit 1
+          fi
+          if [[ "${{ needs.merge-gcc-final.result }}" == "failure" || "${{ needs.merge-gcc-final.result }}" == "cancelled" ]]; then
+            echo "merge-gcc-final failed or was cancelled" && exit 1
           fi
           if [[ "${{ needs.build-gcc-size-libstdcxx.result }}" == "failure" || "${{ needs.build-gcc-size-libstdcxx.result }}" == "cancelled" ]]; then
             echo "build-gcc-size-libstdcxx failed or was cancelled" && exit 1
