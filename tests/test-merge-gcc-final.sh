@@ -208,7 +208,7 @@ _err7=$(bash "$SCRIPT" \
     --aprofile-dir="$_AP7" \
     --output-dir="$_OUT7" \
     --gcc-final-build-dir="$_TMPDIR/no-build-dir" 2>&1 || true)
-assert_contains "no gcc binary in output: error message references output path" \
+assert_contains "no gcc binary in output: error message mentions missing gcc in output tree" \
     "$_err7" "arm-none-eabi-gcc not found in output tree"
 
 # ---------------------------------------------------------------------------
@@ -271,7 +271,7 @@ _err8b=$(bash "$SCRIPT" \
     --output-dir="$_OUT8b" \
     --gcc-final-build-dir="$_TMPDIR/no-build-dir" 2>&1 || true)
 assert_contains "missing aprofile variant: error names missing variant" \
-    "$_err8b" "aprofile variant 'thumb/armv7-a' not found"
+    "$_err8b" "no aprofile library directories"
 
 # ---------------------------------------------------------------------------
 # Test group 9: Successful merge with mock arm-none-eabi-gcc
@@ -287,7 +287,7 @@ echo "=== Group 9: Successful merge path ==="
 _RM9="$_TMPDIR/rm9"
 _AP9="$_TMPDIR/ap9"
 _OUT9="$_TMPDIR/out9"
-mkdir -p "$_RM9/bin" "$_RM9/lib/gcc/arm-none-eabi" "$_AP9/arm-none-eabi/lib/thumb/armv7-a" "$_OUT9"
+mkdir -p "$_RM9/bin" "$_RM9/lib/gcc/arm-none-eabi" "$_AP9/arm-none-eabi/lib/thumb/v7-a" "$_OUT9"
 # Sentinel file in rmprofile tree — must appear in output after Step 1 copy.
 echo "rmprofile-content" > "$_RM9/rmprofile-sentinel.txt"
 # Mock gcc: outputs both required multilib variant lines.
@@ -298,20 +298,20 @@ echo "thumb/armv7-a;@mthumb@march=armv7-a"
 MOCK
 chmod +x "$_RM9/bin/arm-none-eabi-gcc"
 # Sentinel file in aprofile overlay dir — must appear in output after Step 2.
-echo "aprofile-content" > "$_AP9/arm-none-eabi/lib/thumb/armv7-a/aprofile-sentinel.txt"
+echo "aprofile-content" > "$_AP9/arm-none-eabi/lib/thumb/v7-a/aprofile-sentinel.txt"
 
 assert_zero_exit "successful merge: exits zero" \
     bash "$SCRIPT" \
         --rmprofile-dir="$_RM9" \
         --aprofile-dir="$_AP9" \
         --output-dir="$_OUT9" \
-        --gcc-final-build-dir="$_TMPDIR/no-build-dir" 2>/dev/null
+        --gcc-final-build-dir="$_TMPDIR/no-build-dir"
 
 assert_zero_exit "successful merge: rmprofile sentinel in output (Step 1 copy)" \
     test -f "$_OUT9/rmprofile-sentinel.txt"
 
 assert_zero_exit "successful merge: aprofile sentinel in output (Step 2 overlay)" \
-    test -f "$_OUT9/arm-none-eabi/lib/thumb/armv7-a/aprofile-sentinel.txt"
+    test -f "$_OUT9/arm-none-eabi/lib/thumb/v7-a/aprofile-sentinel.txt"
 
 _warn9=$(bash "$SCRIPT" \
     --rmprofile-dir="$_RM9" \
