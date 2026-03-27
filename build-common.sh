@@ -210,7 +210,6 @@ break_hardlink() {
 
     if [ ! -f "$filename" ] ; then
         error "break_hardlink: Argument is not a file ($filename)"
-        return 1
     fi
 
     # Split declare/assign so that dirname/mktemp exit codes are not masked
