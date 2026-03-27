@@ -22,7 +22,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# shellcheck source=test-helpers.sh
+# shellcheck source=tests/test-helpers.sh
 . "$SCRIPT_DIR/test-helpers.sh"
 
 # ---------------------------------------------------------------------------
