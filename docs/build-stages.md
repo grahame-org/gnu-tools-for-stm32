@@ -289,8 +289,11 @@ This is a CI-only convergence step. In local sequential builds via
    (`build-native/gcc-final/`). The `gcc/multilib.h` produced by that
    target is then copied over the installed copy in the output tree. If the
    build directory is absent (e.g. when running outside a full build
-   environment), the step is skipped with a warning and the rmprofile
-   `multilib.h` — which is valid but incomplete — is left in place.
+   environment — including the GitHub Actions `merge-gcc-final` job, which
+   invokes `merge-gcc-final.sh` without `--gcc-final-build-dir` and therefore
+   does not provide `build-native/gcc-final/`), the step is skipped with a
+   warning and the rmprofile `multilib.h` — which is valid but incomplete — is
+   left in place.
 
 4. **Verification:** `arm-none-eabi-gcc --print-multi-lib` is run against the
    merged tree to confirm that a representative rmprofile variant
@@ -298,8 +301,11 @@ This is a CI-only convergence step. In local sequential builds via
    (`v7-a*`/`v7ve*`/`v8-a*` under `arm-none-eabi/lib/thumb/`) are checked
    to exist on disk.
 
-**Output:** A `install-native/` tree equivalent to a full
-`--with-multilib-list=rmprofile,aprofile` build.
+**Output:** An `install-native/` tree that is equivalent, in terms of
+installed multilib library directories, to a full
+`--with-multilib-list=rmprofile,aprofile` build, but retains the rmprofile
+compiler binaries and may keep the rmprofile-only `multilib.h` (affecting
+what `--print-multi-lib` reports) if regeneration is skipped.
 
 **Depends on:**
 - `gcc-final-rmprofile` (III-4a)
@@ -308,7 +314,9 @@ This is a CI-only convergence step. In local sequential builds via
 **Artifacts written to `install-native/`:**
 
 Combined superset of III-4a and III-4b artifacts (see those sections for the
-full artifact list), with `multilib.h` regenerated for the combined profile set.
+full artifact list), with `multilib.h` regenerated for the combined profile set
+when the rmprofile `gcc-final` build directory is available; otherwise the
+rmprofile `multilib.h` is retained.
 
 ---
 
