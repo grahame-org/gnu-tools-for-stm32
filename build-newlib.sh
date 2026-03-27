@@ -72,7 +72,7 @@ fi
 cd "$SRCDIR"
 
 if [ "x$skip_native_build" != "xyes" ] ; then
-    echo "Task [III-2] /${HOST_NATIVE}/newlib/" | tee -a "$BUILDDIR_NATIVE/.stage"
+    echo "Task [III-2] /$HOST_NATIVE/newlib/" | tee -a "$BUILDDIR_NATIVE/.stage"
     saveenv
     prepend_path PATH "$INSTALLDIR_NATIVE/bin"
     saveenvvar CFLAGS_FOR_TARGET '-g -Os -ffunction-sections -fdata-sections -fno-unroll-loops -DPREFER_SIZE_OVER_SPEED -D__OPTIMIZE_SIZE__ -DSMALL_MEMORY'
