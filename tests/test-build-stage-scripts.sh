@@ -11,7 +11,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 ACTION_DIR="${REPO_ROOT}/.github/actions/build-stage"
 
-# shellcheck source=test-helpers.sh
+# shellcheck source=tests/test-helpers.sh
 . "$SCRIPT_DIR/test-helpers.sh"
 
 _TMPDIR=$(mktemp -d)

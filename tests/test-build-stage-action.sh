@@ -15,7 +15,7 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 ACTION_YML="${REPO_ROOT}/.github/actions/build-stage/action.yml"
 YAMLLINT_CFG="${REPO_ROOT}/.yamllint"
 
-# shellcheck source=test-helpers.sh
+# shellcheck source=tests/test-helpers.sh
 . "$SCRIPT_DIR/test-helpers.sh"
 
 if [ ! -f "${ACTION_YML}" ]; then
