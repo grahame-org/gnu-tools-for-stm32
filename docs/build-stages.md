@@ -14,13 +14,13 @@ of `install-native/` it creates or modifies.
 | `newlib-nano` | III-3 | `src/newlib/` | `gcc-first` |
 | `gcc-final-rmprofile` | III-4a | `src/gcc/` | `binutils`, `newlib` |
 | `gcc-final-aprofile` | III-4b | `src/gcc/` | `binutils`, `newlib` |
-| `gcc-final-merge` | III-4-merge | — | `gcc-final-rmprofile`, `gcc-final-aprofile` |
-| `gcc-size-libstdcxx` | III-5 | `src/gcc/` | `binutils`, `newlib`, `newlib-nano`, `gcc-final-merge` |
+| `merge-gcc-final` | III-4m | — | `gcc-final-rmprofile`, `gcc-final-aprofile` |
+| `gcc-size-libstdcxx` | III-5 | `src/gcc/` | `binutils`, `newlib`, `newlib-nano`, `merge-gcc-final` |
 | `gdb` | III-6 | `src/gdb/` | `binutils` |
 | `pretidy` | III-8 | — | `gdb` |
 | `strip_host_objects` | III-9 | — | `pretidy` |
 | `strip_target_objects` | III-10 | — | `strip_host_objects` |
-| `specs` | III-11 | `src/specs/` | `gcc-final-merge` |
+| `specs` | III-11 | `src/specs/` | `merge-gcc-final` |
 | `package_tbz2` | III-12 | `license.txt` | `strip_target_objects`, `specs` |
 | `package_bins` | III-13 | — | `package_tbz2` |
 | `validate_tool_deps` | III-14 | — | `package_tbz2` (macOS only) |
@@ -183,7 +183,7 @@ default `--with-multilib-list=rmprofile,aprofile`.
 > **CI staging:** In CI, each parallel build job writes its output to
 > `install-native/` on the runner, then saves that directory as a
 > profile-specific GitHub Actions cache (key:
-> `stage-v3-<gcc-final-rmprofile-hash>`).  The III-4-merge (`gcc-final-merge`)
+> `stage-v3-<gcc-final-rmprofile-hash>`).  The III-4m (`merge-gcc-final`)
 > step later restores both profile caches and re-saves them merged under the
 > shared `stage-v3-<gcc-final-hash>` key used by downstream stages.  In local
 > sequential builds both profiles write directly to `install-native/` with no
@@ -211,6 +211,10 @@ default `--with-multilib-list=rmprofile,aprofile`.
 | Deleted | `lib/libiberty.a` |
 | Deleted | `include/` (top-level GCC host include tree) |
 | Removed | `arm-none-eabi/usr` symlink (temporary symlink created at stage start) |
+
+> **Note:** The `multilib.h` header in this output encodes only the `rmprofile`
+> multilib set and is therefore incomplete. It must not be used directly — the
+> correct combined `multilib.h` is regenerated in stage III-4m (`merge-gcc-final`).
 
 ---
 
@@ -240,9 +244,13 @@ in both sets, so the two builds can run independently and be safely merged.
 Same as III-4a (see CI staging note above) but for `aprofile` + base multilib
 subdirectories; saved under a separate `stage-v3-<gcc-final-aprofile-hash>` cache key.
 
+> **Note:** The `multilib.h` header in this output encodes only the `aprofile`
+> multilib set and is therefore incomplete. It must not be used directly — the
+> correct combined `multilib.h` is regenerated in stage III-4m (`merge-gcc-final`).
+
 ---
 
-### III-4-merge — `gcc-final-merge`
+### III-4m — `merge-gcc-final`
 
 **Source directory:** none (CI merge step only)
 
@@ -256,6 +264,49 @@ This is a CI-only convergence step. In local sequential builds via
 `build-toolchain.sh`, both profiles are built together in a single
 `build-gcc-final.sh` invocation (no merge step is needed).
 
+**Merge procedure** (as implemented in `merge-gcc-final.sh`):
+
+1. **Base:** Copy the rmprofile `install-native/` tree verbatim to the output
+   directory. This tree contains the compiler binary, all shared headers
+   (`arm-none-eabi/include/`, `arm-none-eabi/include/c++/`), the rmprofile
+   multilib library directories, and the base multilib variants shared with
+   all profiles.
+
+2. **Overlay:** Overlay only the aprofile-specific multilib library
+   directories from the aprofile tree. The directories overlaid are the
+   immediate children of `arm-none-eabi/lib/thumb/` whose names match the
+   `MULTI_ARCH_DIRS_A` patterns in `gcc/config/arm/t-aprofile`:
+   `v7-a*`, `v7ve*`, `v8-a*`. Compiler binaries, headers, and host libraries
+   from the aprofile tree are deliberately **not** overlaid.
+
+3. **`multilib.h` regeneration:** The `multilib.h` header
+   (`lib/gcc/arm-none-eabi/<ver>/plugin/include/multilib.h`) encodes the
+   multilib configuration baked in at configure time; it differs between the
+   two single-profile trees and cannot simply be overlaid. After merging the
+   libraries, `merge-gcc-final.sh` regenerates a combined `multilib.h` by
+   invoking `make s-mlib TM_MULTILIB_CONFIG="rmprofile,aprofile"` inside the
+   existing rmprofile `gcc-final` build directory
+   (`build-native/gcc-final/`). The `gcc/multilib.h` produced by that
+   target is then copied over the installed copy in the output tree. If the
+   build directory is absent (e.g. when running outside a full build
+   environment — including the GitHub Actions `merge-gcc-final` job, which
+   invokes `merge-gcc-final.sh` without `--gcc-final-build-dir` and therefore
+   does not provide `build-native/gcc-final/`), the step is skipped with a
+   warning and the rmprofile `multilib.h` — which is valid but incomplete — is
+   left in place.
+
+4. **Verification:** `arm-none-eabi-gcc --print-multi-lib` is run against the
+   merged tree to confirm that a representative rmprofile variant
+   (`thumb/v7e-m+fp/hard`) is reported, and the aprofile library directories
+   (`v7-a*`/`v7ve*`/`v8-a*` under `arm-none-eabi/lib/thumb/`) are checked
+   to exist on disk.
+
+**Output:** An `install-native/` tree that is equivalent, in terms of
+installed multilib library directories, to a full
+`--with-multilib-list=rmprofile,aprofile` build, but retains the rmprofile
+compiler binaries and may keep the rmprofile-only `multilib.h` (affecting
+what `--print-multi-lib` reports) if regeneration is skipped.
+
 **Depends on:**
 - `gcc-final-rmprofile` (III-4a)
 - `gcc-final-aprofile` (III-4b)
@@ -263,7 +314,9 @@ This is a CI-only convergence step. In local sequential builds via
 **Artifacts written to `install-native/`:**
 
 Combined superset of III-4a and III-4b artifacts (see those sections for the
-full artifact list).
+full artifact list), with `multilib.h` regenerated for the combined profile set
+when the rmprofile `gcc-final` build directory is available; otherwise the
+rmprofile `multilib.h` is retained.
 
 ---
 
@@ -288,7 +341,7 @@ nano-specific `newlib.h` header is copied to
   per-multilib subdirectories.
 - `newlib-nano` — `build-native/target-libs/arm-none-eabi/` must contain the nano
   newlib headers and libraries (the sysroot for the build).
-- `gcc-final-merge` (III-4-merge) — the merged output from III-4a and III-4b
+- `merge-gcc-final` (III-4m) — the merged output from III-4a and III-4b
   containing the full GCC compiler and runtime libraries must be present in
   `install-native/` before this stage runs.
 
@@ -398,7 +451,7 @@ broken so they cannot be modified via aliasing. Skipped when
 **Description:** Copies the two extra GCC spec files that enable mixed
 newlib/nano linking into every multilib subdirectory of the sysroot.
 
-**Depends on:** `gcc-final-merge` (III-4-merge) — the `arm-none-eabi-gcc -print-multi-lib` command
+**Depends on:** `merge-gcc-final` (III-4m) — the `arm-none-eabi-gcc -print-multi-lib` command
 is used to enumerate the target multilib directories, so GCC must be fully
 installed.
 
@@ -480,7 +533,7 @@ flowchart TD
     D["newlib-nano (III-3)"]
     E1["gcc-final-rmprofile (III-4a)"]
     E2["gcc-final-aprofile (III-4b)"]
-    EM["gcc-final-merge (III-4-merge)"]
+    EM["merge-gcc-final (III-4m)"]
     F["gcc-size-libstdcxx (III-5)"]
     G["gdb (III-6)"]
     H["pretidy (III-8)"]
