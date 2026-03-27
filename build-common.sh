@@ -176,7 +176,7 @@ restoreenv () {
         # eval echo $varname restore to \\\"\"\${$varname}\"\\\"
     done
     # Force expr return 0 to avoid script fail
-    stack_level=$(expr "$stack_level" \- 1 || true)
+    stack_level=$(expr "$stack_level" - 1 || true)
     set -u
 }
 
