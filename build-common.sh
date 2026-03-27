@@ -281,20 +281,20 @@ clean_env
 ROOT=$(pwd)
 SRCDIR=$ROOT/src
 
-# shellcheck disable=SC2034  # set here, consumed by sourcing scripts (build-toolchain.sh, build-prerequisites.sh)
+# shellcheck disable=SC2034  # set here, consumed by scripts that source build-common.sh
 BUILDDIR_NATIVE=$ROOT/build-native
-# shellcheck disable=SC2034  # set here, consumed by sourcing scripts (build-toolchain.sh, build-prerequisites.sh)
+# shellcheck disable=SC2034  # set here, consumed by scripts that source build-common.sh
 BUILDDIR_MINGW=$ROOT/build-mingw
-# shellcheck disable=SC2034  # set here, consumed by sourcing scripts (build-toolchain.sh, build-prerequisites.sh)
+# shellcheck disable=SC2034  # set here, consumed by scripts that source build-common.sh
 INSTALLDIR_NATIVE=$ROOT/install-native
-# shellcheck disable=SC2034  # set here, consumed by sourcing scripts (build-toolchain.sh, build-prerequisites.sh)
+# shellcheck disable=SC2034  # set here, consumed by scripts that source build-common.sh
 INSTALLDIR_NATIVE_DOC=$ROOT/install-native/share/doc/gcc-arm-none-eabi
-# shellcheck disable=SC2034  # set here, consumed by sourcing scripts (build-toolchain.sh, build-prerequisites.sh)
+# shellcheck disable=SC2034  # set here, consumed by scripts that source build-common.sh
 INSTALLDIR_MINGW=$ROOT/install-mingw
-# shellcheck disable=SC2034  # set here, consumed by sourcing scripts (build-toolchain.sh, build-prerequisites.sh)
+# shellcheck disable=SC2034  # set here, consumed by scripts that source build-common.sh
 INSTALLDIR_MINGW_DOC=$ROOT/install-mingw/share/doc/gcc-arm-none-eabi
 
-# shellcheck disable=SC2034  # set here, consumed by sourcing scripts (build-toolchain.sh, build-prerequisites.sh)
+# shellcheck disable=SC2034  # set here, consumed by scripts that source build-common.sh
 PACKAGEDIR=$ROOT/pkg
 
 # shellcheck disable=SC2034  # set here, consumed by sourcing scripts (build-prerequisites.sh)
@@ -311,14 +311,14 @@ LIBICONV_VER=1.15
 ZLIB_VER=1.2.12
 PYTHON_WIN_VER=2.7.13
 
-# shellcheck disable=SC2034  # set here, consumed by sourcing scripts (build-toolchain.sh, build-prerequisites.sh)
+# shellcheck disable=SC2034  # set here, consumed by scripts that source build-common.sh
 BINUTILS=binutils
 GCC=gcc
-# shellcheck disable=SC2034  # set here, consumed by sourcing scripts (build-toolchain.sh, build-prerequisites.sh)
+# shellcheck disable=SC2034  # set here, consumed by scripts that source build-common.sh
 NEWLIB=newlib
-# shellcheck disable=SC2034  # set here, consumed by sourcing scripts (build-toolchain.sh, build-prerequisites.sh)
+# shellcheck disable=SC2034  # set here, consumed by scripts that source build-common.sh
 NEWLIB_NANO=newlib
-# shellcheck disable=SC2034  # set here, consumed by sourcing scripts (build-toolchain.sh, build-prerequisites.sh)
+# shellcheck disable=SC2034  # set here, consumed by scripts that source build-common.sh
 GDB=gdb
 GMP=gmp
 MPFR=mpfr
@@ -372,14 +372,14 @@ elif [ "$uname_string" == "darwin" ] ; then
     HOST_NATIVE=x86_64-apple-darwin10
     # Disable parallel build for mac as we will randomly run into "Permission denied" issue.
     #JOBS=`sysctl -n hw.ncpu`
-    # shellcheck disable=SC2034  # set here, consumed by sourcing scripts (build-toolchain.sh, build-prerequisites.sh)
+    # shellcheck disable=SC2034  # set here, consumed by scripts that source build-common.sh
     JOBS=1
-    # shellcheck disable=SC2034  # set here, consumed by sourcing scripts (build-toolchain.sh, build-prerequisites.sh)
+    # shellcheck disable=SC2034  # set here, consumed by scripts that source build-common.sh
     GCC_CONFIG_OPTS_LCPP="--with-host-libstdcxx=-static-libgcc -Wl,-lstdc++ -lm"
-    # shellcheck disable=SC2034  # set here, consumed by sourcing scripts (build-toolchain.sh, build-prerequisites.sh)
+    # shellcheck disable=SC2034  # set here, consumed by scripts that source build-common.sh
     MD5="md5 -r"
     PACKAGE_NAME_SUFFIX=mac-$(sw_vers -productVersion)
-    # shellcheck disable=SC2034  # set here, consumed by sourcing scripts (build-toolchain.sh, build-prerequisites.sh)
+    # shellcheck disable=SC2034  # set here, consumed by scripts that source build-common.sh
     TAR=gtar
 else
     error "Unsupported build system : $uname_string"
@@ -416,7 +416,7 @@ if [[ "${SCRIPT%%-*}" = "build" || "${SCRIPT#*_*}" = "build" ]]; then
     STM32_TOOLS_VER=$(git describe --tags 2>/dev/null || echo "$GCC_VER_DISPLAY-$RELEASEVER~$(git rev-parse --verify HEAD)")
 
     HOST_MINGW=x86_64-w64-mingw32
-    # shellcheck disable=SC2034  # set here, consumed by sourcing scripts (build-toolchain.sh, build-prerequisites.sh)
+    # shellcheck disable=SC2034  # set here, consumed by scripts that source build-common.sh
     HOST_MINGW_TOOL=x86_64-w64-mingw32
     TARGET=arm-none-eabi
     # shellcheck disable=SC2034  # initialized when sourced; overridden and consumed by build-toolchain.sh and build-prerequisites.sh
