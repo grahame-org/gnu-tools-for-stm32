@@ -9,7 +9,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 SCRIPT="$REPO_ROOT/build-pre-cache-clean.sh"
 
-# shellcheck source=test-helpers.sh
+# shellcheck source=tests/test-helpers.sh
 . "$SCRIPT_DIR/test-helpers.sh"
 
 # ---------------------------------------------------------------------------
