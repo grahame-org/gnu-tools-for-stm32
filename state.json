@@ -1,10 +1,57 @@
 {
-  "last_run": "2026-03-26T05:28Z",
+  "last_run": "2026-03-27T12:06Z",
   "tests": "bash tests/test-build-cache-budget-check.sh && bash tests/test-build-common.sh && bash tests/test-build-stage-scripts.sh && bash tests/test-build-stage-action.sh && bash tests/test-build-toolchain-args.sh && bash tests/test-build-toolchain-cache-keys.sh && bash tests/test-pre-cache-clean.sh && bash tests/test-strip-binary.sh && bash tests/test-measure-cache-compressed-size.sh && bash tests/test-merge-gcc-final.sh && python3 -m pytest tests/test_build_stage_action.py",
-  "counts": {"total": 286, "build-common": 77, "toolchain-args": 87, "strip-binary": 13, "stage-scripts": 23, "cache-keys": 19, "cache-budget-check": 11, "pre-cache-clean": 34, "pytest-stage-action": 22, "measure-compressed-size": 8, "merge-gcc-final": 14},
-  "issues": {"108": "Monthly 2026-03"},
-  "backlog": ["all build-common.sh functions covered", "all build-stage helper scripts covered", "all measure-cache-compressed-size.sh paths covered (merged #660)", "merge-gcc-final.sh arg/path tests added (PR in review, branch test-assist/merge-gcc-final-tests)", "no high-value gaps currently identified"],
-  "done": ["toolchain-args", "pack_dir_clean-g13", "strip_binary", "copy_dir/clean", "saveenv", "parse_args", "break_hardlink", "extend-toolchain-args-tests", "cache-key-dependency-chain", "copy_multi_libs", "fix-cache-budget-test-isolation", "build-stage-scripts", "safety-check-failure", "assert-contains-helper", "run-build-stage", "measure-cache-compressed-size", "merge-gcc-final-tests"],
-  "notes": "PR #368 merged. PR #370 merged. PR #525 merged. PR #545 merged. PR #556 merged. PR #573 merged. PR #582 merged. PR #604 merged. PR #623 merged. PR #634+#635 merged (safety-check). PR #637 merged (aprofile test). PR #639 merged (assert_contains+assert_exit_status helpers). PR #642 merged (run-build-stage Group 6). PR #648 merged (fix assert_contains to use grep -Fq). PR #660 merged (measure-cache-compressed-size 8 tests). PR #662 merged (merge-gcc-final.sh new script). New PR created 2026-03-26 (branch test-assist/merge-gcc-final-tests): 14 tests for merge-gcc-final.sh (6 groups: missing-args, unknown/help, non-existent dirs, output-dir safety, missing-apt-lib, non-empty-output-cleanup). Base branch is 13.3.rel1. shell-unit-tests.yml and shellcheck.yml updated.",
-  "tasks_run": {"t1": "2026-03-25", "t2": "2026-03-26", "t3": "2026-03-26", "t4": "2026-03-26", "t5": "2026-03-25", "t6": "2026-03-25", "t7": "2026-03-26"}
+  "counts": {
+    "total": 298,
+    "build-common": 77,
+    "toolchain-args": 87,
+    "strip-binary": 13,
+    "stage-scripts": 23,
+    "cache-keys": 19,
+    "cache-budget-check": 11,
+    "pre-cache-clean": 34,
+    "pytest-stage-action": 22,
+    "measure-compressed-size": 8,
+    "merge-gcc-final": 26
+  },
+  "issues": {
+    "108": "Monthly 2026-03"
+  },
+  "backlog": [
+    "all build-common.sh functions covered",
+    "all build-stage helper scripts covered",
+    "all measure-cache-compressed-size.sh paths covered (merged #660)",
+    "merge-gcc-final.sh fully tested including Step 4 paths (merged #677, extended PR in review)",
+    "no high-value gaps currently identified"
+  ],
+  "done": [
+    "toolchain-args",
+    "pack_dir_clean-g13",
+    "strip_binary",
+    "copy_dir/clean",
+    "saveenv",
+    "parse_args",
+    "break_hardlink",
+    "extend-toolchain-args-tests",
+    "cache-key-dependency-chain",
+    "copy_multi_libs",
+    "fix-cache-budget-test-isolation",
+    "build-stage-scripts",
+    "safety-check-failure",
+    "assert-contains-helper",
+    "run-build-stage",
+    "measure-cache-compressed-size",
+    "merge-gcc-final-tests",
+    "merge-gcc-final-step4-tests"
+  ],
+  "notes": "PR #368 merged. PR #370 merged. PR #525 merged. PR #545 merged. PR #556 merged. PR #573 merged. PR #582 merged. PR #604 merged. PR #623 merged. PR #634+#635 merged (safety-check). PR #637 merged (aprofile test). PR #639 merged (assert_contains+assert_exit_status helpers). PR #642 merged (run-build-stage Group 6). PR #648 merged (fix assert_contains to use grep -Fq). PR #660 merged (measure-cache-compressed-size 8 tests). PR #677 merged (merge-gcc-final.sh 16 tests). New PR created 2026-03-27 (branch test-assist/merge-gcc-final-step4-tests): 10 new tests for merge-gcc-final.sh Step 4 paths (Groups 7-9: missing gcc binary, mock gcc variant checks, full happy path). Total 288->298 tests.",
+  "tasks_run": {
+    "t1": "2026-03-27",
+    "t2": "2026-03-26",
+    "t3": "2026-03-27",
+    "t4": "2026-03-26",
+    "t5": "2026-03-27",
+    "t6": "2026-03-27",
+    "t7": "2026-03-27"
+  }
 }
