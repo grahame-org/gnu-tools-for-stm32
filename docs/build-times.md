@@ -43,6 +43,11 @@ version, and the size of the source trees.
 > skipped.  The ~3 min figure is measured from the cold-cache build triggered
 > by the v2 cache key bump in PR #516.
 
+> **Single-job baseline (pre-parallelisation):** Before PR #283 introduced the
+> parallel gcc-final jobs, stage III-4 was a single unified `build-gcc-final`
+> job that built all multilib variants (rmprofile + aprofile) in one pass.  Its
+> measured cold-cache build time was approximately **~70 min**.
+
 ---
 
 ## Reading Per-Stage Timings in CI
@@ -79,6 +84,46 @@ To compare the build-time impact of a source change:
 Jobs unaffected by your change will show a very short duration (< 1 min,
 indicating a cache hit), so you can quickly focus on the stages that actually
 rebuilt.
+
+---
+
+## Critical-Path Analysis: Parallelised gcc-final
+
+The cold-cache critical path runs through the longest sequential chain of
+dependent jobs:
+
+```
+build-binutils → build-gcc-first → build-newlib → [gcc-final stage]
+              → build-gcc-size-libstdcxx
+```
+
+(`build-gdb` and `build-newlib-nano` run in parallel with other jobs on this
+chain and do not extend the critical path.)
+
+| Metric | Single-job baseline (pre-PR #283) | Parallelised (III-4a/4b/4m) |
+|--------|-----------------------------------|-----------------------------|
+| gcc-final wall time | ~70 min | ~35 min + ~1 min = ~36 min |
+| Total critical-path build time | ~167 min | ~133 min |
+| gcc-final stage reduction | — | **~49%** |
+| Overall critical-path reduction | — | **~20%** |
+
+The critical-path reduction is approximately **20%**, which falls below the
+≥ 30% target.  The total workflow critical path is dominated by
+`build-gcc-size-libstdcxx` (~63 min), which is unchanged by the parallel
+gcc-final split.
+
+**Assessment:** To achieve a ≥ 30% overall critical-path reduction, further
+parallelisation of `build-gcc-size-libstdcxx` or sub-dividing the rmprofile or
+aprofile variant sets across additional parallel jobs would be required.  The
+gcc-final stage itself was reduced by ~49%, which confirms the split is
+performing as designed.
+
+**Correctness:** The `build-final` job validates the merged install tree
+by building the `test_project` STM32 CMake project and comparing the output
+`.bin` file byte-for-byte against `test_project/reference/nucleo-u083rc.bin`.
+A passing comparison confirms that both multilib variant sets are present and
+that the re-linked driver binaries encode the correct combined multilib routing
+tables (see [`docs/parallel-gcc-final-design.md §6`](parallel-gcc-final-design.md#6-validation)).
 
 ---
 
