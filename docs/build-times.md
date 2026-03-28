@@ -47,6 +47,7 @@ version, and the size of the source trees.
 > parallel gcc-final jobs, stage III-4 was a single unified `build-gcc-final`
 > job that built all multilib variants (rmprofile + aprofile) in one pass.  Its
 > measured cold-cache build time was approximately **~70 min**.
+
 > **Note on `build-gcc-size-libstdcxx` timing:** This stage was previously
 > configured with `--with-multilib-list=rmprofile,aprofile` (the full default
 > list), taking approximately 63 min.  It now defaults to
