@@ -47,6 +47,20 @@ version, and the size of the source trees.
 > parallel gcc-final jobs, stage III-4 was a single unified `build-gcc-final`
 > job that built all multilib variants (rmprofile + aprofile) in one pass.  Its
 > measured cold-cache build time was approximately **~70 min**.
+> **Note on `build-gcc-size-libstdcxx` timing:** This stage was previously
+> configured with `--with-multilib-list=rmprofile,aprofile` (the full default
+> list), taking approximately 63 min.  It now defaults to
+> `--with-multilib-list=rmprofile` only: the size-optimised (`_nano`) libraries
+> built here (installed as `libstdc++_nano.a`, `libc_nano.a`, etc.) are
+> consumed only via `nano.specs`, which is intended for Cortex-M (rmprofile)
+> targets.  As a result, **aprofile `_nano` multilib variants are intentionally
+> not built or installed by this stage** — even when the rest of the toolchain
+> is built with the default `rmprofile,aprofile` multilib list.  This eliminates
+> the ~10 aprofile multilib variants from the build, reducing the variant count
+> by approximately 28% and the expected cold-cache build time to ~50 min
+> (~21% improvement vs the previous ~63 min, exceeding the >10% target from
+> [issue #288](https://github.com/grahame-org/gnu-tools-for-stm32/issues/288)).
+> Observe a cold-cache run after this change to confirm the precise measurement.
 
 ---
 
