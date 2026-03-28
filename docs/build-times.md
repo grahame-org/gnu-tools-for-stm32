@@ -37,6 +37,7 @@ version, and the size of the source trees.
 | `build-gcc-final-aprofile` | III-4b | gcc-final (aprofile) | ~35 min (parallel with III-4a) |
 | `build-gcc-final-merge` | III-4-merge | gcc-final merge | ~1 min |
 | `build-gcc-size-libstdcxx` | III-5 | gcc-size-libstdcxx | ~63 min |
+| `build-final` | III-8–11 | pretidy, strip, specs, test_project | ~10 min (see note) |
 
 > **Note on `build-binutils` timing:** The binutils source changes very rarely,
 > so the `build-binutils` cache is almost always warm and the build step is
@@ -62,6 +63,13 @@ version, and the size of the source trees.
 > (~21% improvement vs the previous ~63 min, exceeding the >10% target from
 > [issue #288](https://github.com/grahame-org/gnu-tools-for-stm32/issues/288)).
 > Observe a cold-cache run after this change to confirm the precise measurement.
+
+> **Note on `build-final` timing:** This job covers stages III-8–11 (pretidy,
+> strip_host_objects, strip_target_objects, specs), which are fast file-system
+> operations, followed by the `test_project` CMake build and binary comparison.
+> The ~10 min figure is an estimate (runner setup 2–3 min + fast build stages +
+> ~2–5 min for the CMake build); a dedicated cold-cache benchmark has not been
+> run for this job.
 
 ---
 
@@ -109,20 +117,20 @@ dependent jobs:
 
 ```
 build-binutils → build-gcc-first → build-newlib → [gcc-final stage]
-              → build-gcc-size-libstdcxx
+              → build-gcc-size-libstdcxx → build-final
 ```
 
 (`build-gdb` and `build-newlib-nano` run in parallel with other jobs on this
 chain and do not extend the critical path.)
 
-| Metric | Single-job baseline (pre-issue #283) | Parallelised (III-4a/4b/4-merge) |
-|--------|--------------------------------------|---------------------------------|
+| Metric | Single-job baseline (pre-issue #283) | Parallelised (III-4a/III-4b/III-4-merge) |
+|--------|--------------------------------------|------------------------------------------|
 | gcc-final wall time | ~70 min | ~35 min + ~1 min = ~36 min |
-| Total critical-path build time | ~167 min | ~133 min |
+| Total critical-path build time | ~177 min | ~143 min |
 | gcc-final stage reduction | — | **~49%** |
-| Overall critical-path reduction | — | **~20%** |
+| Overall critical-path reduction | — | **~19%** |
 
-The critical-path reduction is approximately **20%**, which falls below the
+The critical-path reduction is approximately **19%**, which falls below the
 ≥ 30% target.  The total workflow critical path is dominated by
 `build-gcc-size-libstdcxx` (~63 min), which is unchanged by the parallel
 gcc-final split.
