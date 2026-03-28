@@ -43,7 +43,7 @@ version, and the size of the source trees.
 > skipped.  The ~3 min figure is measured from the cold-cache build triggered
 > by the v2 cache key bump in PR #516.
 
-> **Single-job baseline (pre-parallelisation):** Before PR #283 introduced the
+> **Single-job baseline (pre-parallelisation):** Before issue #283 introduced the
 > parallel gcc-final jobs, stage III-4 was a single unified `build-gcc-final`
 > job that built all multilib variants (rmprofile + aprofile) in one pass.  Its
 > measured cold-cache build time was approximately **~70 min**.
@@ -100,8 +100,8 @@ build-binutils → build-gcc-first → build-newlib → [gcc-final stage]
 (`build-gdb` and `build-newlib-nano` run in parallel with other jobs on this
 chain and do not extend the critical path.)
 
-| Metric | Single-job baseline (pre-PR #283) | Parallelised (III-4a/4b/4m) |
-|--------|-----------------------------------|-----------------------------|
+| Metric | Single-job baseline (pre-issue #283) | Parallelised (III-4a/4b/4-merge) |
+|--------|--------------------------------------|---------------------------------|
 | gcc-final wall time | ~70 min | ~35 min + ~1 min = ~36 min |
 | Total critical-path build time | ~167 min | ~133 min |
 | gcc-final stage reduction | — | **~49%** |
