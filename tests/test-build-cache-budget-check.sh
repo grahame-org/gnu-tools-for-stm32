@@ -173,4 +173,77 @@ assert_eq "GITHUB_STEP_SUMMARY has at least one numeric compressed-size cell" \
     "yes" "${compressed_value_found}"
 
 # ---------------------------------------------------------------------------
+# Group 7: build-native/target-libs exceeds warn threshold but not fail — should exit 0
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "=== Group 7: target-libs in warn zone ==="
+
+# warn < 512 KiB (0.0003 GB ≈ 315 KiB), fail > 512 KiB (0.001 GB ≈ 1 MiB).
+assert_zero_exit "exits 0 when target-libs is in warn zone (above warn, below fail)" \
+    run_check "${_TMPDIR}" \
+        INSTALL_NATIVE_MAX_GB=0.01 \
+        INSTALL_NATIVE_WARN_GB=0.005 \
+        TARGET_LIBS_MAX_GB=0.001 \
+        TARGET_LIBS_WARN_GB=0.0003
+
+# ---------------------------------------------------------------------------
+# Group 8: Both directories exceed fail threshold — should exit non-zero
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "=== Group 8: Both directories over fail threshold ==="
+
+# 0.0001 GB ≈ 104 KiB — both test directories (1 MiB and 512 KiB) exceed this.
+assert_nonzero_exit "exits non-zero when both directories exceed fail threshold" \
+    run_check "${_TMPDIR}" \
+        INSTALL_NATIVE_MAX_GB=0.0001 \
+        INSTALL_NATIVE_WARN_GB=0.00005 \
+        TARGET_LIBS_MAX_GB=0.0001 \
+        TARGET_LIBS_WARN_GB=0.00005
+
+# ---------------------------------------------------------------------------
+# Group 9: Output report contains expected status strings
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "=== Group 9: Output status strings ==="
+
+# Both dirs within budget → both status cells should read "OK".
+_report_ok=$(run_check "${_TMPDIR}" \
+    INSTALL_NATIVE_MAX_GB=0.01 \
+    INSTALL_NATIVE_WARN_GB=0.005 \
+    TARGET_LIBS_MAX_GB=0.01 \
+    TARGET_LIBS_WARN_GB=0.005 2>/dev/null) || true
+assert_contains "output contains '| OK |' when directory is within budget" \
+    "${_report_ok}" "| OK |"
+
+# install-native in warn zone → install-native status cell should read "WARNING".
+_report_warn=$(run_check "${_TMPDIR}" \
+    INSTALL_NATIVE_MAX_GB=0.002 \
+    INSTALL_NATIVE_WARN_GB=0.0005 \
+    TARGET_LIBS_MAX_GB=0.01 \
+    TARGET_LIBS_WARN_GB=0.005 2>/dev/null) || true
+assert_contains "output contains '| WARNING |' when directory is in warn zone" \
+    "${_report_warn}" "| WARNING |"
+
+# install-native exceeds fail threshold → install-native status cell should read "OVER BUDGET".
+_report_over=$(run_check "${_TMPDIR}" \
+    INSTALL_NATIVE_MAX_GB=0.0001 \
+    INSTALL_NATIVE_WARN_GB=0.00005 \
+    TARGET_LIBS_MAX_GB=0.01 \
+    TARGET_LIBS_WARN_GB=0.005 2>/dev/null) || true
+assert_contains "output contains '| OVER BUDGET |' when directory exceeds fail threshold" \
+    "${_report_over}" "| OVER BUDGET |"
+
+# Missing directories → status cells should read "not found".
+_report_missing=$(run_check "${_EMPTY_TMPDIR}" \
+    INSTALL_NATIVE_MAX_GB=0.01 \
+    INSTALL_NATIVE_WARN_GB=0.005 \
+    TARGET_LIBS_MAX_GB=0.01 \
+    TARGET_LIBS_WARN_GB=0.005 2>/dev/null) || true
+assert_contains "output contains 'not found' when directory does not exist" \
+    "${_report_missing}" "not found"
+
+# ---------------------------------------------------------------------------
 print_test_results
