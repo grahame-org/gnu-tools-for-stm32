@@ -215,8 +215,12 @@ _report_ok=$(run_check "${_TMPDIR}" \
     INSTALL_NATIVE_WARN_GB=0.005 \
     TARGET_LIBS_MAX_GB=0.01 \
     TARGET_LIBS_WARN_GB=0.005 2>/dev/null) || true
-assert_contains "output contains '| OK |' when directory is within budget" \
-    "${_report_ok}" "| OK |"
+_row_install_ok=$(printf '%s\n' "${_report_ok}" | grep "install-native")
+_row_target_ok=$(printf '%s\n' "${_report_ok}" | grep "target-libs")
+assert_contains "output marks install-native as OK when within budget" \
+    "${_row_install_ok}" "| OK |"
+assert_contains "output marks build-native/target-libs as OK when within budget" \
+    "${_row_target_ok}" "| OK |"
 
 # install-native in warn zone → install-native status cell should read "WARNING".
 _report_warn=$(run_check "${_TMPDIR}" \
@@ -242,8 +246,8 @@ _report_missing=$(run_check "${_EMPTY_TMPDIR}" \
     INSTALL_NATIVE_WARN_GB=0.005 \
     TARGET_LIBS_MAX_GB=0.01 \
     TARGET_LIBS_WARN_GB=0.005 2>/dev/null) || true
-assert_contains "output contains 'not found' when directory does not exist" \
-    "${_report_missing}" "not found"
+assert_contains "output contains '| not found |' when directory does not exist" \
+    "${_report_missing}" "| not found |"
 
 # ---------------------------------------------------------------------------
 print_test_results
