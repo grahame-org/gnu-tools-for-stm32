@@ -64,7 +64,7 @@ jobs:
 
       - name: Run shellcheck on build scripts
         run: |
-          shellcheck --severity=warning \
+          shellcheck --severity=info \
           build-binutils.sh \
           build-common.sh \
           build-gcc-final.sh \
