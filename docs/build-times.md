@@ -37,11 +37,17 @@ version, and the size of the source trees.
 | `build-gcc-final-aprofile` | III-4b | gcc-final (aprofile) | ~35 min (parallel with III-4a) |
 | `build-gcc-final-merge` | III-4-merge | gcc-final merge | ~1 min |
 | `build-gcc-size-libstdcxx` | III-5 | gcc-size-libstdcxx | ~63 min |
+| `build-final` | III-8–11 | pretidy, strip, specs, test_project | ~10 min (see note) |
 
 > **Note on `build-binutils` timing:** The binutils source changes very rarely,
 > so the `build-binutils` cache is almost always warm and the build step is
 > skipped.  The ~3 min figure is measured from the cold-cache build triggered
 > by the v2 cache key bump in PR #516.
+
+> **Single-job baseline (pre-parallelisation):** Before issue #283 introduced the
+> parallel gcc-final jobs, stage III-4 was a single unified `build-gcc-final`
+> job that built all multilib variants (rmprofile + aprofile) in one pass.  Its
+> measured cold-cache build time was approximately **~70 min**.
 
 > **Note on `build-gcc-size-libstdcxx` timing:** This stage was previously
 > configured with `--with-multilib-list=rmprofile,aprofile` (the full default
@@ -57,6 +63,13 @@ version, and the size of the source trees.
 > (~21% improvement vs the previous ~63 min, exceeding the >10% target from
 > [issue #288](https://github.com/grahame-org/gnu-tools-for-stm32/issues/288)).
 > Observe a cold-cache run after this change to confirm the precise measurement.
+
+> **Note on `build-final` timing:** This job covers stages III-8–11 (pretidy,
+> strip_host_objects, strip_target_objects, specs), which are fast file-system
+> operations, followed by the `test_project` CMake build and binary comparison.
+> The ~10 min figure is an estimate (runner setup 2–3 min + fast build stages +
+> ~2–5 min for the CMake build); a dedicated cold-cache benchmark has not been
+> run for this job.
 
 ---
 
@@ -94,6 +107,46 @@ To compare the build-time impact of a source change:
 Jobs unaffected by your change will show a very short duration (< 1 min,
 indicating a cache hit), so you can quickly focus on the stages that actually
 rebuilt.
+
+---
+
+## Critical-Path Analysis: Parallelised gcc-final
+
+The cold-cache critical path runs through the longest sequential chain of
+dependent jobs:
+
+```
+build-binutils → build-gcc-first → build-newlib → [gcc-final stage]
+              → build-gcc-size-libstdcxx → build-final
+```
+
+(`build-gdb` and `build-newlib-nano` run in parallel with other jobs on this
+chain and do not extend the critical path.)
+
+| Metric | Single-job baseline (pre-issue #283) | Parallelised (III-4a/III-4b/III-4-merge) |
+|--------|--------------------------------------|------------------------------------------|
+| gcc-final wall time | ~70 min | ~35 min + ~1 min = ~36 min |
+| Total critical-path build time | ~177 min | ~143 min |
+| gcc-final stage reduction | — | **~49%** |
+| Overall critical-path reduction | — | **~19%** |
+
+The critical-path reduction is approximately **19%**, which falls below the
+≥ 30% target.  The total workflow critical path is dominated by
+`build-gcc-size-libstdcxx` (~63 min), which is unchanged by the parallel
+gcc-final split.
+
+**Assessment:** To achieve a ≥ 30% overall critical-path reduction, further
+parallelisation of `build-gcc-size-libstdcxx` or sub-dividing the rmprofile or
+aprofile variant sets across additional parallel jobs would be required.  The
+gcc-final stage itself was reduced by ~49%, which confirms the split is
+performing as designed.
+
+**Correctness:** The `build-final` job validates the merged install tree
+by building the `test_project` STM32 CMake project and comparing the output
+`.bin` file byte-for-byte against `test_project/reference/nucleo-u083rc.bin`.
+A passing comparison confirms that both multilib variant sets are present and
+that the re-linked driver binaries encode the correct combined multilib routing
+tables (see [`docs/parallel-gcc-final-design.md §6`](parallel-gcc-final-design.md#6-validation)).
 
 ---
 

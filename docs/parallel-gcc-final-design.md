@@ -1,6 +1,6 @@
 # Parallel `gcc-final` Design
 
-**Status:** Design (not yet implemented)
+**Status:** Implemented (issue #283)
 
 **Related issues:**
 [#283 (implementation)](https://github.com/grahame-org/gnu-tools-for-stm32/issues/283) ·
