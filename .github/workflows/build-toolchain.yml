@@ -2095,6 +2095,61 @@ jobs:
           path: install-native
           key: ${{ steps.cache-toolchain.outputs.cache-primary-key }}
 
+      - name: Verify nano library multilib variants
+        run: |
+          set -euo pipefail
+          lib_dir="${GITHUB_WORKSPACE}/install-native/arm-none-eabi/lib"
+          if [ ! -d "${lib_dir}" ]; then
+            echo "ERROR: ${lib_dir} does not exist." >&2
+            exit 1
+          fi
+          # Collect all directories that contain *_nano.a files.
+          nano_dirs=$(find "${lib_dir}" -name "*_nano.a" -exec dirname {} \; | sort -u)
+          echo "Directories containing *_nano.a files:"
+          echo "${nano_dirs}"
+          PASS=true
+          # Expected: rmprofile (Cortex-M/R) multilib directories must contain
+          # *_nano.a files.  These are the only variants built when
+          # gcc-size-libstdcxx uses --with-multilib-list=rmprofile.
+          expected_patterns=(
+            "thumb/v6-m"
+            "thumb/v7-m"
+            "thumb/v7e-m"
+            "thumb/v8-m.base"
+            "thumb/v8-m.main"
+          )
+          for pattern in "${expected_patterns[@]}"; do
+            if echo "${nano_dirs}" | grep -qF "${pattern}"; then
+              echo "PASS: Found _nano.a files in ${pattern}"
+            else
+              echo "FAIL: Expected _nano.a files in ${pattern} but none found"
+              PASS=false
+            fi
+          done
+          # Unexpected: aprofile (Cortex-A / classic ARM) multilib directories
+          # must NOT contain *_nano.a files.  With rmprofile-only restriction
+          # gcc-size-libstdcxx should not produce these variants.
+          unexpected_patterns=(
+            "thumb/v7-a"
+            "thumb/v7ve"
+            "thumb/v8-a"
+            "arm/v4t"
+            "thumb/v5te"
+          )
+          for pattern in "${unexpected_patterns[@]}"; do
+            if echo "${nano_dirs}" | grep -qF "${pattern}"; then
+              echo "FAIL: Found unexpected _nano.a files in aprofile directory ${pattern}"
+              PASS=false
+            else
+              echo "PASS: No _nano.a files in aprofile directory ${pattern} (as expected)"
+            fi
+          done
+          if [ "${PASS}" != "true" ]; then
+            echo "ERROR: Nano library multilib variant check failed." >&2
+            exit 1
+          fi
+          echo "All nano library multilib variant checks passed."
+
       - name: Build test_project with toolchain
         run: |
           export PATH="${GITHUB_WORKSPACE}/install-native/bin:${PATH}"
