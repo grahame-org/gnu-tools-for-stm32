@@ -1,18 +1,19 @@
 {
-  "last_run": "2026-03-28T11:48Z",
-  "tests": "bash tests/test-build-cache-budget-check.sh && bash tests/test-build-common.sh && bash tests/test-build-stage-scripts.sh && bash tests/test-build-stage-action.sh && bash tests/test-build-toolchain-args.sh && bash tests/test-build-toolchain-cache-keys.sh && bash tests/test-pre-cache-clean.sh && bash tests/test-strip-binary.sh && bash tests/test-measure-cache-compressed-size.sh && bash tests/test-merge-gcc-final.sh && python3 -m pytest tests/test_build_stage_action.py",
+  "last_run": "2026-03-29T11:49Z",
+  "tests": "bash tests/test-build-cache-budget-check.sh && bash tests/test-build-common.sh && bash tests/test-build-stage-scripts.sh && bash tests/test-build-stage-action.sh && bash tests/test-build-toolchain-args.sh && bash tests/test-build-toolchain-cache-keys.sh && bash tests/test-build-toolchain.sh && bash tests/test-merge-gcc-final.sh && bash tests/test-measure-cache-compressed-size.sh && bash tests/test-pre-cache-clean.sh && bash tests/test-strip-binary.sh && python3 -m pytest tests/test_build_stage_action.py",
   "counts": {
-    "total": 304,
+    "total": 320,
     "build-common": 77,
     "toolchain-args": 87,
     "strip-binary": 13,
     "stage-scripts": 23,
     "cache-keys": 19,
-    "cache-budget-check": 17,
+    "cache-budget-check": 18,
     "pre-cache-clean": 34,
     "pytest-stage-action": 22,
     "measure-compressed-size": 8,
-    "merge-gcc-final": 26
+    "merge-gcc-final": 26,
+    "build-toolchain": 15
   },
   "issues": {
     "108": "Monthly 2026-03"
@@ -22,8 +23,9 @@
     "all build-stage helper scripts covered",
     "all measure-cache-compressed-size.sh paths covered (merged #660)",
     "merge-gcc-final.sh fully tested including Step 4 paths (merged #677, #698)",
-    "build-cache-budget-check.sh extended: warn zone, both-over, status strings (PR in review - branch test-assist/cache-budget-check-gaps)",
-    "no remaining high-value gaps identified at shell layer"
+    "build-cache-budget-check.sh extended: warn zone, both-over, status strings (merged #701)",
+    "build-toolchain.sh skip_stages validation tested (PR in review - branch test-assist/build-toolchain-skip-stages)",
+    "next: build-prerequisites.sh argument parsing (similar to toolchain-args but separate code, inline not function-based)"
   ],
   "done": [
     "toolchain-args",
@@ -44,16 +46,17 @@
     "measure-cache-compressed-size",
     "merge-gcc-final-tests",
     "merge-gcc-final-step4-tests",
-    "cache-budget-check-gaps"
+    "cache-budget-check-gaps",
+    "build-toolchain-skip-stages"
   ],
-  "notes": "PR #368 merged. PR #370 merged. PR #525 merged. PR #545 merged. PR #556 merged. PR #573 merged. PR #582 merged. PR #604 merged. PR #623 merged. PR #634+#635 merged (safety-check). PR #637 merged (aprofile test). PR #639 merged (assert_contains+assert_exit_status helpers). PR #642 merged (run-build-stage Group 6). PR #648 merged (fix assert_contains to use grep -Fq). PR #660 merged (measure-cache-compressed-size 8 tests). PR #677 merged (merge-gcc-final.sh 16 tests). PR #698 merged (merge-gcc-final.sh Step 4 10 tests). New PR created 2026-03-28 (branch test-assist/cache-budget-check-gaps): 6 new tests for build-cache-budget-check.sh Groups 7-9 (warn zone, both-over, status strings). Total 298->304 tests.",
+  "notes": "PR #368 merged. PR #370 merged. PR #525 merged. PR #545 merged. PR #556 merged. PR #573 merged. PR #582 merged. PR #604 merged. PR #623 merged. PR #634+#635 merged (safety-check). PR #637 merged (aprofile test). PR #639 merged (assert_contains+assert_exit_status helpers). PR #642 merged (run-build-stage Group 6). PR #648 merged (fix assert_contains to use grep -Fq). PR #660 merged (measure-cache-compressed-size 8 tests). PR #677 merged (merge-gcc-final.sh 16 tests). PR #698 merged (merge-gcc-final.sh Step 4 10 tests). PR #701 merged (cache-budget-check 7 new tests, now 18 total). New PR created 2026-03-29 (branch test-assist/build-toolchain-skip-stages): 15 new tests for build-toolchain.sh Groups 1-4 (valid stages, invalid stages, multiple stages, mixed valid+invalid). Total 305->320 tests.",
   "tasks_run": {
-    "t1": "2026-03-27",
-    "t2": "2026-03-28",
-    "t3": "2026-03-28",
-    "t4": "2026-03-28",
+    "t1": "2026-03-29",
+    "t2": "2026-03-29",
+    "t3": "2026-03-29",
+    "t4": "2026-03-29",
     "t5": "2026-03-27",
     "t6": "2026-03-27",
-    "t7": "2026-03-28"
+    "t7": "2026-03-29"
   }
 }
