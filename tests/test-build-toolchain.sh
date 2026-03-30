@@ -45,31 +45,27 @@ assert_zero_exit "gdb: valid stage name accepted" \
     bash "$SCRIPT" "${SKIP_ALL[@]}" --skip_stages=gdb
 
 # ---------------------------------------------------------------------------
-# Test group 2: Invalid/typo stage names → exit 1 + error message on stderr
+# Test group 2: Invalid/typo stage names → exit 1 + error message
 # ---------------------------------------------------------------------------
 
 echo ""
 echo "=== Group 2: Invalid stage names rejected ==="
 
-assert_nonzero_exit "binutis (typo): exits non-zero" \
-    bash "$SCRIPT" "${SKIP_ALL[@]}" --skip_stages=binutis
-
-_err2a=$(bash "$SCRIPT" "${SKIP_ALL[@]}" --skip_stages=binutis 2>&1 || true)
+_status=0; _out=$(bash "$SCRIPT" "${SKIP_ALL[@]}" --skip_stages=binutis 2>&1) || _status=$?
+assert_eq "binutis (typo): exits with status 1" "1" "$_status"
 assert_contains "binutis (typo): error message names the unknown stage" \
-    "$_err2a" "Unknown build stage: binutis"
+    "$_out" "Unknown build stage: binutis"
 
-assert_nonzero_exit "nosuchthing: exits non-zero" \
-    bash "$SCRIPT" "${SKIP_ALL[@]}" --skip_stages=nosuchthing
-
-_err2b=$(bash "$SCRIPT" "${SKIP_ALL[@]}" --skip_stages=nosuchthing 2>&1 || true)
+_status=0; _out=$(bash "$SCRIPT" "${SKIP_ALL[@]}" --skip_stages=nosuchthing 2>&1) || _status=$?
+assert_eq "nosuchthing: exits with status 1" "1" "$_status"
 assert_contains "nosuchthing: error message names the unknown stage" \
-    "$_err2b" "Unknown build stage: nosuchthing"
+    "$_out" "Unknown build stage: nosuchthing"
 
-assert_nonzero_exit "wrong capitalisation (Binutils): exits non-zero" \
-    bash "$SCRIPT" "${SKIP_ALL[@]}" --skip_stages=Binutils
+_status=0; _out=$(bash "$SCRIPT" "${SKIP_ALL[@]}" --skip_stages=Binutils 2>&1) || _status=$?
+assert_eq "wrong capitalisation (Binutils): exits with status 1" "1" "$_status"
 
-assert_nonzero_exit "prefix only (gcc): exits non-zero" \
-    bash "$SCRIPT" "${SKIP_ALL[@]}" --skip_stages=gcc
+_status=0; _out=$(bash "$SCRIPT" "${SKIP_ALL[@]}" --skip_stages=gcc 2>&1) || _status=$?
+assert_eq "prefix only (gcc): exits with status 1" "1" "$_status"
 
 # ---------------------------------------------------------------------------
 # Test group 3: Multiple valid stages together → exit 0
@@ -92,14 +88,12 @@ assert_zero_exit "all seven stages: all valid stages together accepted" \
 echo ""
 echo "=== Group 4: Mixed valid and invalid stages rejected ==="
 
-assert_nonzero_exit "binutils,binutis (valid+invalid): exits non-zero" \
-    bash "$SCRIPT" "${SKIP_ALL[@]}" --skip_stages=binutils,binutis
-
-_err4a=$(bash "$SCRIPT" "${SKIP_ALL[@]}" --skip_stages=binutils,binutis 2>&1 || true)
+_status=0; _out=$(bash "$SCRIPT" "${SKIP_ALL[@]}" --skip_stages=binutils,binutis 2>&1) || _status=$?
+assert_eq "binutils,binutis (valid+invalid): exits with status 1" "1" "$_status"
 assert_contains "valid+invalid mix: error message names the invalid stage" \
-    "$_err4a" "Unknown build stage: binutis"
+    "$_out" "Unknown build stage: binutis"
 
-assert_nonzero_exit "binutis,binutils (invalid+valid): exits non-zero" \
-    bash "$SCRIPT" "${SKIP_ALL[@]}" --skip_stages=binutis,binutils
+_status=0; _out=$(bash "$SCRIPT" "${SKIP_ALL[@]}" --skip_stages=binutis,binutils 2>&1) || _status=$?
+assert_eq "binutis,binutils (invalid+valid): exits with status 1" "1" "$_status"
 
 print_test_results
