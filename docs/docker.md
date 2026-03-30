@@ -55,13 +55,13 @@ because the branch name is already lower-case.
 ### Registry
 
 ```
-ghcr.io/grahame-org/
+ghcr.io/
 ```
 
 Full image reference:
 
 ```
-ghcr.io/grahame-org/stm32-toolchain-<branch>
+ghcr.io/stm32-toolchain-<branch>
 ```
 
 ### Tag scheme
@@ -144,7 +144,7 @@ it into this repository so that `install-native/` matches the output of
 
 ```bash
 docker build \
-  -t ghcr.io/grahame-org/stm32-toolchain-13.3.rel1:edge \
+  -t ghcr.io/stm32-toolchain-13.3.rel1:edge \
   .
 ```
 
@@ -153,7 +153,7 @@ Replace `13.3.rel1` and `edge` with the appropriate branch name and tag.
 ### Step 3 — Verify the image
 
 ```bash
-docker run --rm ghcr.io/grahame-org/stm32-toolchain-13.3.rel1:edge \
+docker run --rm ghcr.io/stm32-toolchain-13.3.rel1:edge \
   arm-none-eabi-gcc --version
 ```
 
@@ -164,7 +164,7 @@ docker run --rm ghcr.io/grahame-org/stm32-toolchain-13.3.rel1:edge \
 ### Run a single command
 
 ```bash
-docker run --rm ghcr.io/grahame-org/stm32-toolchain-13.3.rel1:edge \
+docker run --rm ghcr.io/stm32-toolchain-13.3.rel1:edge \
   arm-none-eabi-gcc --version
 ```
 
@@ -176,7 +176,7 @@ Mount your source tree into the container and invoke the toolchain:
 docker run --rm \
   -v "$(pwd):/work" \
   -w /work \
-  ghcr.io/grahame-org/stm32-toolchain-13.3.rel1:edge \
+  ghcr.io/stm32-toolchain-13.3.rel1:edge \
   arm-none-eabi-gcc -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard \
   -O2 -c main.c -o main.o
 ```
@@ -229,7 +229,7 @@ The dry-run image is never pushed to the registry.
    - Release published → `latest`, full semver, minor semver, major semver
 4. Runs the same validation steps as the dry-run (version check + test_project
    CMake build).
-5. Pushes all generated tags to `ghcr.io/grahame-org/`.
+5. Pushes all generated tags to `ghcr.io/`.
 
 ---
 
@@ -266,7 +266,7 @@ subsequent phases.
   They are installed transiently inside containers at test time using
   `apt-get` and are discarded when the container exits. If you need to run
   CMake-based builds inside the container in production, install them in
-  your own downstream image (`FROM ghcr.io/grahame-org/stm32-toolchain-...`).
+  your own downstream image (`FROM ghcr.io/stm32-toolchain-...`).
 
 - **No entrypoint script.**
   The image has no `ENTRYPOINT` or `CMD`; it relies on callers to provide
