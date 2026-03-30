@@ -1,0 +1,25 @@
+name: Docker Build
+description: Build (and optionally push) a Docker image to a container registry.
+
+inputs:
+  push:
+    description: Whether to push the image to the registry
+    required: false
+    default: 'false'
+  registry:
+    description: Container registry hostname
+    required: false
+    default: ghcr.io
+  image-name:
+    description: Image name without registry prefix
+    required: true
+  tags:
+    description: Newline-separated list of tags to apply
+    required: true
+  token:
+    description: GITHUB_TOKEN or PAT for registry login
+    required: true
+
+runs:
+  using: composite
+  steps: []
