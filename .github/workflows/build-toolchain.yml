@@ -209,24 +209,7 @@ jobs:
 
       - name: Compute source tree hashes
         id: src-hashes
-        run: |
-          set -euo pipefail
-          toolchain_src_hash=$(
-            printf '%s\n' \
-              src/binutils \
-              src/gcc \
-              src/gdb \
-              src/newlib \
-              src/libiconv \
-              src/liblongpath-win32 \
-              src/specs \
-            | while read -r dir; do
-                git rev-parse "HEAD:${dir}"
-              done \
-            | sha256sum \
-            | cut -d' ' -f1
-          )
-          echo "toolchain-src=${toolchain_src_hash}" >> "${GITHUB_OUTPUT}"
+        uses: ./.github/actions/compute-toolchain-src-hash
 
       - name: Restore cache – prerequisites
         id: cache-prerequisites
@@ -400,24 +383,7 @@ jobs:
 
       - name: Compute source tree hashes
         id: src-hashes
-        run: |
-          set -euo pipefail
-          toolchain_src_hash=$(
-            printf '%s\n' \
-              src/binutils \
-              src/gcc \
-              src/gdb \
-              src/newlib \
-              src/libiconv \
-              src/liblongpath-win32 \
-              src/specs \
-            | while read -r dir; do
-                git rev-parse "HEAD:${dir}"
-              done \
-            | sha256sum \
-            | cut -d' ' -f1
-          )
-          echo "toolchain-src=${toolchain_src_hash}" >> "${GITHUB_OUTPUT}"
+        uses: ./.github/actions/compute-toolchain-src-hash
 
       - name: Restore cache – prerequisites
         id: cache-prerequisites
@@ -735,24 +701,7 @@ jobs:
 
       - name: Compute source tree hashes
         id: src-hashes
-        run: |
-          set -euo pipefail
-          toolchain_src_hash=$(
-            printf '%s\n' \
-              src/binutils \
-              src/gcc \
-              src/gdb \
-              src/newlib \
-              src/libiconv \
-              src/liblongpath-win32 \
-              src/specs \
-            | while read -r dir; do
-                git rev-parse "HEAD:${dir}"
-              done \
-            | sha256sum \
-            | cut -d' ' -f1
-          )
-          echo "toolchain-src=${toolchain_src_hash}" >> "${GITHUB_OUTPUT}"
+        uses: ./.github/actions/compute-toolchain-src-hash
 
       - name: Restore cache – toolchain
         id: cache-toolchain
@@ -1964,24 +1913,7 @@ jobs:
 
       - name: Compute source tree hashes
         id: src-hashes
-        run: |
-          set -euo pipefail
-          toolchain_src_hash=$(
-            printf '%s\n' \
-              src/binutils \
-              src/gcc \
-              src/gdb \
-              src/newlib \
-              src/libiconv \
-              src/liblongpath-win32 \
-              src/specs \
-            | while read -r dir; do
-                git rev-parse "HEAD:${dir}"
-              done \
-            | sha256sum \
-            | cut -d' ' -f1
-          )
-          echo "toolchain-src=${toolchain_src_hash}" >> "${GITHUB_OUTPUT}"
+        uses: ./.github/actions/compute-toolchain-src-hash
 
       - name: Restore cache – prerequisites
         id: cache-prerequisites
