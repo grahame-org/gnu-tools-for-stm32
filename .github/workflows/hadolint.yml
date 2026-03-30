@@ -1,0 +1,68 @@
+name: hadolint
+
+on:
+  push:
+    branches:
+      - 13.3.rel1
+  pull_request:
+  merge_group:
+  workflow_dispatch:
+permissions: {}
+
+jobs:
+  check-changes:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      should-lint: ${{ steps.filter.outputs.lint || 'true' }}
+    steps:
+      - name: Check for lint-relevant file changes
+        if: github.event_name == 'pull_request'
+        id: filter
+        uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
+        with:
+          filters: |
+            lint:
+              - 'Dockerfile'
+              - '.hadolint.yaml'
+              - '.github/workflows/hadolint.yml'
+
+  hadolint:
+    needs: check-changes
+    if: needs.check-changes.outputs.should-lint == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Install hadolint
+        run: |
+          curl -sSfL \
+            "https://github.com/hadolint/hadolint/releases/download/v2.12.0/hadolint-Linux-x86_64" \
+            -o /tmp/hadolint
+          echo "56de6d5e5ec427e17b74fa48d51271c7fc0d61244bf5c90e828aab8362d55010  /tmp/hadolint" | sha256sum --check
+          sudo install -m 755 /tmp/hadolint /usr/local/bin/hadolint
+
+      - name: Run hadolint on Dockerfile
+        run: hadolint Dockerfile
+
+  hadolint-status:
+    runs-on: ubuntu-latest
+    needs: [check-changes, hadolint]
+    if: always()
+    steps:
+      - name: Report hadolint status
+        run: |
+          if [[ "${{ needs.check-changes.result }}" == "failure" || "${{ needs.check-changes.result }}" == "cancelled" ]]; then
+            echo "check-changes job failed or was cancelled" && exit 1
+          fi
+          if [[ "${{ needs.hadolint.result }}" == "failure" || "${{ needs.hadolint.result }}" == "cancelled" ]]; then
+            echo "hadolint failed or was cancelled" && exit 1
+          fi
+          echo "hadolint skipped or succeeded"
