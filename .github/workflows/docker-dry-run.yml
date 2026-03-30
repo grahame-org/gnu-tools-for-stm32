@@ -66,12 +66,18 @@ jobs:
           echo "Run the 'Build STM32 Toolchain' workflow on this branch first to populate the cache." >&2
           exit 1
 
+      - name: Compute image name
+        id: image-name
+        run: |
+          safe_ref="${GITHUB_REF_NAME//\//-}"
+          echo "value=stm32-toolchain-${safe_ref}" >> "${GITHUB_OUTPUT}"
+
       - name: Build Docker image (no push)
         id: docker-build
         uses: ./.github/actions/docker-build
         with:
           push: 'false'
-          image-name: ${{ github.repository }}
+          image-name: ${{ steps.image-name.outputs.value }}
           tags: |
             type=sha
           token: ${{ secrets.GITHUB_TOKEN }}
