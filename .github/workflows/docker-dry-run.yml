@@ -30,6 +30,7 @@ jobs:
               - '.dockerignore'
               - '.github/workflows/docker-dry-run.yml'
               - '.github/actions/docker-build/**'
+              - '.github/actions/compute-toolchain-src-hash/**'
               - 'test_project/**'
 
   docker-dry-run:
