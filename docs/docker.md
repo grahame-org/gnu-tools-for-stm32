@@ -42,8 +42,15 @@ The base OS is **Ubuntu 24.04**.
 stm32-toolchain-<branch>
 ```
 
-The branch name is lower-cased and `/` characters are replaced with `-`.
-For example, branch `13.3.rel1` produces image name `stm32-toolchain-13.3.rel1`.
+The two CI workflows apply slightly different normalization:
+
+- **`docker-dry-run`** uses the current ref name (`GITHUB_REF_NAME`), lower-cased
+  with `/` replaced by `-`.
+- **`docker-publish`** uses the repository default branch name, with `/` replaced
+  by `-` (no lower-casing applied).
+
+For example, on branch `13.3.rel1` both produce `stm32-toolchain-13.3.rel1`
+because the branch name is already lower-case.
 
 ### Registry
 
@@ -93,8 +100,9 @@ The Dockerfile **does not build the toolchain from source**. The build context
 must include the `install-native/` directory, which is the output of running
 `build-toolchain.sh` (or restoring it from the GitHub Actions cache).
 
-The `.dockerignore` file excludes everything from the build context _except_
-`install-native/`, keeping the context transfer fast.
+The `.dockerignore` file limits the build context to `install-native/`, the
+license files (`LICENSE.md`, `license.txt`), and the `Dockerfile`/`.dockerignore`
+themselves, keeping the context transfer fast.
 
 ### OCI labels
 
@@ -125,11 +133,12 @@ export JOBS=$(nproc)
 
 The toolchain will be installed to `install-native/`.
 
-**Option B — Restore from a GitHub Actions cache (requires `gh` CLI):**
+**Option B — Use a prebuilt `install-native/` directory:**
 
-Retrieve the `install-native` cache artifact from a recent successful
-`Build STM32 Toolchain` workflow run on your branch and extract it to
-`install-native/`.
+If you already have a compatible `install-native/` from another machine or
+a tarball produced by a previous build (locally or in CI), copy or extract
+it into this repository so that `install-native/` matches the output of
+`./build-toolchain.sh`.
 
 ### Step 2 — Build the Docker image
 
@@ -235,8 +244,8 @@ subsequent phases.
 | Toolchain binary runs inside the container | ✅ Validated | Confirmed by the `arm-none-eabi-gcc --version` step in both dry-run and publish workflows |
 | `test_project` CMake build succeeds inside the container | ✅ Validated | Confirmed by the CMake + Make step in both dry-run and publish workflows |
 | `install-native/` is present before `docker build` | ✅ Validated | Enforced by the `Check toolchain cache hit` step that fails fast if the cache is absent |
-| `.dockerignore` keeps build context small | ✅ Validated | Only `install-native/` is included in the context; all other files are excluded |
-| Image naming is stable across branches | ✅ Validated | `stm32-toolchain-<safe-branch>` formula used consistently in both workflows |
+| `.dockerignore` keeps build context small | ✅ Validated | Context contains only `install-native/`, license files, and `Dockerfile`/`.dockerignore` |
+| Image naming is predictable per workflow | ✅ Validated | Dry-run tags use `stm32-toolchain-<lowercased-ref>`; publish tags use `stm32-toolchain-<default-branch>` |
 | Automated versioning via release-please | ⚠️ Deferred | Covered in issue 07/13 of the docker plan |
 | Docker action for downstream consumers | ⚠️ Deferred | Covered in issue 09/13 of the docker plan |
 
