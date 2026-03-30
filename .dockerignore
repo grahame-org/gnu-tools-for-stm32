@@ -1,0 +1,37 @@
+# Exclude everything that is not needed for the Docker build context.
+# Only install-native/ (the pre-built toolchain) is required by the Dockerfile.
+
+# Version control
+.git/
+
+# Toolchain source trees and intermediate build artefacts
+src/
+build-native/
+pkg/
+
+# Test infrastructure and project
+test_project/
+tests/
+
+# Documentation and repository tooling
+docs/
+.github/
+.vscode/
+
+# Build and repository scripts
+*.sh
+
+# Configuration and metadata files
+*.md
+!LICENSE.md
+*.txt
+!license.txt
+*.js
+*.json
+*.lock
+*.yml
+*.yaml
+.gitignore
+.gitattributes
+.shellcheckrc
+.yamllint
