@@ -1,0 +1,82 @@
+name: Docker Build
+description: >
+  Build a Docker image from the pre-built toolchain, optionally push to a
+  container registry, and validate the image by running the test_project
+  CMake build inside the container.
+
+inputs:
+  push:
+    description: Whether to push the image to the registry
+    required: false
+    default: 'false'
+  registry:
+    description: Container registry
+    required: false
+    default: 'ghcr.io'
+  image-name:
+    description: Image name without registry prefix
+    required: true
+  tags:
+    description: Newline-separated list of tags to apply
+    required: true
+  token:
+    description: GITHUB_TOKEN or PAT for registry login
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Log in to registry
+      if: inputs.push == 'true'
+      uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
+      with:
+        registry: ${{ inputs.registry }}
+        username: ${{ github.actor }}
+        password: ${{ inputs.token }}
+
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@030e881283bb7a6894de51c315a6bfe6a94e05cf # v6.0.0
+      with:
+        images: ${{ inputs.registry }}/${{ inputs.image-name }}
+        tags: ${{ inputs.tags }}
+
+    - name: Build and push
+      id: build
+      uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7.0.0
+      with:
+        context: .
+        file: Dockerfile
+        push: ${{ inputs.push == 'true' }}
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        load: true
+
+    - name: Verify toolchain in container
+      shell: bash
+      env:
+        IMAGE_ID: ${{ steps.build.outputs.imageid }}
+      run: docker run --rm "${IMAGE_ID}" arm-none-eabi-gcc --version
+
+    - name: Build test_project in container
+      shell: bash
+      env:
+        IMAGE_ID: ${{ steps.build.outputs.imageid }}
+      run: |
+        docker run --rm \
+          -v "$PWD/test_project:/work" \
+          -w /work \
+          "${IMAGE_ID}" \
+          sh -c '
+            set -e
+            apt-get update -qq
+            apt-get install -y --no-install-recommends cmake make
+            rm -rf /var/lib/apt/lists/*
+            cmake -G "Unix Makefiles" \
+              -DCMAKE_TOOLCHAIN_FILE=/work/arm-none-eabi-gcc.cmake \
+              -DCMAKE_C_COMPILER=/opt/stm32-toolchain/bin/arm-none-eabi-gcc \
+              -DCMAKE_CXX_COMPILER=/opt/stm32-toolchain/bin/arm-none-eabi-g++ \
+              -B /work/build \
+              -S /work
+            cmake --build /work/build --verbose -- -j "$(nproc)"
+          '
