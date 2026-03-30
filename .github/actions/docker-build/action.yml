@@ -52,3 +52,12 @@ runs:
       with:
         images: ${{ inputs.registry }}/${{ inputs.image-name }}
         tags: ${{ inputs.tags }}
+
+    - name: Build and push Docker image
+      uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7.0.0
+      with:
+        context: .
+        file: Dockerfile
+        push: ${{ inputs.push == 'true' }}
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
