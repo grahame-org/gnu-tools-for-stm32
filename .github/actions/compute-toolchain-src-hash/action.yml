@@ -1,0 +1,19 @@
+name: Compute toolchain source hash
+description: >
+  Computes a combined SHA-256 hash of the toolchain source trees (binutils, gcc,
+  gdb, newlib, libiconv, liblongpath-win32, specs) and writes it to GITHUB_OUTPUT
+  as "toolchain-src=<hash>".  Used by build-toolchain.yml and docker-dry-run.yml
+  to construct the toolchain cache key without duplicating the computation.
+
+outputs:
+  toolchain-src:
+    description: SHA-256 hash of the combined toolchain source trees
+    value: ${{ steps.compute.outputs.toolchain-src }}
+
+runs:
+  using: composite
+  steps:
+    - name: Compute source tree hashes
+      id: compute
+      shell: bash
+      run: "${GITHUB_ACTION_PATH}/compute-toolchain-src-hash.sh"
