@@ -67,9 +67,10 @@ jobs:
           exit 1
 
       - name: Compute image name
-        id: image-name
+        id: image_name
         run: |
           safe_ref="${GITHUB_REF_NAME//\//-}"
+          safe_ref="$(echo "${safe_ref}" | tr '[:upper:]' '[:lower:]')"
           echo "value=stm32-toolchain-${safe_ref}" >> "${GITHUB_OUTPUT}"
 
       - name: Build Docker image (no push)
@@ -77,7 +78,7 @@ jobs:
         uses: ./.github/actions/docker-build
         with:
           push: 'false'
-          image-name: ${{ steps.image-name.outputs.value }}
+          image-name: ${{ steps.image_name.outputs.value }}
           tags: |
             type=sha
           token: ${{ secrets.GITHUB_TOKEN }}
