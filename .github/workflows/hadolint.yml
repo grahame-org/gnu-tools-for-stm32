@@ -43,8 +43,9 @@ jobs:
         run: |
           curl -sSfL \
             "https://github.com/hadolint/hadolint/releases/download/v2.12.0/hadolint-Linux-x86_64" \
-            -o /usr/local/bin/hadolint
-          chmod +x /usr/local/bin/hadolint
+            -o /tmp/hadolint
+          echo "56de6d5e5ec427e17b74fa48d51271c7fc0d61244bf5c90e828aab8362d55010  /tmp/hadolint" | sha256sum --check
+          sudo install -m 755 /tmp/hadolint /usr/local/bin/hadolint
 
       - name: Run hadolint on Dockerfile
         run: hadolint Dockerfile
