@@ -298,7 +298,7 @@ echo "merge-gcc-final: --print-multi-lib output:"
 echo "$multilib_output"
 
 # Check for representative rmprofile variant (Cortex-M4 with hard-float).
-if ! echo "$multilib_output" | grep -q "thumb/v7e-m+fp/hard"; then
+if ! grep -q "thumb/v7e-m+fp/hard" <<< "$multilib_output"; then
     _die "verification failed: rmprofile variant 'thumb/v7e-m+fp/hard' not found in --print-multi-lib output"
 fi
 

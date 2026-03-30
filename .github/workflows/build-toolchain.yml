@@ -2104,10 +2104,10 @@ jobs:
             exit 1
           fi
           # Collect all directories that contain *_nano.a files.
-          nano_dirs=$(find "${lib_dir}" -name "*_nano.a" -exec dirname {} \; | sort -u)
+          nano_dirs=$(find "${lib_dir}" -name "*_nano.a" -printf '%h\n' | sort -u)
           echo "Directories containing *_nano.a files:"
           echo "${nano_dirs}"
-          PASS=true
+          pass=true
           # Expected: rmprofile (Cortex-M/R) multilib directories must contain
           # *_nano.a files.  These are the only variants built when
           # gcc-size-libstdcxx uses --with-multilib-list=rmprofile.
@@ -2119,11 +2119,11 @@ jobs:
             "thumb/v8-m.main"
           )
           for pattern in "${expected_patterns[@]}"; do
-            if echo "${nano_dirs}" | grep -qF "${pattern}"; then
+            if grep -qF "${pattern}" <<< "${nano_dirs}"; then
               echo "PASS: Found _nano.a files in ${pattern}"
             else
               echo "FAIL: Expected _nano.a files in ${pattern} but none found"
-              PASS=false
+              pass=false
             fi
           done
           # Unexpected: aprofile (Cortex-A / classic ARM) multilib directories
@@ -2137,14 +2137,14 @@ jobs:
             "thumb/v5te"
           )
           for pattern in "${unexpected_patterns[@]}"; do
-            if echo "${nano_dirs}" | grep -qF "${pattern}"; then
+            if grep -qF "${pattern}" <<< "${nano_dirs}"; then
               echo "FAIL: Found unexpected _nano.a files in aprofile directory ${pattern}"
-              PASS=false
+              pass=false
             else
               echo "PASS: No _nano.a files in aprofile directory ${pattern} (as expected)"
             fi
           done
-          if [ "${PASS}" != "true" ]; then
+          if [ "${pass}" != "true" ]; then
             echo "ERROR: Nano library multilib variant check failed." >&2
             exit 1
           fi
