@@ -6,6 +6,10 @@ inputs:
     description: Whether to push the image to the registry
     required: false
     default: 'false'
+  load:
+    description: Whether to load the built image into the local Docker daemon
+    required: false
+    default: 'false'
   registry:
     description: Container registry hostname
     required: false
@@ -59,5 +63,6 @@ runs:
         context: .
         file: Dockerfile
         push: ${{ inputs.push == 'true' }}
+        load: ${{ inputs.load == 'true' }}
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
