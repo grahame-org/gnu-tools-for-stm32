@@ -23,7 +23,9 @@ docs/
 
 # Configuration and metadata files
 *.md
+!LICENSE.md
 *.txt
+!license.txt
 *.js
 *.json
 *.lock
