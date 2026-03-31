@@ -249,6 +249,12 @@ subsequent phases.
 | Automated versioning via release-please | ⚠️ Deferred | Covered in issue 07/13 of the docker plan |
 | Docker action for downstream consumers | ⚠️ Deferred | Covered in issue 09/13 of the docker plan |
 
+> [!NOTE]
+> `release-please-stm32` github app created and installed
+>
+> - App ID: `secrets.RELEASE_PLEASE_APP_ID`
+> - App key: `secrets.RELEASE_PLEASE_PRIVATE_KEY`
+
 ---
 
 ## 8. Known Limitations
