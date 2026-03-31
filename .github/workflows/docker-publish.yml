@@ -15,7 +15,7 @@ jobs:
   docker-publish:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    if: github.event_name != 'release' || startsWith(github.event.release.tag_name, 'v')
+    if: github.event_name != 'release' || startsWith(github.event.release.tag_name, 'container-v')
     permissions:
       packages: write
       contents: read
@@ -52,6 +52,13 @@ jobs:
           safe_branch="${branch//\//-}"
           echo "value=stm32-toolchain-${safe_branch}" >> "${GITHUB_OUTPUT}"
 
+      - name: Compute release semver
+        id: release-tag
+        if: github.event_name == 'release'
+        run: |
+          semver="${GITHUB_REF_NAME#container-}"
+          echo "semver=${semver}" >> "${GITHUB_OUTPUT}"
+
       - name: Log in to registry
         uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
         with:
@@ -69,9 +76,9 @@ jobs:
           tags: |
             type=raw,value=edge,enable=${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
             type=raw,value=latest,enable=${{ github.event_name == 'release' }}
-            type=semver,pattern=v{{version}},enable=${{ github.event_name == 'release' }}
-            type=semver,pattern=v{{major}}.{{minor}},enable=${{ github.event_name == 'release' }}
-            type=semver,pattern=v{{major}},enable=${{ github.event_name == 'release' }}
+            type=semver,pattern=v{{version}},value=${{ steps.release-tag.outputs.semver }},enable=${{ github.event_name == 'release' }}
+            type=semver,pattern=v{{major}}.{{minor}},value=${{ steps.release-tag.outputs.semver }},enable=${{ github.event_name == 'release' }}
+            type=semver,pattern=v{{major}},value=${{ steps.release-tag.outputs.semver }},enable=${{ github.event_name == 'release' }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Extract image reference
