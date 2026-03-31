@@ -10,7 +10,7 @@ inputs:
 runs:
   using: 'docker'
   # Pin to the latest semver release; release-please keeps this tag in sync.
-  image: 'docker://ghcr.io/grahame-org/stm32-toolchain-13.3.rel1:v1.2.3'  # x-release-please-version
+  image: 'docker://ghcr.io/grahame-org/stm32-toolchain-13.3.rel1:v0.0.0'  # x-release-please-version
   entrypoint: '/bin/sh'
   args:
     - '-c'
