@@ -1,0 +1,19 @@
+name: 'STM32 Toolchain'
+description: 'Run commands using the arm-none-eabi GNU toolchain for STM32 from a pre-built Docker container'
+author: 'grahame-org'
+
+inputs:
+  run:
+    description: 'Command to run inside the container'
+    required: true
+
+runs:
+  using: 'docker'
+  # Pin to the latest sem ver release. Use `release-please` to keep synched to correct version
+  image: 'docker://ghcr.io/grahame-org/stm32-toolchain-13.3.rel1:v1.2.3'
+  args:
+    - ${{ inputs.run }}
+
+branding:
+  icon: 'cpu'
+  color: 'blue'
