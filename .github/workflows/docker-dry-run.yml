@@ -92,26 +92,18 @@ jobs:
 
       - name: Validate toolchain – version check
         run: |
-          docker run --rm "${{ steps.image-ref.outputs.image }}" arm-none-eabi-gcc --version
+          docker run --rm \
+            --entrypoint arm-none-eabi-gcc \
+            "${{ steps.image-ref.outputs.image }}" \
+            --version
 
       - name: Validate toolchain – build test_project
         run: |
-          # cmake is not installed in the minimal runtime image (the Dockerfile
-          # only includes libncurses6, libexpat1, and zlib1g).  We install cmake
-          # and make transiently inside the container using apt-get so the image
-          # itself stays lean; --rm discards the layer after the run completes.
           docker run --rm \
             -v "${{ github.workspace }}/test_project:/work" \
             -w /work \
             "${{ steps.image-ref.outputs.image }}" \
-            "apt-get update -qq \
-              && apt-get install -y --no-install-recommends cmake make \
-              && cmake -G 'Unix Makefiles' \
-                -DCMAKE_TOOLCHAIN_FILE=/work/arm-none-eabi-gcc.cmake \
-                -DCMAKE_C_COMPILER=arm-none-eabi-gcc \
-                -DCMAKE_CXX_COMPILER=arm-none-eabi-g++ \
-                -B /work/build -S /work \
-              && cmake --build /work/build -- -j\$(nproc)"
+            . # SOURCE_DIR='.': entrypoint runs cmake configure + build with BUILD_DIR=./build
 
   docker-dry-run-status:
     runs-on: ubuntu-latest

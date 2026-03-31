@@ -13,8 +13,10 @@ FROM ubuntu:24.04
 # hadolint ignore=DL3008
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-       libncurses6 \
+       cmake \
        libexpat1 \
+       libncurses6 \
+       make \
        zlib1g \
     && rm -rf /var/lib/apt/lists/*
 
@@ -23,8 +25,7 @@ COPY LICENSE.md /licenses/LICENSE.md
 
 ENV PATH="/opt/stm32-toolchain/bin:${PATH}"
 
-COPY docker-action/entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+COPY --chmod=0755 docker-action/entrypoint.sh /entrypoint.sh
 ENTRYPOINT ["/entrypoint.sh"]
 
 LABEL org.opencontainers.image.source="https://github.com/grahame-org/gnu-tools-for-stm32" \
