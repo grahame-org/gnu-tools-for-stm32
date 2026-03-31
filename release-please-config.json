@@ -25,7 +25,13 @@
       "bump-minor-pre-major": true,
       "bump-patch-for-minor-pre-major": true,
       "draft": false,
-      "prerelease": false
+      "prerelease": false,
+      "extra-files": [
+        {
+          "type": "generic",
+          "path": "docker-action/README.md"
+        }
+      ]
     }
   }
 }
