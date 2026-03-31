@@ -23,6 +23,10 @@ COPY LICENSE.md /licenses/LICENSE.md
 
 ENV PATH="/opt/stm32-toolchain/bin:${PATH}"
 
+COPY docker-action/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+ENTRYPOINT ["/entrypoint.sh"]
+
 LABEL org.opencontainers.image.source="https://github.com/grahame-org/gnu-tools-for-stm32" \
       org.opencontainers.image.description="GNU Tools for STM32 – arm-none-eabi cross-compilation toolchain" \
       org.opencontainers.image.licenses="SEE_LICENSE"
