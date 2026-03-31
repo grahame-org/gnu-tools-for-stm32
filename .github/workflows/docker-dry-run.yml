@@ -31,6 +31,7 @@ jobs:
               - '.github/workflows/docker-dry-run.yml'
               - '.github/actions/docker-build/**'
               - '.github/actions/compute-toolchain-src-hash/**'
+              - 'docker-action/**'
               - 'test_project/**'
 
   docker-dry-run:
@@ -103,7 +104,7 @@ jobs:
             -v "${{ github.workspace }}/test_project:/work" \
             -w /work \
             "${{ steps.image-ref.outputs.image }}" \
-            bash -c "apt-get update -qq \
+            "apt-get update -qq \
               && apt-get install -y --no-install-recommends cmake make \
               && cmake -G 'Unix Makefiles' \
                 -DCMAKE_TOOLCHAIN_FILE=/work/arm-none-eabi-gcc.cmake \
