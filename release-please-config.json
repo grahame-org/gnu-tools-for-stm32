@@ -10,7 +10,13 @@
       "bump-patch-for-minor-pre-major": true,
       "include-component-in-tag": false,
       "draft": false,
-      "prerelease": false
+      "prerelease": false,
+      "extra-files": [
+        {
+          "type": "generic",
+          "path": "docker-action/action.yml"
+        }
+      ]
     },
     "docker-action": {
       "component": "docker-action",
