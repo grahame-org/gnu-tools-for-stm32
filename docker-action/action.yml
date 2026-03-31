@@ -1,0 +1,25 @@
+name: 'STM32 Toolchain'
+description: 'Run commands using the arm-none-eabi GNU toolchain for STM32 from a pre-built Docker container'
+author: 'grahame-org'
+
+inputs:
+  src-path:
+    description: 'Path to the CMake project containing arm-none-eabi-gcc.cmake (default: .)'
+    required: false
+    default: '.'
+  build-dir:
+    description: 'CMake binary directory (default: <src-path>/build)'
+    required: false
+    default: ''
+
+runs:
+  using: 'docker'
+  # Pin to the latest semver release; release-please keeps this tag in sync.
+  image: 'docker://ghcr.io/grahame-org/stm32-toolchain-13.3.rel1:v0.0.0'  # x-release-please-version
+  args:
+    - ${{ inputs.src-path }}
+    - ${{ inputs.build-dir }}
+
+branding:
+  icon: 'cpu'
+  color: 'blue'
