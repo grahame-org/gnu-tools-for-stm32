@@ -15,6 +15,7 @@ jobs:
   docker-publish:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    if: github.event_name != 'release' || startsWith(github.event.release.tag_name, 'v')
     permissions:
       packages: write
       contents: read
