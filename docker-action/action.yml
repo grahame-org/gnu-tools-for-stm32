@@ -9,9 +9,11 @@ inputs:
 
 runs:
   using: 'docker'
-  # Pin to the latest sem ver release. Use `release-please` to keep synched to correct version
+  # Pin to the latest semver release; release-please keeps this tag in sync.
   image: 'docker://ghcr.io/grahame-org/stm32-toolchain-13.3.rel1:v1.2.3'
+  entrypoint: '/bin/sh'
   args:
+    - '-c'
     - ${{ inputs.run }}
 
 branding:
