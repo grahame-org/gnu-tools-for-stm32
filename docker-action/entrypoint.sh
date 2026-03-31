@@ -16,6 +16,8 @@ if [ ! -f "${SOURCE_DIR}/arm-none-eabi-gcc.cmake" ]; then
 fi
 cmake -G "Unix Makefiles" \
     -DCMAKE_TOOLCHAIN_FILE="${SOURCE_DIR}/arm-none-eabi-gcc.cmake" \
+    -DCMAKE_C_COMPILER=arm-none-eabi-gcc \
+    -DCMAKE_CXX_COMPILER=arm-none-eabi-g++ \
     -B "${BUILD_DIR}" \
     -S "${SOURCE_DIR}"
 cmake --build "${BUILD_DIR}" -- -j"$(nproc)"
