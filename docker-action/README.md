@@ -7,7 +7,7 @@ Run CMake configure and build for a bare-metal STM32 project inside the pre-buil
 | Input | Required | Default | Description |
 |-------|----------|---------|-------------|
 | `src-path` | No | `.` | Path to the CMake project directory containing `arm-none-eabi-gcc.cmake` |
-| `build-dir` | No | `<src-path>/build` | CMake binary directory |
+| `build-dir` | No | `${src-path}/build` | CMake binary directory |
 
 ## Usage
 
@@ -23,11 +23,11 @@ The action automatically runs:
 
 ```sh
 cmake -G "Unix Makefiles" \
-  -DCMAKE_TOOLCHAIN_FILE=arm-none-eabi-gcc.cmake \
+  -DCMAKE_TOOLCHAIN_FILE="${SOURCE_DIR}/arm-none-eabi-gcc.cmake" \
   -DCMAKE_C_COMPILER=arm-none-eabi-gcc \
   -DCMAKE_CXX_COMPILER=arm-none-eabi-g++ \
-  -B build -S .
-cmake --build build -- -j$(nproc)
+  -B "${BUILD_DIR}" -S "${SOURCE_DIR}"
+cmake --build "${BUILD_DIR}" -- -j"$(nproc)"
 ```
 
 ## Notes
