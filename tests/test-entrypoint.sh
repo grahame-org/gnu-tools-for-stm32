@@ -28,11 +28,6 @@ printf '%s\n' "$@" >> "${CMAKE_LOG}"
 MOCKEOF
 chmod +x "$_MOCK_BIN/cmake"
 
-# Run entrypoint.sh with the mock cmake on PATH.
-run_entrypoint() {
-    CMAKE_LOG="$_CMAKE_LOG" PATH="${_MOCK_BIN}:${PATH}" sh "$ENTRYPOINT" "$@"
-}
-
 # Same, but discard stdout+stderr and return the exit status.
 exit_status_of() {
     local status=0
@@ -93,15 +88,16 @@ _BUILD3="${_TMPDIR}/build-explicit"
 mkdir -p "$_SRC3"
 touch "$_SRC3/arm-none-eabi-gcc.cmake"
 
-rm -f "$_CMAKE_LOG"
+true > "$_CMAKE_LOG"
 assert_eq "explicit BUILD_DIR: exit status 0" "0" \
     "$(exit_status_of "$_SRC3" "$_BUILD3")"
 
+_LOG3=$(cat "$_CMAKE_LOG")
 assert_contains "explicit BUILD_DIR: cmake configure uses -B BUILD_DIR" \
-    "$(cat "$_CMAKE_LOG")" "$_BUILD3"
+    "$_LOG3" "$_BUILD3"
 
 assert_contains "explicit BUILD_DIR: cmake --build is called" \
-    "$(cat "$_CMAKE_LOG")" "--build"
+    "$_LOG3" "--build"
 
 # ---------------------------------------------------------------------------
 # Group 4: Default BUILD_DIR = SOURCE_DIR/build
@@ -114,11 +110,12 @@ _SRC4="${_TMPDIR}/src-default"
 mkdir -p "$_SRC4"
 touch "$_SRC4/arm-none-eabi-gcc.cmake"
 
-rm -f "$_CMAKE_LOG"
+true > "$_CMAKE_LOG"
 assert_eq "default BUILD_DIR: exit status 0" "0" \
     "$(exit_status_of "$_SRC4")"
 
+_LOG4=$(cat "$_CMAKE_LOG")
 assert_contains "default BUILD_DIR: cmake uses SOURCE_DIR/build" \
-    "$(cat "$_CMAKE_LOG")" "${_SRC4}/build"
+    "$_LOG4" "${_SRC4}/build"
 
 print_test_results
