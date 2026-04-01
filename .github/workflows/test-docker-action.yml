@@ -1,0 +1,111 @@
+name: Test Docker Action
+
+on:
+  push:
+    branches:
+      - 13.3.rel1
+  pull_request:
+  merge_group:
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  check-changes:
+    runs-on: ubuntu-slim
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      should-test: ${{ steps.filter.outputs.test || 'true' }}
+    steps:
+      - name: Check for test-relevant file changes
+        if: github.event_name == 'pull_request'
+        id: filter
+        uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
+        with:
+          filters: |
+            test:
+              - 'docker-action/**'
+              - 'test_project/**'
+              - 'Dockerfile'
+              - '.github/workflows/test-docker-action.yml'
+
+  test-docker-action:
+    needs: check-changes
+    if: needs.check-changes.outputs.should-test == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Build test_project using docker-action
+        uses: ./docker-action
+        with:
+          src-path: test_project
+
+      - name: Compare test_project artifacts against reference binaries
+        run: |
+          set -euo pipefail
+          if [ ! -d "test_project/reference" ]; then
+            echo "ERROR: test_project/reference directory does not exist."
+            exit 1
+          fi
+          PASS=true
+          compared=0
+          for ref_file in test_project/reference/*; do
+            [ -f "${ref_file}" ] || continue
+            # Skip documentation files
+            case "${ref_file}" in *.md) continue ;; esac
+            # Skip files known to differ between the Windows/CubeIDE reference
+            # build and a Linux CI build:
+            #   .elf — DWARF debug-info sections embed absolute source/toolchain paths.
+            #   .map — linker map contains absolute paths to toolchain library archives.
+            #   .hex — Intel HEX encoding can vary between objcopy versions/platforms.
+            # Only .bin (raw binary dump of load segments) is a meaningful
+            # byte-for-byte check across platforms.
+            case "${ref_file}" in *.elf | *.map | *.hex) continue ;; esac
+            artifact_name=$(basename "${ref_file}")
+            built_file="test_project/build/${artifact_name}"
+            if [ ! -f "${built_file}" ]; then
+              echo "FAIL: ${artifact_name} not found in build output"
+              PASS=false
+            elif cmp --silent "${ref_file}" "${built_file}"; then
+              echo "PASS: ${artifact_name} matches reference"
+            else
+              echo "FAIL: ${artifact_name} differs from reference"
+              echo "  reference size : $(wc -c < "${ref_file}") bytes"
+              echo "  built size     : $(wc -c < "${built_file}") bytes"
+              PASS=false
+            fi
+            compared=$((compared + 1))
+          done
+          if [ "${compared}" -eq 0 ]; then
+            echo "ERROR: No reference artifacts found to compare."
+            exit 1
+          fi
+          if [ "${PASS}" != "true" ]; then
+            echo "One or more artifacts differ from the reference binaries."
+            exit 1
+          fi
+          echo "All artifacts match reference binaries."
+
+  test-docker-action-status:
+    runs-on: ubuntu-slim
+    needs: [check-changes, test-docker-action]
+    if: always()
+    steps:
+      - name: Report test status
+        run: |
+          if [[ "${{ needs.check-changes.result }}" == "failure" || "${{ needs.check-changes.result }}" == "cancelled" ]]; then
+            echo "check-changes job failed or was cancelled" && exit 1
+          fi
+          if [[ "${{ needs.test-docker-action.result }}" == "failure" || "${{ needs.test-docker-action.result }}" == "cancelled" ]]; then
+            echo "Tests failed or were cancelled" && exit 1
+          fi
+          echo "Tests skipped or succeeded"
