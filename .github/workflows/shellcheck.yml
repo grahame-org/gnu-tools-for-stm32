@@ -39,6 +39,7 @@ jobs:
               - 'build-prerequisites.sh'
               - 'build-toolchain-args.sh'
               - 'build-toolchain.sh'
+              - 'docker-action/entrypoint.sh'
               - 'measure-cache-compressed-size.sh'
               - 'merge-gcc-final.sh'
               - '.github/actions/build-stage/*.sh'
@@ -46,6 +47,7 @@ jobs:
               - '.github/actions/compute-toolchain-src-hash/*.sh'
               - 'tests/test-build-stage-action.sh'
               - 'tests/test-build-stage-scripts.sh'
+              - 'tests/test-entrypoint.sh'
               - 'tests/test-helpers.sh'
               - 'tests/test-measure-cache-compressed-size.sh'
               - 'tests/test-merge-gcc-final.sh'
@@ -82,8 +84,10 @@ jobs:
           build-cache-budget-check.sh \
           measure-cache-compressed-size.sh \
           merge-gcc-final.sh \
+          docker-action/entrypoint.sh \
           tests/test-build-stage-action.sh \
           tests/test-build-stage-scripts.sh \
+          tests/test-entrypoint.sh \
           tests/test-helpers.sh \
           tests/test-measure-cache-compressed-size.sh \
           tests/test-merge-gcc-final.sh \
