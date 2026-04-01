@@ -118,4 +118,28 @@ _LOG4=$(cat "$_CMAKE_LOG")
 assert_contains "default BUILD_DIR: cmake uses SOURCE_DIR/build" \
     "$_LOG4" "${_SRC4}/build"
 
+# ---------------------------------------------------------------------------
+# Group 5: Relative SOURCE_DIR is converted to absolute before cmake call
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "=== Group 5: Relative SOURCE_DIR ==="
+
+_PARENT5="${_TMPDIR}/parent5"
+_SRC5_NAME="src-relative"
+mkdir -p "${_PARENT5}/${_SRC5_NAME}"
+touch "${_PARENT5}/${_SRC5_NAME}/arm-none-eabi-gcc.cmake"
+
+true > "$_CMAKE_LOG"
+# Run entrypoint from the parent dir with a relative SOURCE_DIR
+(
+    cd "${_PARENT5}"
+    CMAKE_LOG="$_CMAKE_LOG" PATH="${_MOCK_BIN}:${PATH}" sh "$ENTRYPOINT" "${_SRC5_NAME}" >/dev/null 2>&1
+)
+
+_LOG5=$(cat "$_CMAKE_LOG")
+# cmake must receive an absolute path for CMAKE_TOOLCHAIN_FILE
+assert_contains "relative SOURCE_DIR: cmake toolchain file is absolute" \
+    "$_LOG5" "${_PARENT5}/${_SRC5_NAME}/arm-none-eabi-gcc.cmake"
+
 print_test_results

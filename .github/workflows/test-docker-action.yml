@@ -1,0 +1,97 @@
+name: Test Docker Action
+
+on:
+  push:
+    branches:
+      - 13.3.rel1
+  pull_request:
+  merge_group:
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  check-changes:
+    runs-on: ubuntu-slim
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      should-test: ${{ steps.filter.outputs.test || 'true' }}
+    steps:
+      - name: Check for test-relevant file changes
+        if: github.event_name == 'pull_request'
+        id: filter
+        uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
+        with:
+          filters: |
+            test:
+              - 'docker-action/**'
+              - 'test_project/**'
+              - 'Dockerfile'
+              - '.github/actions/compare-test-project-artifacts/**'
+              - '.github/actions/compute-toolchain-src-hash/**'
+              - '.github/workflows/test-docker-action.yml'
+
+  test-docker-action:
+    needs: check-changes
+    if: needs.check-changes.outputs.should-test == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Compute source tree hashes
+        id: src-hashes
+        uses: ./.github/actions/compute-toolchain-src-hash
+
+      - name: Restore cache – toolchain
+        id: cache-toolchain
+        uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        with:
+          path: install-native
+          # Keep this cache key in sync with the key used in build-toolchain.yml.
+          key: ${{ runner.os }}-toolchain-v3-${{ hashFiles('build-*.sh') }}-${{ steps.src-hashes.outputs.toolchain-src }}
+
+      - name: Check toolchain cache hit
+        if: steps.cache-toolchain.outputs.cache-hit != 'true'
+        run: |
+          echo "ERROR: Toolchain cache was not found." >&2
+          echo "Run the 'Build STM32 Toolchain' workflow on this branch first to populate the cache." >&2
+          exit 1
+
+      - name: Build Docker image for testing
+        run: |
+          # Extract the image reference from docker-action/action.yml so this step
+          # stays in sync automatically when release-please bumps the tag.
+          # The pattern handles both single- and double-quoted image references.
+          action_image=$(grep -oP 'docker://\K[^'"'"'"\s]+' docker-action/action.yml | head -1)
+          docker build -t "${action_image}" .
+
+      - name: Build test_project using docker-action
+        uses: ./docker-action
+        with:
+          src-path: test_project
+
+      - name: Compare test_project artifacts against reference binaries
+        uses: ./.github/actions/compare-test-project-artifacts
+
+  test-docker-action-status:
+    runs-on: ubuntu-slim
+    needs: [check-changes, test-docker-action]
+    if: always()
+    steps:
+      - name: Report test status
+        run: |
+          if [[ "${{ needs.check-changes.result }}" == "failure" || "${{ needs.check-changes.result }}" == "cancelled" ]]; then
+            echo "check-changes job failed or was cancelled" && exit 1
+          fi
+          if [[ "${{ needs.test-docker-action.result }}" == "failure" || "${{ needs.test-docker-action.result }}" == "cancelled" ]]; then
+            echo "Tests failed or were cancelled" && exit 1
+          fi
+          echo "Tests skipped or succeeded"
