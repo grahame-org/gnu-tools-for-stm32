@@ -19,18 +19,11 @@ fi
 
 PASS=true
 compared=0
-for ref_file in "${REFERENCE_DIR}"/*; do
+for ref_file in "${REFERENCE_DIR}"/*.bin; do
   [ -f "${ref_file}" ] || continue
-  # Skip documentation files
-  case "${ref_file}" in *.md) continue ;; esac
-  # Skip files known to differ between the Windows/CubeIDE reference
-  # build and a Linux CI build:
-  #   .elf — DWARF debug-info sections embed absolute source/toolchain paths.
-  #   .map — linker map contains absolute paths to toolchain library archives.
-  #   .hex — Intel HEX encoding can vary between objcopy versions/platforms.
   # Only .bin (raw binary dump of load segments) is a meaningful
-  # byte-for-byte check across platforms.
-  case "${ref_file}" in *.elf | *.map | *.hex) continue ;; esac
+  # byte-for-byte check across platforms; the glob above restricts
+  # comparisons to .bin files even if other artifacts are present.
   artifact_name=$(basename "${ref_file}")
   built_file="${BUILD_DIR}/${artifact_name}"
   if [ ! -f "${built_file}" ]; then
