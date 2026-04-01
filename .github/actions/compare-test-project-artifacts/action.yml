@@ -1,0 +1,27 @@
+name: Compare test_project artifacts
+description: >
+  Compares built test_project artifacts byte-for-byte against reference binaries.
+  Only .bin files are compared; .elf, .map, and .hex are skipped as non-portable
+  across platforms and toolchain versions.
+  Used by build-toolchain.yml and test-docker-action.yml to avoid duplicating
+  the comparison logic.
+
+inputs:
+  reference-dir:
+    description: Path to the reference artifacts directory
+    required: false
+    default: 'test_project/reference'
+  build-dir:
+    description: Path to the built artifacts directory
+    required: false
+    default: 'test_project/build'
+
+runs:
+  using: composite
+  steps:
+    - name: Compare test_project artifacts against reference binaries
+      shell: bash
+      env:
+        REFERENCE_DIR: ${{ inputs.reference-dir }}
+        BUILD_DIR: ${{ inputs.build-dir }}
+      run: "${GITHUB_ACTION_PATH}/compare-test-project-artifacts.sh"

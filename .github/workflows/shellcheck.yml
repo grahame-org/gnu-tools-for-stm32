@@ -42,6 +42,7 @@ jobs:
               - 'measure-cache-compressed-size.sh'
               - 'merge-gcc-final.sh'
               - '.github/actions/build-stage/*.sh'
+              - '.github/actions/compare-test-project-artifacts/*.sh'
               - '.github/actions/compute-toolchain-src-hash/*.sh'
               - 'tests/test-build-stage-action.sh'
               - 'tests/test-build-stage-scripts.sh'
@@ -90,6 +91,7 @@ jobs:
           .github/actions/build-stage/compute-cache-miss.sh \
           .github/actions/build-stage/run-build-stage.sh \
           .github/actions/build-stage/set-cache-hit-output.sh \
+          .github/actions/compare-test-project-artifacts/compare-test-project-artifacts.sh \
           .github/actions/compute-toolchain-src-hash/compute-toolchain-src-hash.sh
 
   shellcheck-status:
