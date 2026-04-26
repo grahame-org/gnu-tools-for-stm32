@@ -71,7 +71,7 @@ jobs:
 
       - name: Restore cache – prerequisites
         id: cache-prerequisites
-        uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: build-native/host-libs
           key: ${{ runner.os }}-prerequisites-${{ hashFiles('build-prerequisites.sh', 'build-common.sh', 'src/gmp/**', 'src/mpfr/**', 'src/mpc/**', 'src/isl/**', 'src/expat/**', 'src/zlib*/**') }}
@@ -214,7 +214,7 @@ jobs:
 
       - name: Restore cache – prerequisites
         id: cache-prerequisites
-        uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: build-native/host-libs
           key: ${{ runner.os }}-prerequisites-${{ hashFiles('build-prerequisites.sh', 'build-common.sh', 'src/gmp/**', 'src/mpfr/**', 'src/mpc/**', 'src/isl/**', 'src/expat/**', 'src/zlib*/**') }}
@@ -222,7 +222,7 @@ jobs:
 
       - name: Restore cache – toolchain
         id: cache-toolchain
-        uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: install-native
           # hashFiles('build-*.sh') is intentionally broad: the final toolchain
@@ -235,7 +235,7 @@ jobs:
       - name: Restore cache – binutils
         id: pre-restore
         if: steps.cache-toolchain.outputs.cache-hit != 'true'
-        uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: install-native
           key: ${{ runner.os }}-stage-v3-${{ needs.compute-hashes.outputs.binutils }}
@@ -319,7 +319,7 @@ jobs:
 
       - name: Save cache – prerequisites
         if: steps.cache-prerequisites.outputs.cache-hit != 'true' && steps.cache-toolchain.outputs.cache-hit != 'true' && steps.pre-restore.outputs.cache-hit != 'true'
-        uses: actions/cache/save@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        uses: actions/cache/save@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: build-native/host-libs
           key: ${{ steps.cache-prerequisites.outputs.cache-primary-key }}
@@ -388,14 +388,14 @@ jobs:
 
       - name: Restore cache – prerequisites
         id: cache-prerequisites
-        uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: build-native/host-libs
           key: ${{ runner.os }}-prerequisites-${{ hashFiles('build-prerequisites.sh', 'build-common.sh', 'src/gmp/**', 'src/mpfr/**', 'src/mpc/**', 'src/isl/**', 'src/expat/**', 'src/zlib*/**') }}
 
       - name: Restore cache – toolchain
         id: cache-toolchain
-        uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: install-native
           key: ${{ runner.os }}-toolchain-v3-${{ hashFiles('build-*.sh') }}-${{ steps.src-hashes.outputs.toolchain-src }}
@@ -404,14 +404,14 @@ jobs:
       - name: Restore cache – gdb
         id: pre-restore
         if: steps.cache-toolchain.outputs.cache-hit != 'true'
-        uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: install-native
           key: ${{ runner.os }}-stage-v3-${{ needs.compute-hashes.outputs.gdb }}
 
       - name: Restore cache – binutils (baseline for gdb build)
         if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.pre-restore.outputs.cache-hit != 'true'
-        uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: install-native
           key: ${{ runner.os }}-stage-v3-${{ needs.compute-hashes.outputs.binutils }}
@@ -550,7 +550,7 @@ jobs:
       # --- Stage: gcc-first ---
       - name: Restore cache – gcc-first
         id: pre-restore
-        uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: install-native
           key: ${{ runner.os }}-stage-v3-${{ needs.compute-hashes.outputs['gcc-first'] }}
@@ -624,7 +624,7 @@ jobs:
       - name: Restore cache – prerequisites
         id: cache-prerequisites
         if: steps.pre-restore.outputs.cache-hit != 'true'
-        uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: build-native/host-libs
           key: ${{ runner.os }}-prerequisites-${{ hashFiles('build-prerequisites.sh', 'build-common.sh', 'src/gmp/**', 'src/mpfr/**', 'src/mpc/**', 'src/isl/**', 'src/expat/**', 'src/zlib*/**') }}
@@ -640,7 +640,7 @@ jobs:
       # Restore binutils as baseline for the gcc-first build
       - name: Restore cache – binutils (baseline)
         if: steps.pre-restore.outputs.cache-hit != 'true'
-        uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: install-native
           key: ${{ runner.os }}-stage-v3-${{ needs.compute-hashes.outputs.binutils }}
@@ -706,7 +706,7 @@ jobs:
 
       - name: Restore cache – toolchain
         id: cache-toolchain
-        uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: install-native
           key: ${{ runner.os }}-toolchain-v3-${{ hashFiles('build-*.sh') }}-${{ steps.src-hashes.outputs.toolchain-src }}
@@ -715,7 +715,7 @@ jobs:
       - name: Restore cache – prerequisites
         id: cache-prerequisites
         if: steps.cache-toolchain.outputs.cache-hit != 'true'
-        uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: build-native/host-libs
           key: ${{ runner.os }}-prerequisites-${{ hashFiles('build-prerequisites.sh', 'build-common.sh', 'src/gmp/**', 'src/mpfr/**', 'src/mpc/**', 'src/isl/**', 'src/expat/**', 'src/zlib*/**') }}
@@ -724,14 +724,14 @@ jobs:
       - name: Restore cache – newlib
         id: pre-restore
         if: steps.cache-toolchain.outputs.cache-hit != 'true'
-        uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: install-native
           key: ${{ runner.os }}-stage-v3-${{ needs.compute-hashes.outputs.newlib }}
 
       - name: Restore cache – gcc-first (baseline for newlib build)
         if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.pre-restore.outputs.cache-hit != 'true'
-        uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: install-native
           key: ${{ runner.os }}-stage-v3-${{ needs.compute-hashes.outputs['gcc-first'] }}
@@ -816,7 +816,7 @@ jobs:
 
       - name: Save cache – prerequisites
         if: steps.cache-prerequisites.outputs.cache-hit != 'true' && steps.cache-toolchain.outputs.cache-hit != 'true' && steps.pre-restore.outputs.cache-hit != 'true'
-        uses: actions/cache/save@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        uses: actions/cache/save@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: build-native/host-libs
           key: ${{ steps.cache-prerequisites.outputs.cache-primary-key }}
@@ -882,7 +882,7 @@ jobs:
       # --- Stage: newlib-nano ---
       - name: Restore cache – newlib-nano
         id: pre-restore
-        uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: build-native/target-libs
           key: ${{ runner.os }}-stage-v3-${{ needs.compute-hashes.outputs['newlib-nano'] }}
@@ -956,7 +956,7 @@ jobs:
       - name: Restore cache – prerequisites
         id: cache-prerequisites
         if: steps.pre-restore.outputs.cache-hit != 'true'
-        uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: build-native/host-libs
           key: ${{ runner.os }}-prerequisites-${{ hashFiles('build-prerequisites.sh', 'build-common.sh', 'src/gmp/**', 'src/mpfr/**', 'src/mpc/**', 'src/isl/**', 'src/expat/**', 'src/zlib*/**') }}
@@ -972,7 +972,7 @@ jobs:
       # Restore gcc-first as the compiler needed to build newlib-nano
       - name: Restore cache – gcc-first
         if: steps.pre-restore.outputs.cache-hit != 'true'
-        uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: install-native
           key: ${{ runner.os }}-stage-v3-${{ needs.compute-hashes.outputs['gcc-first'] }}
@@ -1035,7 +1035,7 @@ jobs:
 
       - name: Restore cache – gcc-final-rmprofile
         id: pre-restore
-        uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: install-native
           key: ${{ runner.os }}-stage-v3-${{ needs.compute-hashes.outputs['gcc-final-rmprofile'] }}
@@ -1110,7 +1110,7 @@ jobs:
       - name: Restore cache – prerequisites
         id: cache-prerequisites
         if: steps.pre-restore.outputs.cache-hit != 'true'
-        uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: build-native/host-libs
           key: ${{ runner.os }}-prerequisites-${{ hashFiles('build-prerequisites.sh', 'build-common.sh', 'src/gmp/**', 'src/mpfr/**', 'src/mpc/**', 'src/isl/**', 'src/expat/**', 'src/zlib*/**') }}
@@ -1125,7 +1125,7 @@ jobs:
 
       - name: Restore cache – newlib
         if: steps.pre-restore.outputs.cache-hit != 'true'
-        uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: install-native
           key: ${{ runner.os }}-stage-v3-${{ needs.compute-hashes.outputs.newlib }}
@@ -1133,7 +1133,7 @@ jobs:
       - name: Restore ccache – gcc-final-rmprofile
         id: cache-gcc-final-rmprofile
         if: steps.pre-restore.outputs.cache-hit != 'true'
-        uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: ~/.ccache
           key: ${{ runner.os }}-ccache-gcc-final-rmprofile-${{ needs.compute-hashes.outputs['gcc-final-rmprofile'] }}
@@ -1212,7 +1212,7 @@ jobs:
 
       - name: Save ccache – gcc-final-rmprofile
         if: steps.check-ccache-gcc-final-rmprofile.outputs.non-empty == 'true'
-        uses: actions/cache/save@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        uses: actions/cache/save@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: ~/.ccache
           key: ${{ runner.os }}-ccache-gcc-final-rmprofile-${{ needs.compute-hashes.outputs['gcc-final-rmprofile'] }}
@@ -1242,7 +1242,7 @@ jobs:
 
       - name: Restore cache – gcc-final-aprofile
         id: pre-restore
-        uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: install-native
           key: ${{ runner.os }}-stage-v3-${{ needs.compute-hashes.outputs['gcc-final-aprofile'] }}
@@ -1317,7 +1317,7 @@ jobs:
       - name: Restore cache – prerequisites
         id: cache-prerequisites
         if: steps.pre-restore.outputs.cache-hit != 'true'
-        uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: build-native/host-libs
           key: ${{ runner.os }}-prerequisites-${{ hashFiles('build-prerequisites.sh', 'build-common.sh', 'src/gmp/**', 'src/mpfr/**', 'src/mpc/**', 'src/isl/**', 'src/expat/**', 'src/zlib*/**') }}
@@ -1332,7 +1332,7 @@ jobs:
 
       - name: Restore cache – newlib
         if: steps.pre-restore.outputs.cache-hit != 'true'
-        uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: install-native
           key: ${{ runner.os }}-stage-v3-${{ needs.compute-hashes.outputs.newlib }}
@@ -1340,7 +1340,7 @@ jobs:
       - name: Restore ccache – gcc-final-aprofile
         id: cache-gcc-final-aprofile
         if: steps.pre-restore.outputs.cache-hit != 'true'
-        uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: ~/.ccache
           key: ${{ runner.os }}-ccache-gcc-final-aprofile-${{ needs.compute-hashes.outputs['gcc-final-aprofile'] }}
@@ -1419,7 +1419,7 @@ jobs:
 
       - name: Save ccache – gcc-final-aprofile
         if: steps.check-ccache-gcc-final-aprofile.outputs.non-empty == 'true'
-        uses: actions/cache/save@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        uses: actions/cache/save@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: ~/.ccache
           key: ${{ runner.os }}-ccache-gcc-final-aprofile-${{ needs.compute-hashes.outputs['gcc-final-aprofile'] }}
@@ -1450,7 +1450,7 @@ jobs:
 
       - name: Restore cache – merge-gcc-final
         id: pre-restore
-        uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: install-native
           key: ${{ runner.os }}-stage-v3-${{ needs.compute-hashes.outputs['merge-gcc-final'] }}
@@ -1458,7 +1458,7 @@ jobs:
       - name: Restore cache – gcc-final-rmprofile
         id: restore-rmprofile
         if: steps.pre-restore.outputs.cache-hit != 'true'
-        uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: install-native
           key: ${{ runner.os }}-stage-v3-${{ needs.compute-hashes.outputs['gcc-final-rmprofile'] }}
@@ -1476,7 +1476,7 @@ jobs:
       - name: Restore cache – gcc-final-aprofile
         id: restore-aprofile
         if: steps.pre-restore.outputs.cache-hit != 'true'
-        uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: install-native
           key: ${{ runner.os }}-stage-v3-${{ needs.compute-hashes.outputs['gcc-final-aprofile'] }}
@@ -1521,7 +1521,7 @@ jobs:
 
       - name: Save cache – merge-gcc-final
         if: steps.pre-restore.outputs.cache-hit != 'true'
-        uses: actions/cache/save@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        uses: actions/cache/save@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: install-native
           key: ${{ runner.os }}-stage-v3-${{ needs.compute-hashes.outputs['merge-gcc-final'] }}
@@ -1575,7 +1575,7 @@ jobs:
 
       - name: Restore cache – gcc-size-libstdcxx
         id: pre-restore
-        uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: |
             install-native
@@ -1652,7 +1652,7 @@ jobs:
       - name: Restore cache – prerequisites
         id: cache-prerequisites
         if: steps.pre-restore.outputs.cache-hit != 'true'
-        uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: build-native/host-libs
           key: ${{ runner.os }}-prerequisites-${{ hashFiles('build-prerequisites.sh', 'build-common.sh', 'src/gmp/**', 'src/mpfr/**', 'src/mpc/**', 'src/isl/**', 'src/expat/**', 'src/zlib*/**') }}
@@ -1667,14 +1667,14 @@ jobs:
 
       - name: Restore cache – gcc-final
         if: steps.pre-restore.outputs.cache-hit != 'true'
-        uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: install-native
           key: ${{ runner.os }}-stage-v3-${{ needs.compute-hashes.outputs['merge-gcc-final'] }}
 
       - name: Restore cache – newlib-nano
         if: steps.pre-restore.outputs.cache-hit != 'true'
-        uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: build-native/target-libs
           key: ${{ runner.os }}-stage-v3-${{ needs.compute-hashes.outputs['newlib-nano'] }}
@@ -1682,7 +1682,7 @@ jobs:
       - name: Restore ccache – gcc-size-libstdcxx
         id: cache-gcc-size-libstdcxx
         if: steps.pre-restore.outputs.cache-hit != 'true'
-        uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: ~/.ccache
           key: ${{ runner.os }}-ccache-gcc-size-libstdcxx-${{ needs.compute-hashes.outputs['gcc-size-libstdcxx'] }}
@@ -1825,7 +1825,7 @@ jobs:
 
       - name: Save ccache – gcc-size-libstdcxx
         if: steps.check-ccache-gcc-size-libstdcxx.outputs.non-empty == 'true'
-        uses: actions/cache/save@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        uses: actions/cache/save@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: ~/.ccache
           key: ${{ runner.os }}-ccache-gcc-size-libstdcxx-${{ needs.compute-hashes.outputs['gcc-size-libstdcxx'] }}
@@ -1918,14 +1918,14 @@ jobs:
 
       - name: Restore cache – prerequisites
         id: cache-prerequisites
-        uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: build-native/host-libs
           key: ${{ runner.os }}-prerequisites-${{ hashFiles('build-prerequisites.sh', 'build-common.sh', 'src/gmp/**', 'src/mpfr/**', 'src/mpc/**', 'src/isl/**', 'src/expat/**', 'src/zlib*/**') }}
 
       - name: Restore cache – toolchain
         id: cache-toolchain
-        uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: install-native
           key: ${{ runner.os }}-toolchain-v3-${{ hashFiles('build-*.sh') }}-${{ steps.src-hashes.outputs.toolchain-src }}
@@ -1934,7 +1934,7 @@ jobs:
       - name: Restore cache – stage-final
         id: pre-restore
         if: steps.cache-toolchain.outputs.cache-hit != 'true'
-        uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: install-native
           key: ${{ runner.os }}-stage-v3-${{ needs.compute-hashes.outputs.final }}
@@ -1942,7 +1942,7 @@ jobs:
       # Restore gcc-size-libstdcxx snapshot (full gcc chain output)
       - name: Restore cache – gcc-size-libstdcxx
         if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.pre-restore.outputs.cache-hit != 'true'
-        uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: |
             install-native
@@ -1953,7 +1953,7 @@ jobs:
       # removing gcc/newlib files already present in install-native.
       - name: Restore cache – gdb
         if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.pre-restore.outputs.cache-hit != 'true'
-        uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: install-native
           key: ${{ runner.os }}-stage-v3-${{ needs.compute-hashes.outputs.gdb }}
@@ -1973,7 +1973,7 @@ jobs:
 
       - name: Save cache – stage-final
         if: steps.cache-toolchain.outputs.cache-hit != 'true' && steps.pre-restore.outputs.cache-hit != 'true' && github.event_name != 'merge_group'
-        uses: actions/cache/save@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        uses: actions/cache/save@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: install-native
           key: ${{ runner.os }}-stage-v3-${{ needs.compute-hashes.outputs.final }}
@@ -2023,7 +2023,7 @@ jobs:
 
       - name: Save cache – toolchain
         if: steps.cache-toolchain.outputs.cache-hit != 'true' && github.event_name != 'merge_group'
-        uses: actions/cache/save@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        uses: actions/cache/save@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: install-native
           key: ${{ steps.cache-toolchain.outputs.cache-primary-key }}
