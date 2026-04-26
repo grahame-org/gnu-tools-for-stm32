@@ -61,11 +61,11 @@ jobs:
       - name: Check toolchain cache hit
         if: steps.cache-toolchain.outputs.cache-hit != 'true'
         run: |
-          echo "ERROR: Toolchain cache was not found." >&2
-          echo "Run the 'Build STM32 Toolchain' workflow on this branch first to populate the cache." >&2
-          exit 1
+          echo "::warning::Toolchain cache was not found. Docker validation steps will be skipped."
+          echo "Run the 'Build STM32 Toolchain' workflow on this branch first to populate the cache."
 
       - name: Build Docker image for testing
+        if: steps.cache-toolchain.outputs.cache-hit == 'true'
         run: |
           # Extract the image reference from docker-action/action.yml so this step
           # stays in sync automatically when release-please bumps the tag.
@@ -74,11 +74,13 @@ jobs:
           docker build -t "${action_image}" .
 
       - name: Build test_project using docker-action
+        if: steps.cache-toolchain.outputs.cache-hit == 'true'
         uses: ./docker-action
         with:
           src-path: test_project
 
       - name: Compare test_project artifacts against reference binaries
+        if: steps.cache-toolchain.outputs.cache-hit == 'true'
         uses: ./.github/actions/compare-test-project-artifacts
 
   test-docker-action-status:

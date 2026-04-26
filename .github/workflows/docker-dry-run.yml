@@ -63,12 +63,12 @@ jobs:
       - name: Check toolchain cache hit
         if: steps.cache-toolchain.outputs.cache-hit != 'true'
         run: |
-          echo "ERROR: Toolchain cache was not found." >&2
-          echo "Run the 'Build STM32 Toolchain' workflow on this branch first to populate the cache." >&2
-          exit 1
+          echo "::warning::Toolchain cache was not found. Docker validation steps will be skipped."
+          echo "Run the 'Build STM32 Toolchain' workflow on this branch first to populate the cache."
 
       - name: Compute image name
         id: image_name
+        if: steps.cache-toolchain.outputs.cache-hit == 'true'
         run: |
           safe_ref="${GITHUB_REF_NAME//\//-}"
           safe_ref="$(echo "${safe_ref}" | tr '[:upper:]' '[:lower:]')"
@@ -76,6 +76,7 @@ jobs:
 
       - name: Build Docker image (no push)
         id: docker-build
+        if: steps.cache-toolchain.outputs.cache-hit == 'true'
         uses: ./.github/actions/docker-build
         with:
           push: 'false'
@@ -86,11 +87,13 @@ jobs:
 
       - name: Extract image reference
         id: image-ref
+        if: steps.cache-toolchain.outputs.cache-hit == 'true'
         run: |
           IMAGE=$(echo "${{ steps.docker-build.outputs.tags }}" | head -1)
           echo "image=${IMAGE}" >> "${GITHUB_OUTPUT}"
 
       - name: Validate toolchain – version check
+        if: steps.cache-toolchain.outputs.cache-hit == 'true'
         run: |
           docker run --rm \
             --entrypoint arm-none-eabi-gcc \
@@ -98,6 +101,7 @@ jobs:
             --version
 
       - name: Validate toolchain – build test_project
+        if: steps.cache-toolchain.outputs.cache-hit == 'true'
         run: |
           docker run --rm \
             -v "${{ github.workspace }}/test_project:/work" \
