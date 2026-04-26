@@ -65,10 +65,13 @@ jobs:
         if: steps.cache-toolchain.outputs.cache-hit != 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          HEAD_REF: ${{ github.head_ref }}
+          REF_NAME: ${{ github.ref_name }}
         run: |
-          branch="${{ github.head_ref || github.ref_name }}"
+          branch="${HEAD_REF:-${REF_NAME}}"
           run_id=$(gh run list \
-            --repo "${{ github.repository }}" \
+            --repo "${GH_REPO}" \
             --workflow=build-toolchain.yml \
             --branch="${branch}" \
             --json databaseId,status \
@@ -76,7 +79,7 @@ jobs:
           if [[ -n "${run_id}" ]]; then
             echo "Found toolchain build run ${run_id} -- waiting for completion..."
             if ! timeout 350m gh run watch "${run_id}" \
-                --repo "${{ github.repository }}" \
+                --repo "${GH_REPO}" \
                 --exit-status \
                 --interval 60; then
               echo "::warning::Timed out or failed waiting for toolchain build run ${run_id}. Validation steps will be skipped."
