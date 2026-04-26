@@ -38,9 +38,10 @@ jobs:
     needs: check-changes
     if: needs.check-changes.outputs.should-build == 'true'
     runs-on: ubuntu-latest
-    # Timeout is long enough to wait for a concurrent toolchain build (~6 h)
-    # plus the docker validation steps themselves.
-    timeout-minutes: 400
+    # Timeout is set to the GitHub-hosted runner maximum (360 minutes).
+    # The gh run watch step uses an explicit 350m timeout so the job always
+    # exits cleanly before the runner cap is reached.
+    timeout-minutes: 360
     permissions:
       contents: read
       actions: read
