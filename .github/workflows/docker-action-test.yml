@@ -1,0 +1,89 @@
+name: Docker Action Test
+
+on:
+  push:
+    branches:
+      - 13.3.rel1
+  pull_request:
+  merge_group:
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  check-changes:
+    runs-on: ubuntu-slim
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      should-test: ${{ steps.filter.outputs.test || 'true' }}
+    steps:
+      - name: Check for test-relevant file changes
+        if: github.event_name == 'pull_request'
+        id: filter
+        uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
+        with:
+          filters: |
+            test:
+              - 'docker-action/**'
+              - '.github/workflows/docker-action-test.yml'
+
+  docker-action-test:
+    needs: check-changes
+    if: needs.check-changes.outputs.should-test == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Pull published image and tag for action
+        run: |
+          # Extract the image reference from docker-action/action.yml so this
+          # step stays in sync automatically when release-please bumps the tag.
+          # The pattern handles both single- and double-quoted image references.
+          action_image=$(grep -oP 'docker://\K[^'"'"'"\s]+' docker-action/action.yml | head -1)
+          # Derive the base image (without the pinned tag) and pull the edge tag,
+          # which is published on every push to the main branch and represents the
+          # current end-to-end consumer experience.
+          base_image="${action_image%:*}"
+          docker pull "${base_image}:edge"
+          # Retag as the action's pinned placeholder so 'uses: ./docker-action'
+          # resolves to the published image without modifying action.yml.
+          docker tag "${base_image}:edge" "${action_image}"
+
+      - name: Verify toolchain – version check
+        run: |
+          action_image=$(grep -oP 'docker://\K[^'"'"'"\s]+' docker-action/action.yml | head -1)
+          docker run --rm --pull=never \
+            --entrypoint arm-none-eabi-gcc \
+            "${action_image}" \
+            --version
+
+      - name: Build test_project using docker-action
+        uses: ./docker-action
+        with:
+          src-path: test_project
+
+      - name: Compare test_project artifacts against reference binaries
+        uses: ./.github/actions/compare-test-project-artifacts
+
+  docker-action-test-status:
+    runs-on: ubuntu-slim
+    needs: [check-changes, docker-action-test]
+    if: always()
+    steps:
+      - name: Report test status
+        run: |
+          if [[ "${{ needs.check-changes.result }}" == "failure" || "${{ needs.check-changes.result }}" == "cancelled" ]]; then
+            echo "check-changes job failed or was cancelled" && exit 1
+          fi
+          if [[ "${{ needs.docker-action-test.result }}" == "failure" || "${{ needs.docker-action-test.result }}" == "cancelled" ]]; then
+            echo "Tests failed or were cancelled" && exit 1
+          fi
+          echo "Tests skipped or succeeded"
