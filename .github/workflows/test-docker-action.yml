@@ -37,9 +37,13 @@ jobs:
     needs: check-changes
     if: needs.check-changes.outputs.should-test == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    # Timeout is set to the GitHub-hosted runner maximum (360 minutes).
+    # The gh run watch step uses an explicit 350m timeout so the job always
+    # exits cleanly before the runner cap is reached.
+    timeout-minutes: 360
     permissions:
       contents: read
+      actions: read
     steps:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -58,14 +62,45 @@ jobs:
           # Keep this cache key in sync with the key used in build-toolchain.yml.
           key: ${{ runner.os }}-toolchain-v3-${{ hashFiles('build-*.sh') }}-${{ steps.src-hashes.outputs.toolchain-src }}
 
-      - name: Check toolchain cache hit
+      - name: Wait for toolchain build (on cache miss)
         if: steps.cache-toolchain.outputs.cache-hit != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          HEAD_REF: ${{ github.head_ref }}
+          REF_NAME: ${{ github.ref_name }}
         run: |
-          echo "ERROR: Toolchain cache was not found." >&2
-          echo "Run the 'Build STM32 Toolchain' workflow on this branch first to populate the cache." >&2
-          exit 1
+          branch="${HEAD_REF:-${REF_NAME}}"
+          run_id=$(gh run list \
+            --repo "${GH_REPO}" \
+            --workflow=build-toolchain.yml \
+            --branch="${branch}" \
+            --json databaseId,status \
+            --jq '[.[] | select(.status == "in_progress" or .status == "queued")] | .[0].databaseId // empty')
+          if [[ -n "${run_id}" ]]; then
+            echo "Found toolchain build run ${run_id} -- waiting for completion..."
+            if ! timeout 350m gh run watch "${run_id}" \
+                --repo "${GH_REPO}" \
+                --exit-status \
+                --interval 60; then
+              echo "::warning::Timed out or failed waiting for toolchain build run ${run_id}. Validation steps will be skipped."
+            fi
+          else
+            echo "::warning::No in-progress toolchain build found and cache is missing. Validation steps will be skipped."
+          fi
+
+      - name: Re-restore toolchain cache after build
+        id: cache-toolchain-post-build
+        if: steps.cache-toolchain.outputs.cache-hit != 'true'
+        uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        with:
+          path: install-native
+          key: ${{ runner.os }}-toolchain-v3-${{ hashFiles('build-*.sh') }}-${{ steps.src-hashes.outputs.toolchain-src }}
 
       - name: Build Docker image for testing
+        if: >-
+          steps.cache-toolchain.outputs.cache-hit == 'true' ||
+          steps.cache-toolchain-post-build.outputs.cache-hit == 'true'
         run: |
           # Extract the image reference from docker-action/action.yml so this step
           # stays in sync automatically when release-please bumps the tag.
@@ -74,11 +109,17 @@ jobs:
           docker build -t "${action_image}" .
 
       - name: Build test_project using docker-action
+        if: >-
+          steps.cache-toolchain.outputs.cache-hit == 'true' ||
+          steps.cache-toolchain-post-build.outputs.cache-hit == 'true'
         uses: ./docker-action
         with:
           src-path: test_project
 
       - name: Compare test_project artifacts against reference binaries
+        if: >-
+          steps.cache-toolchain.outputs.cache-hit == 'true' ||
+          steps.cache-toolchain-post-build.outputs.cache-hit == 'true'
         uses: ./.github/actions/compare-test-project-artifacts
 
   test-docker-action-status:
