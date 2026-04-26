@@ -362,11 +362,12 @@ jobs:
           for workflow in build-toolchain.yml binutils-tests.yml gcc-selftests.yml gdb-selftests.yml libiberty-tests.yml shell-unit-tests.yml; do
             gh run list --repo ${{ github.repository }} --workflow="${workflow}" --limit 20 \
               --json databaseId,status,conclusion,createdAt,updatedAt,displayTitle,headBranch,event,url,workflowDatabaseId,number \
-              > "/tmp/ci-runs/${workflow%.yml}.json" 2>/dev/null || echo "[]" > "/tmp/ci-runs/${workflow%.yml}.json"
+              > "/tmp/ci-runs/${workflow%.yml}.json" 2>&1 \
+              || { echo "Warning: Failed to fetch ${workflow}" >&2; echo "[]" > "/tmp/ci-runs/${workflow%.yml}.json"; }
           done
 
-          # Merge all runs into a single file
-          jq -s 'add' /tmp/ci-runs/*.json > /tmp/ci-runs.json
+          # Merge all runs into a single file (guard against non-array entries)
+          jq -s 'map(select(type == "array")) | add // []' /tmp/ci-runs/*.json > /tmp/ci-runs.json
 
           # Create directory for artifacts
           mkdir -p /tmp/ci-artifacts
