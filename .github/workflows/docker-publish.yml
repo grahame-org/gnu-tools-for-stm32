@@ -93,7 +93,7 @@ jobs:
 
       - name: Validate toolchain – version check
         run: |
-          docker run --rm --pull=never "${{ steps.image-ref.outputs.image }}" arm-none-eabi-gcc --version
+          docker run --rm --pull=never --entrypoint arm-none-eabi-gcc "${{ steps.image-ref.outputs.image }}" --version
 
       - name: Validate toolchain – build test_project
         run: |
