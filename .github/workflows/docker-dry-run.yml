@@ -57,7 +57,7 @@ jobs:
 
       - name: Restore cache – toolchain
         id: cache-toolchain
-        uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: install-native
           # Same key formula as build-toolchain.yml so this workflow always
@@ -94,7 +94,7 @@ jobs:
       - name: Re-restore toolchain cache after build
         id: cache-toolchain-post-build
         if: steps.cache-toolchain.outputs.cache-hit != 'true'
-        uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: install-native
           key: ${{ runner.os }}-toolchain-v3-${{ hashFiles('build-*.sh') }}-${{ steps.src-hashes.outputs.toolchain-src }}
