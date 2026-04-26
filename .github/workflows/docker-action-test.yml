@@ -27,6 +27,8 @@ jobs:
           filters: |
             test:
               - 'docker-action/**'
+              - 'test_project/**'
+              - '.github/actions/compare-test-project-artifacts/**'
               - '.github/workflows/docker-action-test.yml'
 
   docker-action-test:
