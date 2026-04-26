@@ -42,27 +42,30 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Pull published image and tag for action
+      - name: Resolve action image reference
         run: |
-          # Extract the image reference from docker-action/action.yml so this
-          # step stays in sync automatically when release-please bumps the tag.
+          # Extract the image reference from docker-action/action.yml so
+          # subsequent steps stay in sync when release-please bumps the tag.
           # The pattern handles both single- and double-quoted image references.
           action_image=$(grep -oP 'docker://\K[^'"'"'"\s]+' docker-action/action.yml | head -1)
+          echo "ACTION_IMAGE=${action_image}" >> "${GITHUB_ENV}"
+
+      - name: Pull published image and tag for action
+        run: |
           # Derive the base image (without the pinned tag) and pull the edge tag,
           # which is published on every push to the main branch and represents the
           # current end-to-end consumer experience.
-          base_image="${action_image%:*}"
+          base_image="${ACTION_IMAGE%:*}"
           docker pull "${base_image}:edge"
           # Retag as the action's pinned placeholder so 'uses: ./docker-action'
           # resolves to the published image without modifying action.yml.
-          docker tag "${base_image}:edge" "${action_image}"
+          docker tag "${base_image}:edge" "${ACTION_IMAGE}"
 
       - name: Verify toolchain – version check
         run: |
-          action_image=$(grep -oP 'docker://\K[^'"'"'"\s]+' docker-action/action.yml | head -1)
           docker run --rm --pull=never \
             --entrypoint arm-none-eabi-gcc \
-            "${action_image}" \
+            "${ACTION_IMAGE}" \
             --version
 
       - name: Build test_project using docker-action
