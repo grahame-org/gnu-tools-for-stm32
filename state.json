@@ -1,33 +1,35 @@
 {
-  "last_run": "2026-04-01T12:07Z",
+  "last_run": "2026-04-29T13:15Z",
   "tests": "bash tests/test-build-cache-budget-check.sh && bash tests/test-build-common.sh && bash tests/test-build-stage-scripts.sh && bash tests/test-build-stage-action.sh && bash tests/test-build-toolchain-args.sh && bash tests/test-build-toolchain-cache-keys.sh && bash tests/test-build-toolchain.sh && bash tests/test-entrypoint.sh && bash tests/test-merge-gcc-final.sh && bash tests/test-measure-cache-compressed-size.sh && bash tests/test-pre-cache-clean.sh && bash tests/test-strip-binary.sh && python3 -m pytest tests/test_build_stage_action.py",
   "counts": {
-    "total": 333,
+    "total_main": 334,
+    "pending_pr": 337,
     "build-common": 77,
     "toolchain-args": 87,
     "strip-binary": 13,
     "stage-scripts": 23,
     "cache-keys": 19,
     "cache-budget-check": 18,
-    "pre-cache-clean": 34,
+    "pre-cache-clean": 35,
     "pytest-stage-action": 22,
     "measure-compressed-size": 8,
     "merge-gcc-final": 26,
     "build-toolchain": 18,
-    "entrypoint": 10
+    "entrypoint": 13
   },
   "issues": {
-    "monthly-apr-2026": "Monthly Activity 2026-04 (just created)"
+    "monthly-apr-2026": 763
   },
   "backlog": [
-    "all build-common.sh functions covered",
-    "all build-stage helper scripts covered",
+    "all build-common.sh functions covered (merged)",
+    "all build-stage helper scripts covered (merged)",
     "measure-cache-compressed-size.sh all paths covered (merged #660)",
     "merge-gcc-final.sh fully tested including Step 4 paths (merged #677, #698)",
     "build-cache-budget-check.sh extended (merged #701)",
     "build-toolchain.sh --skip_stages validation tested (merged #708)",
-    "docker-action/entrypoint.sh unit tests + CI wiring (PR in review; branch test-assist/entrypoint-unit-tests)",
-    "next: build-prerequisites.sh argument parsing (inline, not function-based)"
+    "docker-action/entrypoint.sh unit tests + CI wiring (merged PR #764)",
+    "assert_not_contains helper + negative assertions (patch pending apply; 334->337)",
+    "next: build-prerequisites.sh argument parsing (inline, not function-based, deferred)"
   ],
   "done": [
     "toolchain-args", "pack_dir_clean-g13", "strip_binary",
@@ -37,16 +39,16 @@
     "build-stage-scripts", "safety-check-failure", "assert-contains-helper",
     "run-build-stage", "measure-cache-compressed-size", "merge-gcc-final-tests",
     "merge-gcc-final-step4-tests", "cache-budget-check-gaps",
-    "build-toolchain-skip-stages", "entrypoint-tests"
+    "build-toolchain-skip-stages", "entrypoint-tests", "assert-not-contains-helper"
   ],
-  "notes": "PR #708 merged (build-toolchain.sh 18 tests, now in shell-unit-tests.yml). 2026-04-01: Created 10 unit tests for docker-action/entrypoint.sh in branch test-assist/entrypoint-unit-tests. Commented on issue #721. Closed March issue #108. Created April issue. Bash total 323->333 (after PR merges).",
+  "notes": "PR #764 merged 2026-04-01: 13 entrypoint tests (maintainer added one extra for relative SOURCE_DIR). 2026-04-29: assert_not_contains helper added + 3 new assertions (pre-cache-clean groups 9/10, entrypoint groups 3/4). Patch at /tmp/gh-aw/aw-test-assist-assert-not-contains.patch. create_pull_request returned success+patch but branch not pushed to remote (same pattern as entrypoint PR). bash total on main: 334. Pending patch: 337.",
   "tasks_run": {
     "t1": "2026-04-01",
-    "t2": "2026-03-29",
-    "t3": "2026-04-01",
-    "t4": "2026-03-30",
+    "t2": "2026-04-29",
+    "t3": "2026-04-29",
+    "t4": "2026-04-29",
     "t5": "2026-04-01",
-    "t6": "2026-03-27",
-    "t7": "2026-04-01"
+    "t6": "2026-04-29",
+    "t7": "2026-04-29"
   }
 }
