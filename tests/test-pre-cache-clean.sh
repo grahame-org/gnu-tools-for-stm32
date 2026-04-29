@@ -258,6 +258,7 @@ echo "fake-gcc" > "$_ROOT9/bin/arm-none-eabi-gcc"
 
 _OUTPUT9=$(bash "$SCRIPT" "$_ROOT9" 2>&1)
 assert_contains "safety check passed message present" "$_OUTPUT9" "Safety check passed"
+assert_not_contains "safety check passed: no FAILED message emitted" "$_OUTPUT9" "Safety check FAILED"
 
 # ---------------------------------------------------------------------------
 # Test group 10: Safety check silent when arm-none-eabi-gcc was never present
@@ -273,8 +274,7 @@ echo "fake-ld" > "$_ROOT10/bin/arm-none-eabi-ld"
 _root10_exit=0
 _OUTPUT10=$(bash "$SCRIPT" "$_ROOT10" 2>&1) || _root10_exit=$?
 assert_eq "no gcc before: script exits 0" "0" "$_root10_exit"
-assert_eq "no safety-check-passed message when gcc absent" "" \
-    "$(echo "$_OUTPUT10" | grep -F 'Safety check' || true)"
+assert_not_contains "no safety-check message when gcc absent before cleanup" "$_OUTPUT10" "Safety check"
 
 # ---------------------------------------------------------------------------
 # Test group 11: Safety check fails when arm-none-eabi-gcc was present before
