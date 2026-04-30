@@ -1,54 +1,94 @@
 {
-  "last_run": "2026-04-29T13:15Z",
-  "tests": "bash tests/test-build-cache-budget-check.sh && bash tests/test-build-common.sh && bash tests/test-build-stage-scripts.sh && bash tests/test-build-stage-action.sh && bash tests/test-build-toolchain-args.sh && bash tests/test-build-toolchain-cache-keys.sh && bash tests/test-build-toolchain.sh && bash tests/test-entrypoint.sh && bash tests/test-merge-gcc-final.sh && bash tests/test-measure-cache-compressed-size.sh && bash tests/test-pre-cache-clean.sh && bash tests/test-strip-binary.sh && python3 -m pytest tests/test_build_stage_action.py",
-  "counts": {
-    "total_main": 334,
-    "pending_pr": 337,
-    "build-common": 77,
-    "toolchain-args": 87,
-    "strip-binary": 13,
-    "stage-scripts": 23,
-    "cache-keys": 19,
-    "cache-budget-check": 18,
-    "pre-cache-clean": 35,
-    "pytest-stage-action": 22,
-    "measure-compressed-size": 8,
-    "merge-gcc-final": 26,
-    "build-toolchain": 18,
-    "entrypoint": 13
+  "last_updated": "2026-04-30T13:12:00Z",
+  "run_id": "25166670979",
+  "tasks_run": {
+    "T1": "2026-04-30",
+    "T2": "2026-04-29",
+    "T3": "2026-04-30",
+    "T4": "2026-04-30",
+    "T5": "2026-04-30",
+    "T6": "2026-04-29",
+    "T7": "2026-04-30"
   },
-  "issues": {
-    "monthly-apr-2026": 763
+  "monthly_activity_issue": {
+    "number": 763,
+    "title": "[Test Improver] Monthly Activity 2026-04",
+    "state": "open"
+  },
+  "open_prs": [
+    {
+      "number": 786,
+      "branch": "test-assist/assert-not-contains-6d776e5b52defbfc",
+      "title": "[Test Improver] test: add assert_not_contains helper and strengthen negative assertions",
+      "ci_status": "green",
+      "description": "Adds assert_not_contains helper to test-helpers.sh; strengthens test-pre-cache-clean.sh groups 9+10 and test-entrypoint.sh groups 3+4. bash total 334→337."
+    },
+    {
+      "number": "pending",
+      "branch": "test-assist/build-prerequisites-arg-validation",
+      "title": "[Test Improver] test: add argument validation tests for build-prerequisites.sh",
+      "ci_status": "pending",
+      "description": "16 tests for build-prerequisites.sh argument parsing. Wired into shell-unit-tests.yml and shellcheck.yml. bash total 334→350."
+    }
+  ],
+  "test_counts": {
+    "bash_main": 334,
+    "bash_with_open_prs": 350,
+    "python": 22,
+    "breakdown": {
+      "test-build-cache-budget-check": 18,
+      "test-build-common": 77,
+      "test-build-prerequisites": 0,
+      "test-build-stage-action": "needs yamllint",
+      "test-build-stage-scripts": 23,
+      "test-build-toolchain": 18,
+      "test-build-toolchain-args": 87,
+      "test-build-toolchain-cache-keys": 19,
+      "test-entrypoint": 11,
+      "test-measure-cache-compressed-size": 8,
+      "test-merge-gcc-final": 26,
+      "test-pre-cache-clean": 34,
+      "test-strip-binary": 13
+    }
+  },
+  "validated_commands": {
+    "run_all_bash_tests": "for f in tests/test-*.sh; do bash \"$f\"; done",
+    "run_python_tests": "pip install -r tests/requirements.txt && python3 -m pytest tests/test_build_stage_action.py",
+    "shellcheck": "shellcheck --severity=info build-common.sh build-prerequisites.sh ... (see shellcheck.yml for full list)",
+    "notes": "build-prerequisites.sh must run from repo root (ROOT=$(pwd) in build-common.sh). SC1091 info-level only when test-helpers.sh is included in shellcheck input."
   },
   "backlog": [
-    "all build-common.sh functions covered (merged)",
-    "all build-stage helper scripts covered (merged)",
-    "measure-cache-compressed-size.sh all paths covered (merged #660)",
-    "merge-gcc-final.sh fully tested including Step 4 paths (merged #677, #698)",
+    {
+      "id": "build-toolchain-stage-dispatch",
+      "description": "build-toolchain.sh deeper stage-dispatch coverage (current tests: 18, many stages untested)",
+      "priority": "medium",
+      "status": "identified"
+    },
+    {
+      "id": "build-toolchain-mingw",
+      "description": "MinGW/cross-compile paths in build-toolchain.sh (complex, requires skip_steps)",
+      "priority": "low",
+      "status": "identified"
+    }
+  ],
+  "completed_work": [
+    "build-common.sh functions (merged)",
+    "build-stage helper scripts (merged #642)",
+    "measure-cache-compressed-size.sh (merged #660)",
+    "merge-gcc-final.sh Step 4 paths (merged #677, #698)",
     "build-cache-budget-check.sh extended (merged #701)",
-    "build-toolchain.sh --skip_stages validation tested (merged #708)",
-    "docker-action/entrypoint.sh unit tests + CI wiring (merged PR #764)",
-    "assert_not_contains helper + negative assertions (patch pending apply; 334->337)",
-    "next: build-prerequisites.sh argument parsing (inline, not function-based, deferred)"
+    "build-toolchain.sh --skip_stages validation (merged #708)",
+    "docker-action/entrypoint.sh unit tests (merged PR #764)",
+    "assert_not_contains helper (PR #786 open)",
+    "build-prerequisites.sh argument validation (PR open 2026-04-30)"
   ],
-  "done": [
-    "toolchain-args", "pack_dir_clean-g13", "strip_binary",
-    "copy_dir/clean", "saveenv", "parse_args", "break_hardlink",
-    "extend-toolchain-args-tests", "cache-key-dependency-chain",
-    "copy_multi_libs", "fix-cache-budget-test-isolation",
-    "build-stage-scripts", "safety-check-failure", "assert-contains-helper",
-    "run-build-stage", "measure-cache-compressed-size", "merge-gcc-final-tests",
-    "merge-gcc-final-step4-tests", "cache-budget-check-gaps",
-    "build-toolchain-skip-stages", "entrypoint-tests", "assert-not-contains-helper"
-  ],
-  "notes": "PR #764 merged 2026-04-01: 13 entrypoint tests (maintainer added one extra for relative SOURCE_DIR). 2026-04-29: assert_not_contains helper added + 3 new assertions (pre-cache-clean groups 9/10, entrypoint groups 3/4). Patch at /tmp/gh-aw/aw-test-assist-assert-not-contains.patch. create_pull_request returned success+patch but branch not pushed to remote (same pattern as entrypoint PR). bash total on main: 334. Pending patch: 337.",
-  "tasks_run": {
-    "t1": "2026-04-01",
-    "t2": "2026-04-29",
-    "t3": "2026-04-29",
-    "t4": "2026-04-29",
-    "t5": "2026-04-01",
-    "t6": "2026-04-29",
-    "t7": "2026-04-29"
-  }
+  "maintainer_priorities": "No specific priorities communicated yet.",
+  "testing_notes": [
+    "All test files use tests/test-helpers.sh for assert_eq, assert_contains, assert_zero_exit, assert_nonzero_exit, assert_exit_status, assert_ne, assert_unset. PR #786 adds assert_not_contains.",
+    "build-prerequisites.sh must run from repo root (ROOT=$(pwd) in build-common.sh sourced on line 42; src/gcc/gcc/BASE-VER must exist).",
+    "set -x in build scripts produces trace output; filter with grep -v '^+' to extract user-facing messages.",
+    "shellcheck: pass test-helpers.sh and sourced scripts as inputs to avoid SC1091 exit 1.",
+    "The --skip_steps=native,mingw combination causes build-prerequisites.sh to exit 0 at line ~225 without any build work.",
+    "SC1091 info warning: acceptable in test files when test-helpers.sh is passed as input to shellcheck."
+  ]
 }
