@@ -1,94 +1,65 @@
 {
-  "last_updated": "2026-04-30T13:12:00Z",
-  "run_id": "25166670979",
-  "tasks_run": {
+  "updated": "2026-05-01T12:25:00Z",
+  "last_run": {
+    "run_id": "25213747662",
+    "date": "2026-05-01",
+    "tasks": ["T3", "T4", "T7"]
+  },
+  "task_last_run": {
     "T1": "2026-04-30",
     "T2": "2026-04-29",
-    "T3": "2026-04-30",
-    "T4": "2026-04-30",
-    "T5": "2026-04-30",
+    "T3": "2026-05-01",
+    "T4": "2026-05-01",
+    "T5": "2026-04-01",
     "T6": "2026-04-29",
-    "T7": "2026-04-30"
+    "T7": "2026-05-01"
   },
-  "monthly_activity_issue": {
-    "number": 763,
-    "title": "[Test Improver] Monthly Activity 2026-04",
-    "state": "open"
-  },
+  "bash_test_count_main": 334,
+  "python_test_count_main": 22,
   "open_prs": [
     {
       "number": 786,
       "branch": "test-assist/assert-not-contains-6d776e5b52defbfc",
-      "title": "[Test Improver] test: add assert_not_contains helper and strengthen negative assertions",
-      "ci_status": "green",
-      "description": "Adds assert_not_contains helper to test-helpers.sh; strengthens test-pre-cache-clean.sh groups 9+10 and test-entrypoint.sh groups 3+4. bash total 334→337."
+      "title": "test: add assert_not_contains helper + strengthen negative assertions",
+      "status": "draft, CI green",
+      "bash_delta": "+3 (334→337)"
     },
     {
       "number": "pending",
-      "branch": "test-assist/build-prerequisites-arg-validation",
-      "title": "[Test Improver] test: add argument validation tests for build-prerequisites.sh",
-      "ci_status": "pending",
-      "description": "16 tests for build-prerequisites.sh argument parsing. Wired into shell-unit-tests.yml and shellcheck.yml. bash total 334→350."
+      "branch": "test-assist/build-prerequisites-arg-validation-v2",
+      "title": "test: add argument validation tests for build-prerequisites.sh",
+      "status": "PR create attempted 2026-05-01; test file only (no workflow changes)",
+      "bash_delta": "+16 (334→350)"
     }
   ],
-  "test_counts": {
-    "bash_main": 334,
-    "bash_with_open_prs": 350,
-    "python": 22,
-    "breakdown": {
-      "test-build-cache-budget-check": 18,
-      "test-build-common": 77,
-      "test-build-prerequisites": 0,
-      "test-build-stage-action": "needs yamllint",
-      "test-build-stage-scripts": 23,
-      "test-build-toolchain": 18,
-      "test-build-toolchain-args": 87,
-      "test-build-toolchain-cache-keys": 19,
-      "test-entrypoint": 11,
-      "test-measure-cache-compressed-size": 8,
-      "test-merge-gcc-final": 26,
-      "test-pre-cache-clean": 34,
-      "test-strip-binary": 13
+  "open_issues": [
+    {
+      "number": 788,
+      "title": "[Test Improver] test: add argument validation tests for build-prerequisites.sh",
+      "note": "Fallback issue from previous run; commented 2026-05-01 noting new PR attempt excludes workflow changes"
     }
+  ],
+  "monthly_issue": {
+    "april_2026": 763,
+    "may_2026": "created 2026-05-01, number TBD (search for '[Test Improver] Monthly Activity 2026-05')"
   },
   "validated_commands": {
-    "run_all_bash_tests": "for f in tests/test-*.sh; do bash \"$f\"; done",
-    "run_python_tests": "pip install -r tests/requirements.txt && python3 -m pytest tests/test_build_stage_action.py",
-    "shellcheck": "shellcheck --severity=info build-common.sh build-prerequisites.sh ... (see shellcheck.yml for full list)",
-    "notes": "build-prerequisites.sh must run from repo root (ROOT=$(pwd) in build-common.sh). SC1091 info-level only when test-helpers.sh is included in shellcheck input."
+    "bash_tests": "for f in tests/test-*.sh; do bash \"$f\"; done",
+    "python_tests": "pip install -r tests/requirements.txt && python3 -m pytest tests/test_build_stage_action.py",
+    "shellcheck": "shellcheck --severity=info tests/*.sh build-common.sh build-prerequisites.sh build-toolchain.sh"
   },
   "backlog": [
-    {
-      "id": "build-toolchain-stage-dispatch",
-      "description": "build-toolchain.sh deeper stage-dispatch coverage (current tests: 18, many stages untested)",
-      "priority": "medium",
-      "status": "identified"
-    },
-    {
-      "id": "build-toolchain-mingw",
-      "description": "MinGW/cross-compile paths in build-toolchain.sh (complex, requires skip_steps)",
-      "priority": "low",
-      "status": "identified"
-    }
+    "build-toolchain.sh: deeper stage-dispatch coverage (complex, ~500 loc)",
+    "build-gcc-final.sh / build-gcc-first.sh: arg validation tests",
+    "Consider: integration test harness for script interactions"
   ],
-  "completed_work": [
-    "build-common.sh functions (merged)",
-    "build-stage helper scripts (merged #642)",
-    "measure-cache-compressed-size.sh (merged #660)",
-    "merge-gcc-final.sh Step 4 paths (merged #677, #698)",
-    "build-cache-budget-check.sh extended (merged #701)",
-    "build-toolchain.sh --skip_stages validation (merged #708)",
-    "docker-action/entrypoint.sh unit tests (merged PR #764)",
-    "assert_not_contains helper (PR #786 open)",
-    "build-prerequisites.sh argument validation (PR open 2026-04-30)"
+  "notes": [
+    "Bot lacks 'workflows' permission - cannot push .github/workflows/ changes; exclude them from PR commits",
+    "--skip_steps=native,mingw exits build-prerequisites.sh at ~line 225 without build work (safe for tests)",
+    "Use _out=$(bash script 2>&1) || _status=$? not piped through grep (loses exit code)",
+    "set -x in build-prerequisites.sh pollutes stderr with + trace lines; filter with grep -v '^+' after capture",
+    "build-common.sh requires ROOT=$(pwd) = repo root; tests must cd to REPO_ROOT before running",
+    "assert_not_contains is in PR #786 only - new tests must not depend on it until merged"
   ],
-  "maintainer_priorities": "No specific priorities communicated yet.",
-  "testing_notes": [
-    "All test files use tests/test-helpers.sh for assert_eq, assert_contains, assert_zero_exit, assert_nonzero_exit, assert_exit_status, assert_ne, assert_unset. PR #786 adds assert_not_contains.",
-    "build-prerequisites.sh must run from repo root (ROOT=$(pwd) in build-common.sh sourced on line 42; src/gcc/gcc/BASE-VER must exist).",
-    "set -x in build scripts produces trace output; filter with grep -v '^+' to extract user-facing messages.",
-    "shellcheck: pass test-helpers.sh and sourced scripts as inputs to avoid SC1091 exit 1.",
-    "The --skip_steps=native,mingw combination causes build-prerequisites.sh to exit 0 at line ~225 without any build work.",
-    "SC1091 info warning: acceptable in test files when test-helpers.sh is passed as input to shellcheck."
-  ]
+  "checked_off_by_maintainer": []
 }
