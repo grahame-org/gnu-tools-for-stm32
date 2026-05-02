@@ -1,18 +1,18 @@
 {
-  "updated": "2026-05-01T12:25:00Z",
+  "updated": "2026-05-02T12:04:47Z",
   "last_run": {
-    "run_id": "25213747662",
-    "date": "2026-05-01",
-    "tasks": ["T3", "T4", "T7"]
+    "run_id": "25251454599",
+    "date": "2026-05-02",
+    "tasks": ["T4", "T7"]
   },
   "task_last_run": {
     "T1": "2026-04-30",
     "T2": "2026-04-29",
     "T3": "2026-05-01",
-    "T4": "2026-05-01",
+    "T4": "2026-05-02",
     "T5": "2026-04-01",
     "T6": "2026-04-29",
-    "T7": "2026-05-01"
+    "T7": "2026-05-02"
   },
   "bash_test_count_main": 334,
   "python_test_count_main": 22,
@@ -25,23 +25,36 @@
       "bash_delta": "+3 (334→337)"
     },
     {
-      "number": "pending",
-      "branch": "test-assist/build-prerequisites-arg-validation-v2",
+      "number": 792,
+      "branch": "test-assist/build-prerequisites-arg-validation-v2-606639a44cc6a6b8",
       "title": "test: add argument validation tests for build-prerequisites.sh",
-      "status": "PR create attempted 2026-05-01; test file only (no workflow changes)",
-      "bash_delta": "+16 (334→350)"
+      "status": "draft, CI green; 1 file only (no workflow changes)",
+      "bash_delta": "+16 (334→350)",
+      "note": "CI wiring (shell-unit-tests.yml/shellcheck.yml) needs manual addition by maintainer"
+    },
+    {
+      "number": 790,
+      "title": "DUPLICATE of #792 - commented 2026-05-02 asking maintainer to close"
     }
   ],
   "open_issues": [
     {
+      "number": 793,
+      "title": "[Test Improver] Monthly Activity 2026-05",
+      "note": "canonical monthly issue"
+    },
+    {
+      "number": 791,
+      "title": "DUPLICATE monthly issue - commented 2026-05-02 asking maintainer to close"
+    },
+    {
       "number": 788,
       "title": "[Test Improver] test: add argument validation tests for build-prerequisites.sh",
-      "note": "Fallback issue from previous run; commented 2026-05-01 noting new PR attempt excludes workflow changes"
+      "note": "fallback issue; superseded by PR #792; suggested close in monthly issue"
     }
   ],
   "monthly_issue": {
-    "april_2026": 763,
-    "may_2026": "created 2026-05-01, number TBD (search for '[Test Improver] Monthly Activity 2026-05')"
+    "may_2026": 793
   },
   "validated_commands": {
     "bash_tests": "for f in tests/test-*.sh; do bash \"$f\"; done",
@@ -59,7 +72,9 @@
     "Use _out=$(bash script 2>&1) || _status=$? not piped through grep (loses exit code)",
     "set -x in build-prerequisites.sh pollutes stderr with + trace lines; filter with grep -v '^+' after capture",
     "build-common.sh requires ROOT=$(pwd) = repo root; tests must cd to REPO_ROOT before running",
-    "assert_not_contains is in PR #786 only - new tests must not depend on it until merged"
+    "assert_not_contains is in PR #786 only - new tests must not depend on it until merged",
+    "shell-unit-tests.yml uses explicit file list (no glob) - new test files must be added manually",
+    "shellcheck.yml paths-filter also uses explicit list - new test files must be added manually"
   ],
   "checked_off_by_maintainer": []
 }
