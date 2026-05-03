@@ -1,18 +1,18 @@
 {
-  "updated": "2026-05-02T12:04:47Z",
+  "updated": "2026-05-03T12:02:41Z",
   "last_run": {
-    "run_id": "25251454599",
-    "date": "2026-05-02",
-    "tasks": ["T4", "T7"]
+    "run_id": "25278578680",
+    "date": "2026-05-03",
+    "tasks": ["T3", "T2", "T5", "T7"]
   },
   "task_last_run": {
     "T1": "2026-04-30",
-    "T2": "2026-04-29",
-    "T3": "2026-05-01",
+    "T2": "2026-05-03",
+    "T3": "2026-05-03",
     "T4": "2026-05-02",
-    "T5": "2026-04-01",
+    "T5": "2026-05-03",
     "T6": "2026-04-29",
-    "T7": "2026-05-02"
+    "T7": "2026-05-03"
   },
   "bash_test_count_main": 334,
   "python_test_count_main": 22,
@@ -35,6 +35,13 @@
     {
       "number": 790,
       "title": "DUPLICATE of #792 - commented 2026-05-02 asking maintainer to close"
+    },
+    {
+      "branch": "test-assist/compare-artifacts-unit-tests",
+      "title": "test: add unit tests for compare-test-project-artifacts.sh",
+      "status": "draft, pending CI; PR number TBD (submitted this run)",
+      "bash_delta": "+29 (334→363)",
+      "note": "CI wiring (shell-unit-tests.yml/shellcheck.yml) needs manual addition by maintainer"
     }
   ],
   "open_issues": [
@@ -63,7 +70,7 @@
   },
   "backlog": [
     "build-toolchain.sh: deeper stage-dispatch coverage (complex, ~500 loc)",
-    "build-gcc-final.sh / build-gcc-first.sh: arg validation tests",
+    "build-gcc-final.sh / build-gcc-first.sh: arg validation tests (low value - just delegate to parse_toolchain_args)",
     "Consider: integration test harness for script interactions"
   ],
   "notes": [
@@ -74,7 +81,9 @@
     "build-common.sh requires ROOT=$(pwd) = repo root; tests must cd to REPO_ROOT before running",
     "assert_not_contains is in PR #786 only - new tests must not depend on it until merged",
     "shell-unit-tests.yml uses explicit file list (no glob) - new test files must be added manually",
-    "shellcheck.yml paths-filter also uses explicit list - new test files must be added manually"
+    "shellcheck.yml paths-filter also uses explicit list - new test files must be added manually",
+    "compare-test-project-artifacts.sh tested via REFERENCE_DIR/BUILD_DIR env vars (no args)",
+    "7 test files not in shellcheck.yml: test-build-cache-budget-check, test-build-common, test-build-toolchain, test-build-toolchain-args, test-build-toolchain-cache-keys, test-pre-cache-clean, test-strip-binary"
   ],
   "checked_off_by_maintainer": []
 }
