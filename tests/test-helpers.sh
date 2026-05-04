@@ -77,6 +77,32 @@ assert_contains() {
     fi
 }
 
+assert_matches() {
+    local desc="$1" haystack="$2" pattern="$3"
+    if printf '%s\n' "${haystack}" | grep -Eq -- "${pattern}"; then
+        _PASS=$((_PASS + 1))
+        echo "  PASS: $desc"
+    else
+        _FAIL=$((_FAIL + 1))
+        echo "  FAIL: $desc"
+        echo "        expected to match: [${pattern}]"
+        echo "        in:                [${haystack}]"
+    fi
+}
+
+assert_not_matches() {
+    local desc="$1" haystack="$2" pattern="$3"
+    if printf '%s\n' "${haystack}" | grep -Eq -- "${pattern}"; then
+        _FAIL=$((_FAIL + 1))
+        echo "  FAIL: $desc"
+        echo "        expected NOT to match: [${pattern}]"
+        echo "        in:                    [${haystack}]"
+    else
+        _PASS=$((_PASS + 1))
+        echo "  PASS: $desc"
+    fi
+}
+
 assert_exit_status() {
     local desc="$1" expected_status="$2"
     if [ $# -lt 3 ]; then
