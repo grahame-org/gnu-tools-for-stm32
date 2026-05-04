@@ -1,18 +1,18 @@
 {
-  "updated": "2026-05-03T12:02:41Z",
+  "updated": "2026-05-04T13:02:06Z",
   "last_run": {
-    "run_id": "25278578680",
-    "date": "2026-05-03",
-    "tasks": ["T3", "T2", "T5", "T7"]
+    "run_id": "25320381544",
+    "date": "2026-05-04",
+    "tasks": ["T4", "T6", "T1", "T7"]
   },
   "task_last_run": {
-    "T1": "2026-04-30",
+    "T1": "2026-05-04",
     "T2": "2026-05-03",
     "T3": "2026-05-03",
-    "T4": "2026-05-02",
+    "T4": "2026-05-04",
     "T5": "2026-05-03",
-    "T6": "2026-04-29",
-    "T7": "2026-05-03"
+    "T6": "2026-05-04",
+    "T7": "2026-05-04"
   },
   "bash_test_count_main": 334,
   "python_test_count_main": 22,
@@ -28,7 +28,7 @@
       "number": 792,
       "branch": "test-assist/build-prerequisites-arg-validation-v2-606639a44cc6a6b8",
       "title": "test: add argument validation tests for build-prerequisites.sh",
-      "status": "draft, CI green; 1 file only (no workflow changes)",
+      "status": "draft, CI green",
       "bash_delta": "+16 (334→350)",
       "note": "CI wiring (shell-unit-tests.yml/shellcheck.yml) needs manual addition by maintainer"
     },
@@ -37,11 +37,19 @@
       "title": "DUPLICATE of #792 - commented 2026-05-02 asking maintainer to close"
     },
     {
-      "branch": "test-assist/compare-artifacts-unit-tests",
+      "number": 796,
+      "branch": "test-assist/compare-artifacts-unit-tests-0a58cf177908020e",
       "title": "test: add unit tests for compare-test-project-artifacts.sh",
-      "status": "draft, pending CI; PR number TBD (submitted this run)",
+      "status": "draft, CI green",
       "bash_delta": "+29 (334→363)",
       "note": "CI wiring (shell-unit-tests.yml/shellcheck.yml) needs manual addition by maintainer"
+    },
+    {
+      "branch": "test-assist/assert-matches-regex-helpers",
+      "title": "test: add assert_matches/assert_not_matches regex helpers",
+      "status": "draft, submitted 2026-05-04, PR number TBD",
+      "bash_delta": "0 (334→334, refactor only)",
+      "note": "Adds assert_matches + assert_not_matches to test-helpers.sh; refactors 8 assertions in test-build-common.sh"
     }
   ],
   "open_issues": [
@@ -80,9 +88,9 @@
     "set -x in build-prerequisites.sh pollutes stderr with + trace lines; filter with grep -v '^+' after capture",
     "build-common.sh requires ROOT=$(pwd) = repo root; tests must cd to REPO_ROOT before running",
     "assert_not_contains is in PR #786 only - new tests must not depend on it until merged",
+    "assert_matches/assert_not_matches added in new PR (2026-05-04) - use grep -Eq for ERE patterns",
     "shell-unit-tests.yml uses explicit file list (no glob) - new test files must be added manually",
     "shellcheck.yml paths-filter also uses explicit list - new test files must be added manually",
-    "compare-test-project-artifacts.sh tested via REFERENCE_DIR/BUILD_DIR env vars (no args)",
     "7 test files not in shellcheck.yml: test-build-cache-budget-check, test-build-common, test-build-toolchain, test-build-toolchain-args, test-build-toolchain-cache-keys, test-pre-cache-clean, test-strip-binary"
   ],
   "checked_off_by_maintainer": []
