@@ -1,18 +1,18 @@
 {
-  "updated": "2026-05-04T13:02:06Z",
+  "updated": "2026-05-05T12:17:22Z",
   "last_run": {
-    "run_id": "25320381544",
-    "date": "2026-05-04",
-    "tasks": ["T4", "T6", "T1", "T7"]
+    "run_id": "25375740214",
+    "date": "2026-05-05",
+    "tasks": ["T4", "T2", "T3", "T7"]
   },
   "task_last_run": {
     "T1": "2026-05-04",
-    "T2": "2026-05-03",
-    "T3": "2026-05-03",
-    "T4": "2026-05-04",
+    "T2": "2026-05-05",
+    "T3": "2026-05-05",
+    "T4": "2026-05-05",
     "T5": "2026-05-03",
     "T6": "2026-05-04",
-    "T7": "2026-05-04"
+    "T7": "2026-05-05"
   },
   "bash_test_count_main": 334,
   "python_test_count_main": 22,
@@ -42,14 +42,21 @@
       "title": "test: add unit tests for compare-test-project-artifacts.sh",
       "status": "draft, CI green",
       "bash_delta": "+29 (334→363)",
-      "note": "CI wiring (shell-unit-tests.yml/shellcheck.yml) needs manual addition by maintainer"
+      "note": "CI wiring needs manual addition by maintainer"
     },
     {
-      "branch": "test-assist/assert-matches-regex-helpers",
+      "number": 798,
+      "branch": "test-assist/assert-matches-regex-helpers-6737f58451a209a8",
       "title": "test: add assert_matches/assert_not_matches regex helpers",
-      "status": "draft, submitted 2026-05-04, PR number TBD",
-      "bash_delta": "0 (334→334, refactor only)",
-      "note": "Adds assert_matches + assert_not_matches to test-helpers.sh; refactors 8 assertions in test-build-common.sh"
+      "status": "draft, CI green (submitted 2026-05-04)",
+      "bash_delta": "0 (334→334, refactor only)"
+    },
+    {
+      "branch": "test-assist/compute-toolchain-src-hash-1b9e1064",
+      "title": "test: add unit tests for compute-toolchain-src-hash.sh",
+      "status": "draft, submitted 2026-05-05, PR number TBD",
+      "bash_delta": "+8 (334→342)",
+      "note": "CI wiring (shell-unit-tests.yml/shellcheck.yml) needs manual addition by maintainer"
     }
   ],
   "open_issues": [
@@ -78,6 +85,7 @@
   },
   "backlog": [
     "build-toolchain.sh: deeper stage-dispatch coverage (complex, ~500 loc)",
+    "build-gcc-size-libstdcxx.sh: unique --with-multilib-list default logic (low priority)",
     "build-gcc-final.sh / build-gcc-first.sh: arg validation tests (low value - just delegate to parse_toolchain_args)",
     "Consider: integration test harness for script interactions"
   ],
@@ -88,10 +96,11 @@
     "set -x in build-prerequisites.sh pollutes stderr with + trace lines; filter with grep -v '^+' after capture",
     "build-common.sh requires ROOT=$(pwd) = repo root; tests must cd to REPO_ROOT before running",
     "assert_not_contains is in PR #786 only - new tests must not depend on it until merged",
-    "assert_matches/assert_not_matches added in new PR (2026-05-04) - use grep -Eq for ERE patterns",
+    "assert_matches/assert_not_matches added in PR #798 - use grep -Eq for ERE patterns",
     "shell-unit-tests.yml uses explicit file list (no glob) - new test files must be added manually",
     "shellcheck.yml paths-filter also uses explicit list - new test files must be added manually",
-    "7 test files not in shellcheck.yml: test-build-cache-budget-check, test-build-common, test-build-toolchain, test-build-toolchain-args, test-build-toolchain-cache-keys, test-pre-cache-clean, test-strip-binary"
+    "compute-toolchain-src-hash.sh: tested in PR (2026-05-05); tests use GITHUB_OUTPUT file, env -i to test missing GITHUB_OUTPUT",
+    "shellcheck on individual test files exits 1 due to SC1091 (source); passes when run with test-helpers.sh together (as CI does)"
   ],
   "checked_off_by_maintainer": []
 }
