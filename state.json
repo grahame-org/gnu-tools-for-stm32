@@ -1,18 +1,18 @@
 {
-  "updated": "2026-05-05T12:17:22Z",
+  "updated": "2026-05-06T13:15:00Z",
   "last_run": {
-    "run_id": "25375740214",
-    "date": "2026-05-05",
-    "tasks": ["T4", "T2", "T3", "T7"]
+    "run_id": "25436938790",
+    "date": "2026-05-06",
+    "tasks": ["T4", "T5", "T3", "T7"]
   },
   "task_last_run": {
     "T1": "2026-05-04",
     "T2": "2026-05-05",
-    "T3": "2026-05-05",
-    "T4": "2026-05-05",
-    "T5": "2026-05-03",
+    "T3": "2026-05-06",
+    "T4": "2026-05-06",
+    "T5": "2026-05-06",
     "T6": "2026-05-04",
-    "T7": "2026-05-05"
+    "T7": "2026-05-06"
   },
   "bash_test_count_main": 334,
   "python_test_count_main": 22,
@@ -52,11 +52,20 @@
       "bash_delta": "0 (334→334, refactor only)"
     },
     {
-      "branch": "test-assist/compute-toolchain-src-hash-1b9e1064",
+      "number": 801,
+      "branch": "test-assist/compute-toolchain-src-hash-1b9e1064-f051a972fca5b265",
       "title": "test: add unit tests for compute-toolchain-src-hash.sh",
-      "status": "draft, submitted 2026-05-05, PR number TBD",
+      "status": "draft, CI green (submitted 2026-05-05)",
       "bash_delta": "+8 (334→342)",
       "note": "CI wiring (shell-unit-tests.yml/shellcheck.yml) needs manual addition by maintainer"
+    },
+    {
+      "number": "TBD",
+      "branch": "test-assist/build-gcc-size-libstdcxx-arg-validation",
+      "title": "test: add unit tests for build-gcc-size-libstdcxx.sh",
+      "status": "draft, submitted 2026-05-06, PR number TBD",
+      "bash_delta": "+12 (334→346)",
+      "note": "CI wiring (shell-unit-tests.yml/shellcheck.yml) needs manual addition by maintainer; Group 3 uses set -x trace to verify MULTILIB_LIST override"
     }
   ],
   "open_issues": [
@@ -85,7 +94,6 @@
   },
   "backlog": [
     "build-toolchain.sh: deeper stage-dispatch coverage (complex, ~500 loc)",
-    "build-gcc-size-libstdcxx.sh: unique --with-multilib-list default logic (low priority)",
     "build-gcc-final.sh / build-gcc-first.sh: arg validation tests (low value - just delegate to parse_toolchain_args)",
     "Consider: integration test harness for script interactions"
   ],
@@ -93,14 +101,9 @@
     "Bot lacks 'workflows' permission - cannot push .github/workflows/ changes; exclude them from PR commits",
     "--skip_steps=native,mingw exits build-prerequisites.sh at ~line 225 without build work (safe for tests)",
     "Use _out=$(bash script 2>&1) || _status=$? not piped through grep (loses exit code)",
-    "set -x in build-prerequisites.sh pollutes stderr with + trace lines; filter with grep -v '^+' after capture",
-    "build-common.sh requires ROOT=$(pwd) = repo root; tests must cd to REPO_ROOT before running",
-    "assert_not_contains is in PR #786 only - new tests must not depend on it until merged",
-    "assert_matches/assert_not_matches added in PR #798 - use grep -Eq for ERE patterns",
-    "shell-unit-tests.yml uses explicit file list (no glob) - new test files must be added manually",
-    "shellcheck.yml paths-filter also uses explicit list - new test files must be added manually",
-    "compute-toolchain-src-hash.sh: tested in PR (2026-05-05); tests use GITHUB_OUTPUT file, env -i to test missing GITHUB_OUTPUT",
-    "shellcheck on individual test files exits 1 due to SC1091 (source); passes when run with test-helpers.sh together (as CI does)"
+    "build-gcc-size-libstdcxx.sh does cd $script_path before sourcing build-common.sh, so it's self-contained (unlike build-prerequisites.sh which needs CWD=repo root)",
+    "set -x trace in stderr is stable way to verify MULTILIB_LIST variable assignment in build-gcc-size-libstdcxx.sh",
+    "shell-unit-tests.yml paths-filter includes tests/** so new test files trigger CI, but the Run step uses an explicit file list"
   ],
   "checked_off_by_maintainer": []
 }
