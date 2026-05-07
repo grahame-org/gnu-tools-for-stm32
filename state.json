@@ -1,18 +1,18 @@
 {
-  "updated": "2026-05-06T13:15:00Z",
+  "updated": "2026-05-07T13:12:00Z",
   "last_run": {
-    "run_id": "25436938790",
-    "date": "2026-05-06",
-    "tasks": ["T4", "T5", "T3", "T7"]
+    "run_id": "25497861695",
+    "date": "2026-05-07",
+    "tasks": ["T4", "T1", "T7"]
   },
   "task_last_run": {
-    "T1": "2026-05-04",
+    "T1": "2026-05-07",
     "T2": "2026-05-05",
     "T3": "2026-05-06",
-    "T4": "2026-05-06",
+    "T4": "2026-05-07",
     "T5": "2026-05-06",
     "T6": "2026-05-04",
-    "T7": "2026-05-06"
+    "T7": "2026-05-07"
   },
   "bash_test_count_main": 334,
   "python_test_count_main": 22,
@@ -22,26 +22,26 @@
       "branch": "test-assist/assert-not-contains-6d776e5b52defbfc",
       "title": "test: add assert_not_contains helper + strengthen negative assertions",
       "status": "draft, CI green",
-      "bash_delta": "+3 (334→337)"
-    },
-    {
-      "number": 792,
-      "branch": "test-assist/build-prerequisites-arg-validation-v2-606639a44cc6a6b8",
-      "title": "test: add argument validation tests for build-prerequisites.sh",
-      "status": "draft, CI green",
-      "bash_delta": "+16 (334→350)",
-      "note": "CI wiring (shell-unit-tests.yml/shellcheck.yml) needs manual addition by maintainer"
+      "bash_delta": "+3 (334->337)"
     },
     {
       "number": 790,
       "title": "DUPLICATE of #792 - commented 2026-05-02 asking maintainer to close"
     },
     {
+      "number": 792,
+      "branch": "test-assist/build-prerequisites-arg-validation-v2-606639a44cc6a6b8",
+      "title": "test: add argument validation tests for build-prerequisites.sh",
+      "status": "draft, CI green",
+      "bash_delta": "+16 (334->350)",
+      "note": "CI wiring (shell-unit-tests.yml/shellcheck.yml) needs manual addition by maintainer"
+    },
+    {
       "number": 796,
       "branch": "test-assist/compare-artifacts-unit-tests-0a58cf177908020e",
       "title": "test: add unit tests for compare-test-project-artifacts.sh",
       "status": "draft, CI green",
-      "bash_delta": "+29 (334→363)",
+      "bash_delta": "+29 (334->363)",
       "note": "CI wiring needs manual addition by maintainer"
     },
     {
@@ -49,23 +49,23 @@
       "branch": "test-assist/assert-matches-regex-helpers-6737f58451a209a8",
       "title": "test: add assert_matches/assert_not_matches regex helpers",
       "status": "draft, CI green (submitted 2026-05-04)",
-      "bash_delta": "0 (334→334, refactor only)"
+      "bash_delta": "0 (334->334, refactor only)"
     },
     {
       "number": 801,
       "branch": "test-assist/compute-toolchain-src-hash-1b9e1064-f051a972fca5b265",
       "title": "test: add unit tests for compute-toolchain-src-hash.sh",
       "status": "draft, CI green (submitted 2026-05-05)",
-      "bash_delta": "+8 (334→342)",
-      "note": "CI wiring (shell-unit-tests.yml/shellcheck.yml) needs manual addition by maintainer"
+      "bash_delta": "+8 (334->342)",
+      "note": "CI wiring needs manual addition by maintainer"
     },
     {
-      "number": "TBD",
+      "number": 803,
       "branch": "test-assist/build-gcc-size-libstdcxx-arg-validation",
       "title": "test: add unit tests for build-gcc-size-libstdcxx.sh",
-      "status": "draft, submitted 2026-05-06, PR number TBD",
-      "bash_delta": "+12 (334→346)",
-      "note": "CI wiring (shell-unit-tests.yml/shellcheck.yml) needs manual addition by maintainer; Group 3 uses set -x trace to verify MULTILIB_LIST override"
+      "status": "draft, CI green (submitted 2026-05-06)",
+      "bash_delta": "+12 (334->346)",
+      "note": "CI wiring needs manual addition by maintainer; Group 3 uses set -x trace to verify MULTILIB_LIST override"
     }
   ],
   "open_issues": [
@@ -93,7 +93,7 @@
     "shellcheck": "shellcheck --severity=info tests/*.sh build-common.sh build-prerequisites.sh build-toolchain.sh"
   },
   "backlog": [
-    "build-toolchain.sh: deeper stage-dispatch coverage (complex, ~500 loc)",
+    "build-toolchain.sh: deeper stage-dispatch coverage (complex, ~500 loc) - medium priority",
     "build-gcc-final.sh / build-gcc-first.sh: arg validation tests (low value - just delegate to parse_toolchain_args)",
     "Consider: integration test harness for script interactions"
   ],
@@ -103,7 +103,8 @@
     "Use _out=$(bash script 2>&1) || _status=$? not piped through grep (loses exit code)",
     "build-gcc-size-libstdcxx.sh does cd $script_path before sourcing build-common.sh, so it's self-contained (unlike build-prerequisites.sh which needs CWD=repo root)",
     "set -x trace in stderr is stable way to verify MULTILIB_LIST variable assignment in build-gcc-size-libstdcxx.sh",
-    "shell-unit-tests.yml paths-filter includes tests/** so new test files trigger CI, but the Run step uses an explicit file list"
+    "shell-unit-tests.yml paths-filter includes tests/** so new test files trigger CI, but the Run step uses an explicit file list",
+    "7 open PRs as of 2026-05-07; maintainer has not reviewed any yet; avoid creating more until queue reduces"
   ],
   "checked_off_by_maintainer": []
 }
