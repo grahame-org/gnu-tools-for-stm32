@@ -1,18 +1,18 @@
 {
-  "updated": "2026-05-08T12:51:00Z",
+  "updated": "2026-05-09T12:06:56Z",
   "last_run": {
-    "run_id": "25556463986",
-    "date": "2026-05-08",
-    "tasks": ["T4", "T7"]
+    "run_id": "25600688665",
+    "date": "2026-05-09",
+    "tasks": ["T4", "T2", "T7"]
   },
   "task_last_run": {
     "T1": "2026-05-07",
-    "T2": "2026-05-05",
+    "T2": "2026-05-09",
     "T3": "2026-05-06",
-    "T4": "2026-05-08",
+    "T4": "2026-05-09",
     "T5": "2026-05-06",
     "T6": "2026-05-04",
-    "T7": "2026-05-08"
+    "T7": "2026-05-09"
   },
   "bash_test_count_main": 334,
   "python_test_count_main": 22,
@@ -61,7 +61,7 @@
     },
     {
       "number": 803,
-      "branch": "test-assist/build-gcc-size-libstdcxx-arg-validation",
+      "branch": "test-assist/build-gcc-size-libstdcxx-arg-validation-26dfae2ea73f495d",
       "title": "test: add unit tests for build-gcc-size-libstdcxx.sh",
       "status": "draft, CI green (submitted 2026-05-06)",
       "bash_delta": "+12 (334->346)",
@@ -95,6 +95,7 @@
   "backlog": [
     "build-toolchain.sh: deeper stage-dispatch coverage (complex, ~500 loc) - medium priority",
     "build-gcc-final.sh / build-gcc-first.sh: arg validation tests (low value - just delegate to parse_toolchain_args)",
+    "build-binutils.sh / build-gdb.sh / build-newlib.sh / build-newlib-nano.sh: full build wrappers with minimal testable logic - low priority",
     "Consider: integration test harness for script interactions"
   ],
   "notes": [
@@ -104,7 +105,7 @@
     "build-gcc-size-libstdcxx.sh does cd $script_path before sourcing build-common.sh, so it's self-contained (unlike build-prerequisites.sh which needs CWD=repo root)",
     "set -x trace in stderr is stable way to verify MULTILIB_LIST variable assignment in build-gcc-size-libstdcxx.sh",
     "shell-unit-tests.yml paths-filter includes tests/** so new test files trigger CI, but the Run step uses an explicit file list",
-    "7 open PRs as of 2026-05-08; maintainer has not reviewed any yet; avoid creating more until queue reduces"
+    "7 open PRs as of 2026-05-09; maintainer has not reviewed any yet; avoid creating more until queue reduces"
   ],
   "checked_off_by_maintainer": []
 }
