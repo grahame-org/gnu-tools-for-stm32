@@ -45,6 +45,7 @@ jobs:
               - '.github/actions/build-stage/*.sh'
               - '.github/actions/compare-test-project-artifacts/*.sh'
               - '.github/actions/compute-toolchain-src-hash/*.sh'
+              - 'tests/test-build-prerequisites.sh'
               - 'tests/test-build-stage-action.sh'
               - 'tests/test-build-stage-scripts.sh'
               - 'tests/test-entrypoint.sh'
@@ -85,6 +86,7 @@ jobs:
           measure-cache-compressed-size.sh \
           merge-gcc-final.sh \
           docker-action/entrypoint.sh \
+          tests/test-build-prerequisites.sh \
           tests/test-build-stage-action.sh \
           tests/test-build-stage-scripts.sh \
           tests/test-entrypoint.sh \

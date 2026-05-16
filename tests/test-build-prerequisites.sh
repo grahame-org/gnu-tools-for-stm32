@@ -13,9 +13,10 @@ SCRIPT="$REPO_ROOT/build-prerequisites.sh"
 . "$SCRIPT_DIR/test-helpers.sh"
 
 # Flags that skip all build work: passing both native and mingw to --skip_steps
-# causes build-prerequisites.sh to exit 0 immediately after the native section
-# (line ~226) without touching any build directories.  These flags are embedded
-# directly in each assert call so each test is self-contained.
+# causes build-prerequisites.sh to exit 0 after the native build section without
+# touching any build directories (both the native and cross-build blocks are
+# skipped).  These flags are embedded directly in each assert call so each test
+# is self-contained.
 
 # ---------------------------------------------------------------------------
 # Test group 1: --help / -h → exit 1 with usage
