@@ -67,18 +67,26 @@ assert_nonzero_exit "--build_type=badtype rejected" \
 # Captures stdout+stderr and checks the exit status before processing output,
 # so a non-zero exit from the script is surfaced as a failure rather than
 # being masked by the pipeline.
+# The extraction pipeline uses || true so that a grep-no-match does not abort
+# the test script under set -e; an empty result causes assert_eq to report
+# a proper FAIL with the full trace shown for diagnosis.
 # ---------------------------------------------------------------------------
 _last_multilib() {
-    local output exit_status=0
+    local output exit_status=0 extracted
     output=$(bash "$SCRIPT" "${SKIP_ALL[@]}" "$@" 2>&1) || exit_status=$?
     if [ "$exit_status" -ne 0 ]; then
         echo "ERROR: $SCRIPT exited with status $exit_status" >&2
         return "$exit_status"
     fi
-    printf '%s\n' "$output" | \
+    extracted=$(printf '%s\n' "$output" | \
         grep 'MULTILIB_LIST=--with-multilib-list=' | \
         tail -1 | \
-        grep -o -- '--with-multilib-list=[^[:space:]]*'
+        grep -o -- '--with-multilib-list=[^[:space:]]*' || true)
+    if [ -z "$extracted" ]; then
+        echo "ERROR: no MULTILIB_LIST=--with-multilib-list= line found in trace; full output:" >&2
+        printf '%s\n' "$output" >&2
+    fi
+    printf '%s\n' "$extracted"
 }
 
 # ---------------------------------------------------------------------------
