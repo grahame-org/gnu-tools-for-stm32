@@ -79,7 +79,14 @@ assert_contains() {
 
 assert_matches() {
     local desc="$1" haystack="$2" pattern="$3"
-    if printf '%s\n' "${haystack}" | grep -Eq -- "${pattern}"; then
+    local grep_stderr grep_status=0
+    grep_stderr=$(printf '%s\n' "${haystack}" | grep -Eq -- "${pattern}" 2>&1) || grep_status=$?
+    if [ "${grep_status}" -eq 2 ]; then
+        _FAIL=$((_FAIL + 1))
+        echo "  FAIL: $desc"
+        echo "        invalid pattern: [${pattern}]"
+        echo "        grep error:      ${grep_stderr}"
+    elif [ "${grep_status}" -eq 0 ]; then
         _PASS=$((_PASS + 1))
         echo "  PASS: $desc"
     else
@@ -92,7 +99,14 @@ assert_matches() {
 
 assert_not_matches() {
     local desc="$1" haystack="$2" pattern="$3"
-    if printf '%s\n' "${haystack}" | grep -Eq -- "${pattern}"; then
+    local grep_stderr grep_status=0
+    grep_stderr=$(printf '%s\n' "${haystack}" | grep -Eq -- "${pattern}" 2>&1) || grep_status=$?
+    if [ "${grep_status}" -eq 2 ]; then
+        _FAIL=$((_FAIL + 1))
+        echo "  FAIL: $desc"
+        echo "        invalid pattern: [${pattern}]"
+        echo "        grep error:      ${grep_stderr}"
+    elif [ "${grep_status}" -eq 0 ]; then
         _FAIL=$((_FAIL + 1))
         echo "  FAIL: $desc"
         echo "        expected NOT to match: [${pattern}]"
