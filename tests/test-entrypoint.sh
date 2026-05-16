@@ -92,6 +92,9 @@ true > "$_CMAKE_LOG"
 assert_eq "explicit BUILD_DIR: exit status 0" "0" \
     "$(exit_status_of "$_SRC3" "$_BUILD3")"
 
+assert_not_contains "explicit BUILD_DIR: no error in stderr" \
+    "$(stderr_of "$_SRC3" "$_BUILD3")" "Error"
+
 _LOG3=$(cat "$_CMAKE_LOG")
 assert_contains "explicit BUILD_DIR: cmake configure uses -B BUILD_DIR" \
     "$_LOG3" "$_BUILD3"
@@ -113,6 +116,9 @@ touch "$_SRC4/arm-none-eabi-gcc.cmake"
 true > "$_CMAKE_LOG"
 assert_eq "default BUILD_DIR: exit status 0" "0" \
     "$(exit_status_of "$_SRC4")"
+
+assert_not_contains "default BUILD_DIR: no error in stderr" \
+    "$(stderr_of "$_SRC4")" "Error"
 
 _LOG4=$(cat "$_CMAKE_LOG")
 assert_contains "default BUILD_DIR: cmake uses SOURCE_DIR/build" \

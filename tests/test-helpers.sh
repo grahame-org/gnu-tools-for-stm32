@@ -77,6 +77,19 @@ assert_contains() {
     fi
 }
 
+assert_not_contains() {
+    local desc="$1" haystack="$2" needle="$3"
+    if printf '%s\n' "${haystack}" | grep -Fq -- "${needle}"; then
+        _FAIL=$((_FAIL + 1))
+        echo "  FAIL: $desc"
+        echo "        expected NOT to contain: [${needle}]"
+        echo "        in:                      [${haystack}]"
+    else
+        _PASS=$((_PASS + 1))
+        echo "  PASS: $desc"
+    fi
+}
+
 assert_matches() {
     local desc="$1" haystack="$2" pattern="$3"
     local grep_stderr grep_status=0

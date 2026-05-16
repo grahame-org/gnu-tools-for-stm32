@@ -70,6 +70,7 @@ jobs:
         run: |
           bash tests/test-build-cache-budget-check.sh
           bash tests/test-build-common.sh
+          bash tests/test-build-prerequisites.sh
           bash tests/test-build-stage-action.sh
           bash tests/test-build-stage-scripts.sh
           bash tests/test-build-toolchain.sh
@@ -78,6 +79,7 @@ jobs:
           bash tests/test-measure-cache-compressed-size.sh
           bash tests/test-merge-gcc-final.sh
           bash tests/test-entrypoint.sh
+          bash tests/test-compare-test-project-artifacts.sh
           bash tests/test-pre-cache-clean.sh
           bash tests/test-strip-binary.sh
 
