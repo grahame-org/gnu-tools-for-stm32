@@ -37,9 +37,14 @@ echo "=== Group 1: Successful execution ==="
 assert_zero_exit "script exits 0 when GITHUB_OUTPUT is set" \
     bash -c "GITHUB_OUTPUT=\$(mktemp \"$_TMPDIR/go-XXXXXX\") bash \"$SCRIPT\""
 
-_hash=$(run_script_with_output)
+_output_file=$(mktemp "$_TMPDIR/go-XXXXXX")
+GITHUB_OUTPUT="$_output_file" bash "$SCRIPT"
+_line_count=$(grep -c '^toolchain-src=' "$_output_file")
+_hash=$(grep '^toolchain-src=' "$_output_file" | cut -d= -f2)
 
-assert_eq "output contains exactly one toolchain-src line" "yes" \
+assert_eq "output contains exactly one toolchain-src line" "1" "$_line_count"
+
+assert_eq "toolchain-src value is a 64-char lowercase hex hash" "yes" \
     "$( [[ "$_hash" =~ ^[0-9a-f]{64}$ ]] && echo yes || echo no )"
 
 # ---------------------------------------------------------------------------
