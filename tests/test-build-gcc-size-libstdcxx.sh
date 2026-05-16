@@ -64,9 +64,18 @@ assert_nonzero_exit "--build_type=badtype rejected" \
 # ---------------------------------------------------------------------------
 # Helper: run the script and return the last --with-multilib-list=VALUE seen
 # in the set -x trace written to stderr.
+# Captures stdout+stderr and checks the exit status before processing output,
+# so a non-zero exit from the script is surfaced as a failure rather than
+# being masked by the pipeline.
 # ---------------------------------------------------------------------------
 _last_multilib() {
-    bash "$SCRIPT" "${SKIP_ALL[@]}" "$@" 2>&1 | \
+    local output exit_status=0
+    output=$(bash "$SCRIPT" "${SKIP_ALL[@]}" "$@" 2>&1) || exit_status=$?
+    if [ "$exit_status" -ne 0 ]; then
+        echo "ERROR: $SCRIPT exited with status $exit_status" >&2
+        return "$exit_status"
+    fi
+    printf '%s\n' "$output" | \
         grep 'MULTILIB_LIST=--with-multilib-list=' | \
         tail -1 | \
         grep -o -- '--with-multilib-list=[^[:space:]]*'
