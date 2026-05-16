@@ -48,6 +48,7 @@ jobs:
               - 'tests/test-build-prerequisites.sh'
               - 'tests/test-build-stage-action.sh'
               - 'tests/test-build-stage-scripts.sh'
+              - 'tests/test-compare-test-project-artifacts.sh'
               - 'tests/test-entrypoint.sh'
               - 'tests/test-helpers.sh'
               - 'tests/test-measure-cache-compressed-size.sh'
@@ -89,6 +90,7 @@ jobs:
           tests/test-build-prerequisites.sh \
           tests/test-build-stage-action.sh \
           tests/test-build-stage-scripts.sh \
+          tests/test-compare-test-project-artifacts.sh \
           tests/test-entrypoint.sh \
           tests/test-helpers.sh \
           tests/test-measure-cache-compressed-size.sh \
