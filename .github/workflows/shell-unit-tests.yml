@@ -70,6 +70,7 @@ jobs:
         run: |
           bash tests/test-build-cache-budget-check.sh
           bash tests/test-build-common.sh
+          bash tests/test-build-prerequisites.sh
           bash tests/test-build-stage-action.sh
           bash tests/test-build-stage-scripts.sh
           bash tests/test-build-toolchain.sh
