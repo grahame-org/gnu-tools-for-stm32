@@ -61,9 +61,10 @@ echo ""
 echo "=== Group 3: Missing GITHUB_OUTPUT ==="
 
 _status=0
-_out=$(env -i HOME="$HOME" PATH="$PATH" GIT_DIR="$REPO_ROOT/.git" GIT_WORK_TREE="$REPO_ROOT" \
+_err=$(env -i HOME="$HOME" PATH="$PATH" GIT_DIR="$REPO_ROOT/.git" GIT_WORK_TREE="$REPO_ROOT" \
     bash "$SCRIPT" 2>&1) || _status=$?
 assert_ne "missing GITHUB_OUTPUT: exits non-zero" "0" "$_status"
+assert_contains "missing GITHUB_OUTPUT: reports unbound variable" "$_err" "GITHUB_OUTPUT"
 
 # ---------------------------------------------------------------------------
 # Test group 4: Script covers all expected source directories
@@ -72,7 +73,15 @@ assert_ne "missing GITHUB_OUTPUT: exits non-zero" "0" "$_status"
 echo ""
 echo "=== Group 4: Expected source directories present in script ==="
 
-for _dir in src/binutils src/gcc src/gdb src/newlib; do
+for _dir in \
+    src/binutils \
+    src/gcc \
+    src/gdb \
+    src/newlib \
+    src/libiconv \
+    src/liblongpath-win32 \
+    src/specs
+do
     assert_contains "script references ${_dir}" "$(cat "$SCRIPT")" "$_dir"
 done
 
