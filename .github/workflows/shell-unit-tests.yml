@@ -76,6 +76,7 @@ jobs:
           bash tests/test-build-toolchain.sh
           bash tests/test-build-toolchain-args.sh
           bash tests/test-build-toolchain-cache-keys.sh
+          bash tests/test-compute-toolchain-src-hash.sh
           bash tests/test-measure-cache-compressed-size.sh
           bash tests/test-merge-gcc-final.sh
           bash tests/test-entrypoint.sh
