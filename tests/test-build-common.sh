@@ -364,22 +364,22 @@ assert_eq "pack_dir_clean archives nested file in regular subdir" \
 # src/.gitignore, src/.gitattributes, or src/CVSroot.
 # CLARIFY: if the test fixture is ever extended to include such files (e.g. a
 # .gitignore that should be archived), verify these patterns still hold.
-assert_eq "pack_dir_clean excludes .git directory" \
-    "" "$(echo "$_PDC_CONTENTS" | grep -E '(^|/)\.git(/|$)' || true)"
-assert_eq "pack_dir_clean excludes CVS directory" \
-    "" "$(echo "$_PDC_CONTENTS" | grep -E '(^|/)CVS(/|$)' || true)"
-assert_eq "pack_dir_clean excludes .svn directory" \
-    "" "$(echo "$_PDC_CONTENTS" | grep -E '(^|/)\.svn(/|$)' || true)"
-assert_eq "pack_dir_clean excludes .pc directory" \
-    "" "$(echo "$_PDC_CONTENTS" | grep -E '(^|/)\.pc(/|$)' || true)"
-assert_eq "pack_dir_clean excludes *~ backup files" \
-    "" "$(echo "$_PDC_CONTENTS" | grep "file\.txt~" || true)"
-assert_eq "pack_dir_clean excludes *.orig files" \
-    "" "$(echo "$_PDC_CONTENTS" | grep "patch\.orig" || true)"
-assert_eq "pack_dir_clean excludes *.rej files" \
-    "" "$(echo "$_PDC_CONTENTS" | grep "patch\.rej" || true)"
-assert_eq "pack_dir_clean excludes .#* emacs lock files" \
-    "" "$(echo "$_PDC_CONTENTS" | grep "\.#lockfile" || true)"
+assert_not_matches "pack_dir_clean excludes .git directory" \
+    "$_PDC_CONTENTS" '(^|/)\.git(/|$)'
+assert_not_matches "pack_dir_clean excludes CVS directory" \
+    "$_PDC_CONTENTS" '(^|/)CVS(/|$)'
+assert_not_matches "pack_dir_clean excludes .svn directory" \
+    "$_PDC_CONTENTS" '(^|/)\.svn(/|$)'
+assert_not_matches "pack_dir_clean excludes .pc directory" \
+    "$_PDC_CONTENTS" '(^|/)\.pc(/|$)'
+assert_not_matches "pack_dir_clean excludes *~ backup files" \
+    "$_PDC_CONTENTS" 'file\.txt~'
+assert_not_matches "pack_dir_clean excludes *.orig files" \
+    "$_PDC_CONTENTS" 'patch\.orig'
+assert_not_matches "pack_dir_clean excludes *.rej files" \
+    "$_PDC_CONTENTS" 'patch\.rej'
+assert_not_matches "pack_dir_clean excludes .#* emacs lock files" \
+    "$_PDC_CONTENTS" '\.#lockfile'
 
 # Test that extra --exclude args (params 4+) are forwarded to tar
 _PDC_EXTRA_ARCHIVE="$_PDC_TMPDIR/out-extra.tar.bz2"
