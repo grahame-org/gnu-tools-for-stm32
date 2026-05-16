@@ -80,40 +80,40 @@ assert_contains() {
 assert_matches() {
     local desc="$1" haystack="$2" pattern="$3"
     local grep_stderr grep_status=0
-    grep_stderr=$(printf '%s\n' "${haystack}" | grep -Eq -- "${pattern}" 2>&1) || grep_status=$?
-    if [ "${grep_status}" -eq 2 ]; then
-        _FAIL=$((_FAIL + 1))
-        echo "  FAIL: $desc"
-        echo "        invalid pattern: [${pattern}]"
-        echo "        grep error:      ${grep_stderr}"
-    elif [ "${grep_status}" -eq 0 ]; then
+    grep_stderr=$(grep -Eq -- "${pattern}" <<< "${haystack}" 2>&1) || grep_status=$?
+    if [ "${grep_status}" -eq 0 ]; then
         _PASS=$((_PASS + 1))
         echo "  PASS: $desc"
-    else
+    elif [ "${grep_status}" -eq 1 ]; then
         _FAIL=$((_FAIL + 1))
         echo "  FAIL: $desc"
         echo "        expected to match: [${pattern}]"
         echo "        in:                [${haystack}]"
+    else
+        _FAIL=$((_FAIL + 1))
+        echo "  FAIL: $desc"
+        echo "        grep error (status ${grep_status}): ${grep_stderr}"
+        echo "        pattern: [${pattern}]"
     fi
 }
 
 assert_not_matches() {
     local desc="$1" haystack="$2" pattern="$3"
     local grep_stderr grep_status=0
-    grep_stderr=$(printf '%s\n' "${haystack}" | grep -Eq -- "${pattern}" 2>&1) || grep_status=$?
-    if [ "${grep_status}" -eq 2 ]; then
-        _FAIL=$((_FAIL + 1))
-        echo "  FAIL: $desc"
-        echo "        invalid pattern: [${pattern}]"
-        echo "        grep error:      ${grep_stderr}"
+    grep_stderr=$(grep -Eq -- "${pattern}" <<< "${haystack}" 2>&1) || grep_status=$?
+    if [ "${grep_status}" -eq 1 ]; then
+        _PASS=$((_PASS + 1))
+        echo "  PASS: $desc"
     elif [ "${grep_status}" -eq 0 ]; then
         _FAIL=$((_FAIL + 1))
         echo "  FAIL: $desc"
         echo "        expected NOT to match: [${pattern}]"
         echo "        in:                    [${haystack}]"
     else
-        _PASS=$((_PASS + 1))
-        echo "  PASS: $desc"
+        _FAIL=$((_FAIL + 1))
+        echo "  FAIL: $desc"
+        echo "        grep error (status ${grep_status}): ${grep_stderr}"
+        echo "        pattern: [${pattern}]"
     fi
 }
 
