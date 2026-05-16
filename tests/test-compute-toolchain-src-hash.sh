@@ -12,6 +12,8 @@ SCRIPT="${REPO_ROOT}/.github/actions/compute-toolchain-src-hash/compute-toolchai
 # shellcheck source=tests/test-helpers.sh
 . "$SCRIPT_DIR/test-helpers.sh"
 
+cd "$REPO_ROOT"
+
 _TMPDIR=$(mktemp -d)
 trap 'rm -rf "$_TMPDIR"' EXIT
 
@@ -39,7 +41,7 @@ assert_zero_exit "script exits 0 when GITHUB_OUTPUT is set" \
 
 _output_file=$(mktemp "$_TMPDIR/go-XXXXXX")
 GITHUB_OUTPUT="$_output_file" bash "$SCRIPT"
-_line_count=$(grep -c '^toolchain-src=' "$_output_file")
+_line_count=$(grep -c '^toolchain-src=' "$_output_file" || true)
 _hash=$(grep '^toolchain-src=' "$_output_file" | cut -d= -f2)
 
 assert_eq "output contains exactly one toolchain-src line" "1" "$_line_count"
