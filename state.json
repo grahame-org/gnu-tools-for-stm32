@@ -1,76 +1,58 @@
 {
-  "updated": "2026-05-16T12:12:00Z",
+  "updated": "2026-05-17T12:09:47Z",
   "last_run": {
-    "run_id": "25961584311",
-    "date": "2026-05-16",
-    "tasks": ["T4", "T7"]
+    "run_id": "25990404441",
+    "date": "2026-05-17",
+    "tasks": ["T1", "T6", "T7"]
   },
   "task_last_run": {
-    "T1": "2026-05-15",
+    "T1": "2026-05-17",
     "T2": "2026-05-13",
     "T3": "2026-05-06",
     "T4": "2026-05-16",
     "T5": "2026-05-15",
-    "T6": "2026-05-04",
-    "T7": "2026-05-16"
+    "T6": "2026-05-17",
+    "T7": "2026-05-17"
   },
-  "bash_test_count_main": 334,
+  "bash_test_count_main": 407,
   "python_test_count_main": 22,
-  "open_prs": [
-    {
-      "number": 786,
-      "branch": "test-assist/assert-not-contains-6d776e5b52defbfc",
-      "title": "test: add assert_not_contains helper + strengthen negative assertions",
-      "status": "draft, CI green",
-      "bash_delta": "+3 (334->337)"
-    },
-    {
-      "number": 790,
-      "branch": "test-assist/build-prerequisites-arg-validation-v2-10bd70d9642677cb",
-      "title": "test: add argument validation tests for build-prerequisites.sh",
-      "status": "open, CI green, updated 2026-05-16 by Copilot per maintainer review request",
-      "bash_delta": "+16 (334->350)",
-      "note": "Includes CI wiring (shell-unit-tests.yml + shellcheck.yml). PR #792 (without CI wiring) was closed by maintainer as dup."
-    },
-    {
-      "number": 796,
-      "branch": "test-assist/compare-artifacts-unit-tests-0a58cf177908020e",
-      "title": "test: add unit tests for compare-test-project-artifacts.sh",
-      "status": "draft, CI green",
-      "bash_delta": "+29 (334->363)",
-      "note": "CI wiring needs manual addition by maintainer"
-    },
-    {
-      "number": 798,
-      "branch": "test-assist/assert-matches-regex-helpers-6737f58451a209a8",
-      "title": "test: add assert_matches/assert_not_matches regex helpers",
-      "status": "draft, CI green",
-      "bash_delta": "0 (334->334, refactor only)"
-    },
-    {
-      "number": 801,
-      "branch": "test-assist/compute-toolchain-src-hash-1b9e1064-f051a972fca5b265",
-      "title": "test: add unit tests for compute-toolchain-src-hash.sh",
-      "status": "draft, CI green",
-      "bash_delta": "+8 (334->342)",
-      "note": "CI wiring needs manual addition by maintainer"
-    },
-    {
-      "number": 803,
-      "branch": "test-assist/build-gcc-size-libstdcxx-arg-validation-26dfae2ea73f495d",
-      "title": "test: add unit tests for build-gcc-size-libstdcxx.sh",
-      "status": "draft, CI green",
-      "bash_delta": "+12 (334->346)",
-      "note": "CI wiring needs manual addition by maintainer; Group 3 uses set -x trace to verify MULTILIB_LIST override"
-    }
-  ],
+  "open_prs": [],
   "closed_prs": [
     {
       "number": 792,
       "title": "test: add argument validation tests for build-prerequisites.sh (no CI wiring)",
       "closed": "2026-05-16",
-      "closed_by": "maintainer",
       "reason": "Dup PR — maintainer kept #790 (with CI wiring) instead"
+    },
+    {
+      "number": 786,
+      "title": "test: add assert_not_contains helper and strengthen negative assertions",
+      "merged": "2026-05-16"
+    },
+    {
+      "number": 790,
+      "title": "test: add argument validation tests for build-prerequisites.sh",
+      "merged": "2026-05-16"
+    },
+    {
+      "number": 796,
+      "title": "test: add unit tests for compare-test-project-artifacts.sh",
+      "merged": "2026-05-16"
+    },
+    {
+      "number": 798,
+      "title": "test: add assert_matches/assert_not_matches regex helpers",
+      "merged": "2026-05-16"
+    },
+    {
+      "number": 801,
+      "title": "test: add unit tests for compute-toolchain-src-hash.sh",
+      "merged": "2026-05-16"
+    },
+    {
+      "number": 803,
+      "title": "test: add unit tests for build-gcc-size-libstdcxx.sh",
+      "merged": "2026-05-16"
     }
   ],
   "open_issues": [
@@ -86,7 +68,12 @@
     {
       "number": 788,
       "title": "[Test Improver] test: add argument validation tests for build-prerequisites.sh",
-      "note": "fallback issue; superseded by PR #790; suggested close in monthly issue"
+      "note": "fallback issue; superseded by PR #790 (merged); suggested close in monthly issue"
+    },
+    {
+      "number": "TBD",
+      "title": "[Test Improver] ci: wire test-build-gcc-size-libstdcxx.sh into shell-unit-tests and shellcheck",
+      "note": "created this run; number assigned after run completes; issue describes 4-line fix for CI gap"
     }
   ],
   "monthly_issue": {
@@ -104,13 +91,15 @@
     "Consider: integration test harness for script interactions"
   ],
   "notes": [
-    "PR #790 DID include CI workflow changes - it appears bot can push .github/workflows/ changes in some contexts (original PR creation). Copilot coding agent also updated the PR with workflow changes on 2026-05-16.",
+    "All 6 big PRs (#786, #790, #796, #798, #801, #803) merged by maintainer on 2026-05-16 - queue is now empty",
+    "New bash test baseline on main: 407 (was 334 before merges)",
+    "CI gap found: test-build-gcc-size-libstdcxx.sh is NOT in shell-unit-tests.yml run list or shellcheck.yml; created issue for fix",
     "--skip_steps=native,mingw exits build-prerequisites.sh at ~line 225 without build work (safe for tests)",
     "Use _out=$(bash script 2>&1) || _status=$? not piped through grep (loses exit code)",
     "build-gcc-size-libstdcxx.sh does cd $script_path before sourcing build-common.sh, so it's self-contained (unlike build-prerequisites.sh which needs CWD=repo root)",
     "set -x trace in stderr is stable way to verify MULTILIB_LIST variable assignment in build-gcc-size-libstdcxx.sh",
-    "shell-unit-tests.yml paths-filter includes tests/** so new test files trigger CI, but the Run step uses an explicit file list",
-    "6 open PRs as of 2026-05-16; maintainer has not reviewed any yet (but did review #792/#790 pair); avoid creating more until queue reduces"
+    "shell-unit-tests.yml paths-filter uses tests/** wildcard so new test files trigger CI, but the Run step still requires explicit listing",
+    "safeoutputs create_pull_request is blocked for .github/workflows/ changes (protected files); use create_issue instead"
   ],
   "checked_off_by_maintainer": []
 }
