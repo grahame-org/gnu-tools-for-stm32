@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
-# Unit tests for build-toolchain.sh --skip_stages validation.
+# Unit tests for build-toolchain.sh argument validation.
+# Covers --skip_stages, --skip_steps, --build_type, and unknown flags via
+# subprocess execution so integration with parse_toolchain_args() is tested.
 #
 # Run with: bash tests/test-build-toolchain.sh
 
@@ -95,5 +97,64 @@ assert_contains "valid+invalid mix: error message names the invalid stage" \
 
 _status=0; _out=$(bash "$SCRIPT" "${SKIP_ALL[@]}" --skip_stages=binutis,binutils 2>&1) || _status=$?
 assert_eq "binutis,binutils (invalid+valid): exits with status 1" "1" "$_status"
+
+# ---------------------------------------------------------------------------
+# Test group 5: Invalid --skip_steps value → exit 1 + error message
+# ---------------------------------------------------------------------------
+# These tests run WITHOUT the SKIP_ALL guard so that parse_toolchain_args()
+# hits the error path before any build work begins.
+
+echo ""
+echo "=== Group 5: Invalid --skip_steps values rejected ==="
+
+_status=0; _out=$(bash "$SCRIPT" --skip_steps=nosuchstep 2>&1) || _status=$?
+assert_eq "nosuchstep: exits with status 1" "1" "$_status"
+assert_contains "nosuchstep: error names the unknown step" \
+    "$_out" "Unknown build steps: nosuchstep"
+
+_status=0; _out=$(bash "$SCRIPT" --skip_steps=STRIP 2>&1) || _status=$?
+assert_eq "STRIP (wrong case): exits with status 1" "1" "$_status"
+assert_contains "STRIP: error names the unknown step" \
+    "$_out" "Unknown build steps: STRIP"
+
+_status=0; _out=$(bash "$SCRIPT" --skip_steps=manual,nosuchstep 2>&1) || _status=$?
+assert_eq "manual,nosuchstep (valid+invalid): exits with status 1" "1" "$_status"
+assert_contains "manual,nosuchstep: error names the invalid step" \
+    "$_out" "Unknown build steps: nosuchstep"
+
+# ---------------------------------------------------------------------------
+# Test group 6: Invalid --build_type value → exit 1 + error message
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "=== Group 6: Invalid --build_type values rejected ==="
+
+_status=0; _out=$(bash "$SCRIPT" "${SKIP_ALL[@]}" --build_type=badtype 2>&1) || _status=$?
+assert_eq "badtype: exits with status 1" "1" "$_status"
+assert_contains "badtype: error names the unknown type" \
+    "$_out" "Unknown build type: badtype"
+
+_status=0; _out=$(bash "$SCRIPT" "${SKIP_ALL[@]}" --build_type=Native 2>&1) || _status=$?
+assert_eq "Native (wrong case): exits with status 1" "1" "$_status"
+assert_contains "Native: error names the unknown type" \
+    "$_out" "Unknown build type: Native"
+
+_status=0; _out=$(bash "$SCRIPT" "${SKIP_ALL[@]}" --build_type=native,badtype 2>&1) || _status=$?
+assert_eq "native,badtype (valid+invalid): exits with status 1" "1" "$_status"
+assert_contains "native,badtype: error names the bad type" \
+    "$_out" "Unknown build type: badtype"
+
+# ---------------------------------------------------------------------------
+# Test group 7: Unknown flags → exit 1
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "=== Group 7: Unknown flags rejected ==="
+
+_status=0; _out=$(bash "$SCRIPT" --unknown-flag 2>&1) || _status=$?
+assert_eq "--unknown-flag: exits with status 1" "1" "$_status"
+
+_status=0; _out=$(bash "$SCRIPT" "${SKIP_ALL[@]}" --no-such-option=value 2>&1) || _status=$?
+assert_eq "--no-such-option=value: exits with status 1" "1" "$_status"
 
 print_test_results
