@@ -1,22 +1,29 @@
 {
-  "updated": "2026-05-17T12:09:47Z",
+  "updated": "2026-05-18T14:42:49Z",
   "last_run": {
-    "run_id": "25990404441",
-    "date": "2026-05-17",
-    "tasks": ["T1", "T6", "T7"]
+    "run_id": "26040505137",
+    "date": "2026-05-18",
+    "tasks": ["T3", "T2", "T7"]
   },
   "task_last_run": {
     "T1": "2026-05-17",
-    "T2": "2026-05-13",
-    "T3": "2026-05-06",
+    "T2": "2026-05-18",
+    "T3": "2026-05-18",
     "T4": "2026-05-16",
     "T5": "2026-05-15",
     "T6": "2026-05-17",
-    "T7": "2026-05-17"
+    "T7": "2026-05-18"
   },
   "bash_test_count_main": 407,
+  "bash_test_count_branch": 421,
   "python_test_count_main": 22,
-  "open_prs": [],
+  "open_prs": [
+    {
+      "branch": "test-assist/build-toolchain-error-conditions",
+      "title": "[Test Improver] test: add --skip_steps, --build_type, and unknown-flag error tests to test-build-toolchain.sh",
+      "note": "created 2026-05-18; number TBD after workflow completes; +14 tests (407→421)"
+    }
+  ],
   "closed_prs": [
     {
       "number": 792,
@@ -71,9 +78,14 @@
       "note": "fallback issue; superseded by PR #790 (merged); suggested close in monthly issue"
     },
     {
-      "number": "TBD",
+      "number": 815,
       "title": "[Test Improver] ci: wire test-build-gcc-size-libstdcxx.sh into shell-unit-tests and shellcheck",
-      "note": "created this run; number assigned after run completes; issue describes 4-line fix for CI gap"
+      "note": "CI gap fix issue; instructions for manual PR included; duplicate of #816"
+    },
+    {
+      "number": 816,
+      "title": "[Test Improver] ci: wire test-build-gcc-size-libstdcxx.sh into shell-unit-tests and shellcheck",
+      "note": "CI gap fix issue with diff; duplicate of #815 — suggest close one"
     }
   ],
   "monthly_issue": {
@@ -93,13 +105,13 @@
   "notes": [
     "All 6 big PRs (#786, #790, #796, #798, #801, #803) merged by maintainer on 2026-05-16 - queue is now empty",
     "New bash test baseline on main: 407 (was 334 before merges)",
-    "CI gap found: test-build-gcc-size-libstdcxx.sh is NOT in shell-unit-tests.yml run list or shellcheck.yml; created issue for fix",
+    "CI gap: test-build-gcc-size-libstdcxx.sh NOT in shell-unit-tests.yml run list or shellcheck.yml; fix requires manual PR (workflow write blocked); instructions in #815/#816",
+    "Duplicate CI gap issues: #815 and #816 both describe same fix; suggest maintainer close one",
     "--skip_steps=native,mingw exits build-prerequisites.sh at ~line 225 without build work (safe for tests)",
     "Use _out=$(bash script 2>&1) || _status=$? not piped through grep (loses exit code)",
-    "build-gcc-size-libstdcxx.sh does cd $script_path before sourcing build-common.sh, so it's self-contained (unlike build-prerequisites.sh which needs CWD=repo root)",
-    "set -x trace in stderr is stable way to verify MULTILIB_LIST variable assignment in build-gcc-size-libstdcxx.sh",
     "shell-unit-tests.yml paths-filter uses tests/** wildcard so new test files trigger CI, but the Run step still requires explicit listing",
-    "safeoutputs create_pull_request is blocked for .github/workflows/ changes (protected files); use create_issue instead"
+    "safeoutputs create_pull_request is blocked for .github/workflows/ changes (protected files); use create_issue instead",
+    "test-build-toolchain.sh now has 32 tests (was 18); Groups 5-7 test --skip_steps, --build_type, unknown-flag error conditions via subprocess"
   ],
   "checked_off_by_maintainer": []
 }
