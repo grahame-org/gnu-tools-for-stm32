@@ -1,27 +1,28 @@
 {
-  "updated": "2026-05-18T14:42:49Z",
+  "updated": "2026-05-19T14:09:38Z",
   "last_run": {
-    "run_id": "26040505137",
-    "date": "2026-05-18",
-    "tasks": ["T3", "T2", "T7"]
+    "run_id": "26102549914",
+    "date": "2026-05-19",
+    "tasks": ["T4", "T5", "T7"]
   },
   "task_last_run": {
     "T1": "2026-05-17",
     "T2": "2026-05-18",
     "T3": "2026-05-18",
-    "T4": "2026-05-16",
-    "T5": "2026-05-15",
+    "T4": "2026-05-19",
+    "T5": "2026-05-19",
     "T6": "2026-05-17",
-    "T7": "2026-05-18"
+    "T7": "2026-05-19"
   },
   "bash_test_count_main": 407,
   "bash_test_count_branch": 421,
   "python_test_count_main": 22,
   "open_prs": [
     {
+      "number": 818,
       "branch": "test-assist/build-toolchain-error-conditions",
       "title": "[Test Improver] test: add --skip_steps, --build_type, and unknown-flag error tests to test-build-toolchain.sh",
-      "note": "created 2026-05-18; number TBD after workflow completes; +14 tests (407→421)"
+      "note": "created 2026-05-18; CI green; +14 tests (407->421)"
     }
   ],
   "closed_prs": [
@@ -111,7 +112,7 @@
     "Use _out=$(bash script 2>&1) || _status=$? not piped through grep (loses exit code)",
     "shell-unit-tests.yml paths-filter uses tests/** wildcard so new test files trigger CI, but the Run step still requires explicit listing",
     "safeoutputs create_pull_request is blocked for .github/workflows/ changes (protected files); use create_issue instead",
-    "test-build-toolchain.sh now has 32 tests (was 18); Groups 5-7 test --skip_steps, --build_type, unknown-flag error conditions via subprocess"
+    "test-build-toolchain.sh has 18 tests on main; PR #818 adds 14 more (407->421 total)"
   ],
   "checked_off_by_maintainer": []
 }
