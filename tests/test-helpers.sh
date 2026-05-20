@@ -27,9 +27,11 @@ assert_nonzero_exit() {
         return
     fi
     shift
-    if "$@" 2>/dev/null; then
+    local _diag
+    if _diag=$("$@" 2>&1); then
         _FAIL=$((_FAIL + 1))
         echo "  FAIL: $desc (expected non-zero exit)"
+        [ -n "$_diag" ] && echo "        output: $_diag"
     else
         _PASS=$((_PASS + 1))
         echo "  PASS: $desc"
@@ -44,12 +46,15 @@ assert_zero_exit() {
         return
     fi
     shift
-    if "$@" 2>/dev/null; then
+    local _diag _status=0
+    _diag=$("$@" 2>&1) || _status=$?
+    if [ "$_status" -eq 0 ]; then
         _PASS=$((_PASS + 1))
         echo "  PASS: $desc"
     else
         _FAIL=$((_FAIL + 1))
-        echo "  FAIL: $desc (expected zero exit)"
+        echo "  FAIL: $desc (expected zero exit, got status $_status)"
+        [ -n "$_diag" ] && echo "        output: $_diag"
     fi
 }
 
@@ -138,8 +143,8 @@ assert_exit_status() {
         return
     fi
     shift 2
-    local actual_status=0
-    "$@" 2>/dev/null || actual_status=$?
+    local actual_status=0 _diag
+    _diag=$("$@" 2>&1) || actual_status=$?
     if [ "$actual_status" -eq "$expected_status" ]; then
         _PASS=$((_PASS + 1))
         echo "  PASS: $desc"
@@ -148,6 +153,7 @@ assert_exit_status() {
         echo "  FAIL: $desc"
         echo "        expected exit status: [$expected_status]"
         echo "        actual exit status:   [$actual_status]"
+        [ -n "$_diag" ] && echo "        output: $_diag"
     fi
 }
 
