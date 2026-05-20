@@ -1,18 +1,18 @@
 {
-  "updated": "2026-05-19T14:09:38Z",
+  "updated": "2026-05-20T14:03:29Z",
   "last_run": {
-    "run_id": "26102549914",
-    "date": "2026-05-19",
-    "tasks": ["T4", "T5", "T7"]
+    "run_id": "26167480128",
+    "date": "2026-05-20",
+    "tasks": ["T1", "T4", "T6", "T7"]
   },
   "task_last_run": {
-    "T1": "2026-05-17",
+    "T1": "2026-05-20",
     "T2": "2026-05-18",
     "T3": "2026-05-18",
-    "T4": "2026-05-19",
+    "T4": "2026-05-20",
     "T5": "2026-05-19",
-    "T6": "2026-05-17",
-    "T7": "2026-05-19"
+    "T6": "2026-05-20",
+    "T7": "2026-05-20"
   },
   "bash_test_count_main": 407,
   "bash_test_count_branch": 421,
@@ -23,6 +23,12 @@
       "branch": "test-assist/build-toolchain-error-conditions",
       "title": "[Test Improver] test: add --skip_steps, --build_type, and unknown-flag error tests to test-build-toolchain.sh",
       "note": "created 2026-05-18; CI green; +14 tests (407->421)"
+    },
+    {
+      "number": "TBD",
+      "branch": "test-assist/diagnostic-output-on-assert-failure",
+      "title": "[Test Improver] test: show command output in assert_zero_exit, assert_nonzero_exit, assert_exit_status on failure",
+      "note": "created 2026-05-20; T6 infra improvement; all 407 tests pass; number assigned after workflow run"
     }
   ],
   "closed_prs": [
@@ -112,7 +118,8 @@
     "Use _out=$(bash script 2>&1) || _status=$? not piped through grep (loses exit code)",
     "shell-unit-tests.yml paths-filter uses tests/** wildcard so new test files trigger CI, but the Run step still requires explicit listing",
     "safeoutputs create_pull_request is blocked for .github/workflows/ changes (protected files); use create_issue instead",
-    "test-build-toolchain.sh has 18 tests on main; PR #818 adds 14 more (407->421 total)"
+    "test-build-toolchain.sh has 18 tests on main; PR #818 adds 14 more (407->421 total)",
+    "assert_zero_exit / assert_nonzero_exit / assert_exit_status now capture+show output on failure (PR TBD from 2026-05-20 run)"
   ],
   "checked_off_by_maintainer": []
 }
