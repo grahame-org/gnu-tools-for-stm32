@@ -1,21 +1,21 @@
 {
-  "updated": "2026-05-20T14:03:29Z",
+  "updated": "2026-05-21T14:20:58Z",
   "last_run": {
-    "run_id": "26167480128",
-    "date": "2026-05-20",
-    "tasks": ["T1", "T4", "T6", "T7"]
+    "run_id": "26231782686",
+    "date": "2026-05-21",
+    "tasks": ["T2", "T4", "T7"]
   },
   "task_last_run": {
     "T1": "2026-05-20",
-    "T2": "2026-05-18",
+    "T2": "2026-05-21",
     "T3": "2026-05-18",
-    "T4": "2026-05-20",
+    "T4": "2026-05-21",
     "T5": "2026-05-19",
     "T6": "2026-05-20",
-    "T7": "2026-05-20"
+    "T7": "2026-05-21"
   },
   "bash_test_count_main": 407,
-  "bash_test_count_branch": 421,
+  "bash_test_count_branch_818": 421,
   "python_test_count_main": 22,
   "open_prs": [
     {
@@ -25,10 +25,10 @@
       "note": "created 2026-05-18; CI green; +14 tests (407->421)"
     },
     {
-      "number": "TBD",
+      "number": 823,
       "branch": "test-assist/diagnostic-output-on-assert-failure",
       "title": "[Test Improver] test: show command output in assert_zero_exit, assert_nonzero_exit, assert_exit_status on failure",
-      "note": "created 2026-05-20; T6 infra improvement; all 407 tests pass; number assigned after workflow run"
+      "note": "created 2026-05-20; T6 infra improvement; all 407 tests pass on main"
     }
   ],
   "closed_prs": [
@@ -104,13 +104,13 @@
     "shellcheck": "shellcheck --severity=info tests/*.sh build-common.sh build-prerequisites.sh build-toolchain.sh"
   },
   "backlog": [
-    "build-toolchain.sh: deeper stage-dispatch coverage (complex, ~500 loc) - medium priority",
+    "build-toolchain.sh: deeper stage-dispatch coverage (requires mocking build scripts — complex) - medium priority",
     "build-gcc-final.sh / build-gcc-first.sh: arg validation tests (low value - just delegate to parse_toolchain_args)",
     "build-binutils.sh / build-gdb.sh / build-newlib.sh / build-newlib-nano.sh: full build wrappers with minimal testable logic - low priority",
     "Consider: integration test harness for script interactions"
   ],
   "notes": [
-    "All 6 big PRs (#786, #790, #796, #798, #801, #803) merged by maintainer on 2026-05-16 - queue is now empty",
+    "All 6 big PRs (#786, #790, #796, #798, #801, #803) merged by maintainer on 2026-05-16 - queue is now mostly empty",
     "New bash test baseline on main: 407 (was 334 before merges)",
     "CI gap: test-build-gcc-size-libstdcxx.sh NOT in shell-unit-tests.yml run list or shellcheck.yml; fix requires manual PR (workflow write blocked); instructions in #815/#816",
     "Duplicate CI gap issues: #815 and #816 both describe same fix; suggest maintainer close one",
@@ -119,7 +119,8 @@
     "shell-unit-tests.yml paths-filter uses tests/** wildcard so new test files trigger CI, but the Run step still requires explicit listing",
     "safeoutputs create_pull_request is blocked for .github/workflows/ changes (protected files); use create_issue instead",
     "test-build-toolchain.sh has 18 tests on main; PR #818 adds 14 more (407->421 total)",
-    "assert_zero_exit / assert_nonzero_exit / assert_exit_status now capture+show output on failure (PR TBD from 2026-05-20 run)"
+    "assert_zero_exit / assert_nonzero_exit / assert_exit_status now capture+show output on failure (PR #823 from 2026-05-20 run)",
+    "build-toolchain.sh stage dispatch uses SKIP_ALL which skips native build; testing stage_is_skipped() output requires mocking sub-build scripts"
   ],
   "checked_off_by_maintainer": []
 }
