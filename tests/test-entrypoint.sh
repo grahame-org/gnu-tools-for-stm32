@@ -148,4 +148,79 @@ _LOG5=$(cat "$_CMAKE_LOG")
 assert_contains "relative SOURCE_DIR: cmake toolchain file is absolute" \
     "$_LOG5" "${_PARENT5}/${_SRC5_NAME}/arm-none-eabi-gcc.cmake"
 
+# ---------------------------------------------------------------------------
+# Group 6: cmake configure flags verification
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "=== Group 6: cmake configure flags ==="
+
+_SRC6="${_TMPDIR}/src-flags"
+_BUILD6="${_TMPDIR}/build-flags"
+mkdir -p "$_SRC6"
+touch "$_SRC6/arm-none-eabi-gcc.cmake"
+
+true > "$_CMAKE_LOG"
+CMAKE_LOG="$_CMAKE_LOG" PATH="${_MOCK_BIN}:${PATH}" sh "$ENTRYPOINT" "$_SRC6" "$_BUILD6" >/dev/null 2>&1
+
+_LOG6=$(cat "$_CMAKE_LOG")
+
+assert_contains "configure: -G flag passed" \
+    "$_LOG6" "-G"
+assert_contains "configure: Unix Makefiles generator specified" \
+    "$_LOG6" "Unix Makefiles"
+assert_contains "configure: CMAKE_C_COMPILER set to arm-none-eabi-gcc" \
+    "$_LOG6" "-DCMAKE_C_COMPILER=arm-none-eabi-gcc"
+assert_contains "configure: CMAKE_CXX_COMPILER set to arm-none-eabi-g++" \
+    "$_LOG6" "-DCMAKE_CXX_COMPILER=arm-none-eabi-g++"
+assert_contains "configure: CMAKE_TOOLCHAIN_FILE flag passed" \
+    "$_LOG6" "-DCMAKE_TOOLCHAIN_FILE="
+assert_contains "configure: -S SOURCE_DIR passed" \
+    "$_LOG6" "-S"
+
+# ---------------------------------------------------------------------------
+# Group 7: cmake --build step flags
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "=== Group 7: cmake build step flags ==="
+
+_SRC7="${_TMPDIR}/src-build-flags"
+_BUILD7="${_TMPDIR}/build-build-flags"
+mkdir -p "$_SRC7"
+touch "$_SRC7/arm-none-eabi-gcc.cmake"
+
+true > "$_CMAKE_LOG"
+CMAKE_LOG="$_CMAKE_LOG" PATH="${_MOCK_BIN}:${PATH}" sh "$ENTRYPOINT" "$_SRC7" "$_BUILD7" >/dev/null 2>&1
+
+_LOG7=$(cat "$_CMAKE_LOG")
+
+assert_contains "cmake --build: receives BUILD_DIR" \
+    "$_LOG7" "$_BUILD7"
+assert_matches "cmake --build: receives -j flag" \
+    "$_LOG7" "^-j[0-9]"
+
+# ---------------------------------------------------------------------------
+# Group 8: cmake failure propagation
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "=== Group 8: cmake failure propagation ==="
+
+_FAIL_BIN="${_TMPDIR}/fail-bin"
+mkdir -p "$_FAIL_BIN"
+cat > "$_FAIL_BIN/cmake" <<'FAILEOF'
+#!/bin/sh
+exit 1
+FAILEOF
+chmod +x "$_FAIL_BIN/cmake"
+
+_SRC8="${_TMPDIR}/src-fail"
+mkdir -p "$_SRC8"
+touch "$_SRC8/arm-none-eabi-gcc.cmake"
+
+_fail_status=0
+CMAKE_LOG="/dev/null" PATH="${_FAIL_BIN}:${PATH}" sh "$ENTRYPOINT" "$_SRC8" "${_TMPDIR}/build-fail" >/dev/null 2>&1 || _fail_status=$?
+assert_ne "cmake configure fails: entrypoint exits non-zero" "0" "$_fail_status"
+
 print_test_results
