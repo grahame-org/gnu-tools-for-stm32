@@ -1,18 +1,22 @@
 {
-  "updated": "2026-05-21T14:20:58Z",
+  "updated": "2026-05-22T13:41:00Z",
   "last_run": {
-    "run_id": "26231782686",
-    "date": "2026-05-21",
-    "tasks": ["T2", "T4", "T7"]
+    "run_id": "26291178366",
+    "date": "2026-05-22",
+    "tasks": [
+      "T3",
+      "T5",
+      "T7"
+    ]
   },
   "task_last_run": {
     "T1": "2026-05-20",
     "T2": "2026-05-21",
-    "T3": "2026-05-18",
+    "T3": "2026-05-22",
     "T4": "2026-05-21",
-    "T5": "2026-05-19",
+    "T5": "2026-05-22",
     "T6": "2026-05-20",
-    "T7": "2026-05-21"
+    "T7": "2026-05-22"
   },
   "bash_test_count_main": 407,
   "bash_test_count_branch_818": 421,
@@ -29,6 +33,12 @@
       "branch": "test-assist/diagnostic-output-on-assert-failure",
       "title": "[Test Improver] test: show command output in assert_zero_exit, assert_nonzero_exit, assert_exit_status on failure",
       "note": "created 2026-05-20; T6 infra improvement; all 407 tests pass on main"
+    },
+    {
+      "number": null,
+      "branch": "test-assist/entrypoint-cmake-flags-and-failure-propagation",
+      "title": "[Test Improver] test: verify cmake flags and failure propagation in test-entrypoint.sh",
+      "note": "created 2026-05-22; +9 tests (407->416); PR number not yet known"
     }
   ],
   "closed_prs": [
@@ -36,7 +46,7 @@
       "number": 792,
       "title": "test: add argument validation tests for build-prerequisites.sh (no CI wiring)",
       "closed": "2026-05-16",
-      "reason": "Dup PR — maintainer kept #790 (with CI wiring) instead"
+      "reason": "Dup PR \u2014 maintainer kept #790 (with CI wiring) instead"
     },
     {
       "number": 786,
@@ -92,7 +102,7 @@
     {
       "number": 816,
       "title": "[Test Improver] ci: wire test-build-gcc-size-libstdcxx.sh into shell-unit-tests and shellcheck",
-      "note": "CI gap fix issue with diff; duplicate of #815 — suggest close one"
+      "note": "CI gap fix issue with diff; duplicate of #815 \u2014 suggest close one"
     }
   ],
   "monthly_issue": {
@@ -104,7 +114,7 @@
     "shellcheck": "shellcheck --severity=info tests/*.sh build-common.sh build-prerequisites.sh build-toolchain.sh"
   },
   "backlog": [
-    "build-toolchain.sh: deeper stage-dispatch coverage (requires mocking build scripts — complex) - medium priority",
+    "build-toolchain.sh: deeper stage-dispatch coverage (requires mocking build scripts \u2014 complex) - medium priority",
     "build-gcc-final.sh / build-gcc-first.sh: arg validation tests (low value - just delegate to parse_toolchain_args)",
     "build-binutils.sh / build-gdb.sh / build-newlib.sh / build-newlib-nano.sh: full build wrappers with minimal testable logic - low priority",
     "Consider: integration test harness for script interactions"
@@ -120,7 +130,9 @@
     "safeoutputs create_pull_request is blocked for .github/workflows/ changes (protected files); use create_issue instead",
     "test-build-toolchain.sh has 18 tests on main; PR #818 adds 14 more (407->421 total)",
     "assert_zero_exit / assert_nonzero_exit / assert_exit_status now capture+show output on failure (PR #823 from 2026-05-20 run)",
-    "build-toolchain.sh stage dispatch uses SKIP_ALL which skips native build; testing stage_is_skipped() output requires mocking sub-build scripts"
+    "build-toolchain.sh stage dispatch uses SKIP_ALL which skips native build; testing stage_is_skipped() output requires mocking sub-build scripts",
+    "2026-05-22: Closed cmake-flags gap in test-entrypoint.sh (+9 tests, 407->416). PR branch: test-assist/entrypoint-cmake-flags-and-failure-propagation (PR# unknown at write time)."
   ],
-  "checked_off_by_maintainer": []
+  "checked_off_by_maintainer": [],
+  "bash_test_count_branch_new_pr": 416
 }
