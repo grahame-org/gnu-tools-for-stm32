@@ -1,22 +1,23 @@
 {
-  "updated": "2026-05-23T12:11:00Z",
+  "updated": "2026-05-24T12:15:00Z",
   "last_run": {
-    "run_id": "26332278689",
-    "date": "2026-05-23",
+    "run_id": "26360924759",
+    "date": "2026-05-24",
     "tasks": [
-      "T1",
       "T4",
+      "T6",
+      "T2",
       "T7"
     ]
   },
   "task_last_run": {
     "T1": "2026-05-23",
-    "T2": "2026-05-21",
+    "T2": "2026-05-24",
     "T3": "2026-05-22",
-    "T4": "2026-05-23",
+    "T4": "2026-05-24",
     "T5": "2026-05-22",
-    "T6": "2026-05-20",
-    "T7": "2026-05-23"
+    "T6": "2026-05-24",
+    "T7": "2026-05-24"
   },
   "bash_test_count_main": 407,
   "python_test_count_main": 22,
@@ -38,6 +39,12 @@
       "branch": "test-assist/entrypoint-cmake-flags-and-failure-propagation",
       "title": "[Test Improver] test: verify cmake flags and failure propagation in test-entrypoint.sh",
       "note": "created 2026-05-22; +9 tests (407->416); CI green"
+    },
+    {
+      "number": "TBD",
+      "branch": "test-assist/path-existence-test-helpers",
+      "title": "[Test Improver] test: add path/file/dir existence assertion helpers to test-helpers.sh",
+      "note": "created 2026-05-24; T6 infra: adds assert_file_exists, assert_file_not_exists, assert_path_not_exists, assert_dir_exists, assert_dir_not_exists; refactors 28 verbose patterns; removes 8 SC2015 warnings; no test count change"
     }
   ],
   "closed_prs": [
@@ -130,7 +137,8 @@
     "test-build-toolchain.sh has 18 tests on main; PR #818 adds 14 more (407->421 total)",
     "assert_zero_exit / assert_nonzero_exit / assert_exit_status now capture+show output on failure (PR #823 from 2026-05-20 run; not yet merged)",
     "build-toolchain.sh stage dispatch uses SKIP_ALL which skips native build; testing stage_is_skipped() output requires mocking sub-build scripts",
-    "2026-05-22: PR #826 confirmed (cmake flags test for test-entrypoint.sh, +9 tests, 407->416); CI green"
+    "2026-05-22: PR #826 confirmed (cmake flags test for test-entrypoint.sh, +9 tests, 407->416); CI green",
+    "2026-05-24: New PR created (branch test-assist/path-existence-test-helpers) — adds 5 path/file/dir existence helpers, refactors 28 verbose patterns in test-build-common.sh and test-pre-cache-clean.sh, removes 8 pre-existing SC2015 shellcheck warnings. PR number TBD (confirm next run)."
   ],
   "checked_off_by_maintainer": []
 }
