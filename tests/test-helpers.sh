@@ -167,6 +167,66 @@ assert_unset() {
     fi
 }
 
+assert_file_exists() {
+    local desc="$1" path="$2"
+    if [ -f "$path" ]; then
+        _PASS=$((_PASS + 1))
+        echo "  PASS: $desc"
+    else
+        _FAIL=$((_FAIL + 1))
+        echo "  FAIL: $desc"
+        echo "        expected file to exist: [$path]"
+    fi
+}
+
+assert_file_not_exists() {
+    local desc="$1" path="$2"
+    if [ ! -f "$path" ]; then
+        _PASS=$((_PASS + 1))
+        echo "  PASS: $desc"
+    else
+        _FAIL=$((_FAIL + 1))
+        echo "  FAIL: $desc"
+        echo "        expected file NOT to exist: [$path]"
+    fi
+}
+
+assert_path_not_exists() {
+    local desc="$1" path="$2"
+    if [ ! -e "$path" ]; then
+        _PASS=$((_PASS + 1))
+        echo "  PASS: $desc"
+    else
+        _FAIL=$((_FAIL + 1))
+        echo "  FAIL: $desc"
+        echo "        expected path NOT to exist: [$path]"
+    fi
+}
+
+assert_dir_exists() {
+    local desc="$1" path="$2"
+    if [ -d "$path" ]; then
+        _PASS=$((_PASS + 1))
+        echo "  PASS: $desc"
+    else
+        _FAIL=$((_FAIL + 1))
+        echo "  FAIL: $desc"
+        echo "        expected directory to exist: [$path]"
+    fi
+}
+
+assert_dir_not_exists() {
+    local desc="$1" path="$2"
+    if [ ! -d "$path" ]; then
+        _PASS=$((_PASS + 1))
+        echo "  PASS: $desc"
+    else
+        _FAIL=$((_FAIL + 1))
+        echo "  FAIL: $desc"
+        echo "        expected directory NOT to exist: [$path]"
+    fi
+}
+
 print_test_results() {
     echo ""
     echo "Results: $_PASS passed, $_FAIL failed"

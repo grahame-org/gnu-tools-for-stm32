@@ -163,18 +163,12 @@ echo "keep" > "$_ROOT5/bin/keep"
 
 bash "$SCRIPT" "$_ROOT5" >/dev/null 2>&1
 
-assert_eq "share/man removed" "absent" \
-    "$([ -d "$_ROOT5/share/man" ] && echo present || echo absent)"
-assert_eq "share/info removed" "absent" \
-    "$([ -d "$_ROOT5/share/info" ] && echo present || echo absent)"
-assert_eq "share/locale removed" "absent" \
-    "$([ -d "$_ROOT5/share/locale" ] && echo present || echo absent)"
-assert_eq "share/doc removed" "absent" \
-    "$([ -d "$_ROOT5/share/doc" ] && echo present || echo absent)"
-assert_eq "arm-none-eabi/share removed" "absent" \
-    "$([ -d "$_ROOT5/arm-none-eabi/share" ] && echo present || echo absent)"
-assert_eq "bin/keep not removed" "present" \
-    "$([ -f "$_ROOT5/bin/keep" ] && echo present || echo absent)"
+assert_dir_not_exists "share/man removed" "$_ROOT5/share/man"
+assert_dir_not_exists "share/info removed" "$_ROOT5/share/info"
+assert_dir_not_exists "share/locale removed" "$_ROOT5/share/locale"
+assert_dir_not_exists "share/doc removed" "$_ROOT5/share/doc"
+assert_dir_not_exists "arm-none-eabi/share removed" "$_ROOT5/arm-none-eabi/share"
+assert_file_exists "bin/keep not removed" "$_ROOT5/bin/keep"
 
 # ---------------------------------------------------------------------------
 # Test group 6: .la files are removed
