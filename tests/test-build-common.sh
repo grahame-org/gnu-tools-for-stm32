@@ -296,22 +296,22 @@ assert_eq "copy_dir_clean copies regular file" \
     "keep me" "$(cat "$_CDC_TMPDIR/dst/normal.txt")"
 assert_eq "copy_dir_clean copies nested file in regular subdir" \
     "keep me too" "$(cat "$_CDC_TMPDIR/dst/normal_subdir/child.txt")"
-assert_eq "copy_dir_clean excludes .git directory" \
-    "" "$([ -e "$_CDC_TMPDIR/dst/.git" ] && echo "exists" || true)"
-assert_eq "copy_dir_clean excludes CVS directory" \
-    "" "$([ -e "$_CDC_TMPDIR/dst/CVS" ] && echo "exists" || true)"
-assert_eq "copy_dir_clean excludes .svn directory" \
-    "" "$([ -e "$_CDC_TMPDIR/dst/.svn" ] && echo "exists" || true)"
-assert_eq "copy_dir_clean excludes .pc directory" \
-    "" "$([ -e "$_CDC_TMPDIR/dst/.pc" ] && echo "exists" || true)"
-assert_eq "copy_dir_clean excludes *~ backup files" \
-    "" "$([ -e "$_CDC_TMPDIR/dst/file.txt~" ] && echo "exists" || true)"
-assert_eq "copy_dir_clean excludes *.orig files" \
-    "" "$([ -e "$_CDC_TMPDIR/dst/patch.orig" ] && echo "exists" || true)"
-assert_eq "copy_dir_clean excludes *.rej files" \
-    "" "$([ -e "$_CDC_TMPDIR/dst/patch.rej" ] && echo "exists" || true)"
-assert_eq "copy_dir_clean excludes .#* emacs lock files" \
-    "" "$([ -e "$_CDC_TMPDIR/dst/.#lockfile" ] && echo "exists" || true)"
+assert_path_not_exists "copy_dir_clean excludes .git directory" \
+    "$_CDC_TMPDIR/dst/.git"
+assert_path_not_exists "copy_dir_clean excludes CVS directory" \
+    "$_CDC_TMPDIR/dst/CVS"
+assert_path_not_exists "copy_dir_clean excludes .svn directory" \
+    "$_CDC_TMPDIR/dst/.svn"
+assert_path_not_exists "copy_dir_clean excludes .pc directory" \
+    "$_CDC_TMPDIR/dst/.pc"
+assert_path_not_exists "copy_dir_clean excludes *~ backup files" \
+    "$_CDC_TMPDIR/dst/file.txt~"
+assert_path_not_exists "copy_dir_clean excludes *.orig files" \
+    "$_CDC_TMPDIR/dst/patch.orig"
+assert_path_not_exists "copy_dir_clean excludes *.rej files" \
+    "$_CDC_TMPDIR/dst/patch.rej"
+assert_path_not_exists "copy_dir_clean excludes .#* emacs lock files" \
+    "$_CDC_TMPDIR/dst/.#lockfile"
 
 rm -rf "$_CDC_TMPDIR"
 
@@ -439,28 +439,28 @@ copy_multi_libs \
     target_gcc="${_CML_TMPDIR}/mock-gcc"
 
 # --- root multilib: renamed library files ---
-assert_eq "copy_multi_libs root: libstdc++_nano.a created" \
-    "yes" "$([ -f "${_CML_TMPDIR}/dst/libstdc++_nano.a" ] && echo yes || echo no)"
-assert_eq "copy_multi_libs root: libsupc++_nano.a created" \
-    "yes" "$([ -f "${_CML_TMPDIR}/dst/libsupc++_nano.a" ] && echo yes || echo no)"
-assert_eq "copy_multi_libs root: libc_nano.a created" \
-    "yes" "$([ -f "${_CML_TMPDIR}/dst/libc_nano.a" ] && echo yes || echo no)"
-assert_eq "copy_multi_libs root: libg_nano.a created" \
-    "yes" "$([ -f "${_CML_TMPDIR}/dst/libg_nano.a" ] && echo yes || echo no)"
-assert_eq "copy_multi_libs root: librdimon_nano.a created" \
-    "yes" "$([ -f "${_CML_TMPDIR}/dst/librdimon_nano.a" ] && echo yes || echo no)"
-assert_eq "copy_multi_libs root: librdimon-v2m_nano.a created" \
-    "yes" "$([ -f "${_CML_TMPDIR}/dst/librdimon-v2m_nano.a" ] && echo yes || echo no)"
+assert_file_exists "copy_multi_libs root: libstdc++_nano.a created" \
+    "${_CML_TMPDIR}/dst/libstdc++_nano.a"
+assert_file_exists "copy_multi_libs root: libsupc++_nano.a created" \
+    "${_CML_TMPDIR}/dst/libsupc++_nano.a"
+assert_file_exists "copy_multi_libs root: libc_nano.a created" \
+    "${_CML_TMPDIR}/dst/libc_nano.a"
+assert_file_exists "copy_multi_libs root: libg_nano.a created" \
+    "${_CML_TMPDIR}/dst/libg_nano.a"
+assert_file_exists "copy_multi_libs root: librdimon_nano.a created" \
+    "${_CML_TMPDIR}/dst/librdimon_nano.a"
+assert_file_exists "copy_multi_libs root: librdimon-v2m_nano.a created" \
+    "${_CML_TMPDIR}/dst/librdimon-v2m_nano.a"
 
 # --- root multilib: spec files and crt0 ---
-assert_eq "copy_multi_libs root: nano.specs copied" \
-    "yes" "$([ -f "${_CML_TMPDIR}/dst/nano.specs" ] && echo yes || echo no)"
-assert_eq "copy_multi_libs root: rdimon.specs copied" \
-    "yes" "$([ -f "${_CML_TMPDIR}/dst/rdimon.specs" ] && echo yes || echo no)"
-assert_eq "copy_multi_libs root: nosys.specs copied" \
-    "yes" "$([ -f "${_CML_TMPDIR}/dst/nosys.specs" ] && echo yes || echo no)"
-assert_eq "copy_multi_libs root: crt0.o copied" \
-    "yes" "$([ -f "${_CML_TMPDIR}/dst/crt0.o" ] && echo yes || echo no)"
+assert_file_exists "copy_multi_libs root: nano.specs copied" \
+    "${_CML_TMPDIR}/dst/nano.specs"
+assert_file_exists "copy_multi_libs root: rdimon.specs copied" \
+    "${_CML_TMPDIR}/dst/rdimon.specs"
+assert_file_exists "copy_multi_libs root: nosys.specs copied" \
+    "${_CML_TMPDIR}/dst/nosys.specs"
+assert_file_exists "copy_multi_libs root: crt0.o copied" \
+    "${_CML_TMPDIR}/dst/crt0.o"
 
 # --- root multilib: source content is preserved ---
 assert_eq "copy_multi_libs root: libstdc++_nano.a preserves content" \
@@ -468,14 +468,14 @@ assert_eq "copy_multi_libs root: libstdc++_nano.a preserves content" \
 
 # --- nested multilib ---
 _CML_NESTED="thumb/v8-m.main/fp"
-assert_eq "copy_multi_libs nested: libstdc++_nano.a created" \
-    "yes" "$([ -f "${_CML_TMPDIR}/dst/${_CML_NESTED}/libstdc++_nano.a" ] && echo yes || echo no)"
-assert_eq "copy_multi_libs nested: libc_nano.a created" \
-    "yes" "$([ -f "${_CML_TMPDIR}/dst/${_CML_NESTED}/libc_nano.a" ] && echo yes || echo no)"
-assert_eq "copy_multi_libs nested: nano.specs copied" \
-    "yes" "$([ -f "${_CML_TMPDIR}/dst/${_CML_NESTED}/nano.specs" ] && echo yes || echo no)"
-assert_eq "copy_multi_libs nested: crt0.o copied" \
-    "yes" "$([ -f "${_CML_TMPDIR}/dst/${_CML_NESTED}/crt0.o" ] && echo yes || echo no)"
+assert_file_exists "copy_multi_libs nested: libstdc++_nano.a created" \
+    "${_CML_TMPDIR}/dst/${_CML_NESTED}/libstdc++_nano.a"
+assert_file_exists "copy_multi_libs nested: libc_nano.a created" \
+    "${_CML_TMPDIR}/dst/${_CML_NESTED}/libc_nano.a"
+assert_file_exists "copy_multi_libs nested: nano.specs copied" \
+    "${_CML_TMPDIR}/dst/${_CML_NESTED}/nano.specs"
+assert_file_exists "copy_multi_libs nested: crt0.o copied" \
+    "${_CML_TMPDIR}/dst/${_CML_NESTED}/crt0.o"
 
 # --- empty print-multi-lib: function is a no-op (exits 0) ---
 cat > "${_CML_TMPDIR}/empty-gcc" << 'EMPTY_GCC_EOF'
