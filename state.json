@@ -1,23 +1,23 @@
 {
-  "updated": "2026-05-24T12:15:00Z",
+  "updated": "2026-05-25T14:20:00Z",
   "last_run": {
-    "run_id": "26360924759",
-    "date": "2026-05-24",
+    "run_id": "26405076308",
+    "date": "2026-05-25",
     "tasks": [
       "T4",
-      "T6",
-      "T2",
+      "T5",
+      "T3",
       "T7"
     ]
   },
   "task_last_run": {
     "T1": "2026-05-23",
     "T2": "2026-05-24",
-    "T3": "2026-05-22",
-    "T4": "2026-05-24",
-    "T5": "2026-05-22",
+    "T3": "2026-05-25",
+    "T4": "2026-05-25",
+    "T5": "2026-05-25",
     "T6": "2026-05-24",
-    "T7": "2026-05-24"
+    "T7": "2026-05-25"
   },
   "bash_test_count_main": 407,
   "python_test_count_main": 22,
@@ -41,10 +41,16 @@
       "note": "created 2026-05-22; +9 tests (407->416); CI green"
     },
     {
-      "number": "TBD",
+      "number": 828,
       "branch": "test-assist/path-existence-test-helpers",
       "title": "[Test Improver] test: add path/file/dir existence assertion helpers to test-helpers.sh",
-      "note": "created 2026-05-24; T6 infra: adds assert_file_exists, assert_file_not_exists, assert_path_not_exists, assert_dir_exists, assert_dir_not_exists; refactors 28 verbose patterns; removes 8 SC2015 warnings; no test count change"
+      "note": "created 2026-05-24; T6 infra: adds assert_file_exists, assert_file_not_exists, assert_path_not_exists, assert_dir_exists, assert_dir_not_exists; refactors 28 verbose patterns; removes 8 SC2015 warnings; CI green"
+    },
+    {
+      "number": "TBD",
+      "branch": "test-assist/clean-env-tests",
+      "title": "[Test Improver] test: add clean_env unit tests to test-build-common.sh",
+      "note": "created 2026-05-25; T3: adds 8 tests for clean_env() whitelist logic in build-common.sh; +8 tests (407->415); PR number TBD"
     }
   ],
   "closed_prs": [
@@ -138,7 +144,8 @@
     "assert_zero_exit / assert_nonzero_exit / assert_exit_status now capture+show output on failure (PR #823 from 2026-05-20 run; not yet merged)",
     "build-toolchain.sh stage dispatch uses SKIP_ALL which skips native build; testing stage_is_skipped() output requires mocking sub-build scripts",
     "2026-05-22: PR #826 confirmed (cmake flags test for test-entrypoint.sh, +9 tests, 407->416); CI green",
-    "2026-05-24: New PR created (branch test-assist/path-existence-test-helpers) — adds 5 path/file/dir existence helpers, refactors 28 verbose patterns in test-build-common.sh and test-pre-cache-clean.sh, removes 8 pre-existing SC2015 shellcheck warnings. PR number TBD (confirm next run)."
+    "2026-05-24: PR #828 confirmed (branch test-assist/path-existence-test-helpers-f5926b6058e2c0d9) — adds 5 path/file/dir existence helpers, refactors 28 verbose patterns in test-build-common.sh and test-pre-cache-clean.sh, removes 8 pre-existing SC2015 shellcheck warnings.",
+    "2026-05-25: New PR created (branch test-assist/clean-env-tests) — adds 8 clean_env() unit tests to test-build-common.sh covering whitelist (PATH, HOME, SHELL, WORKSPACE, SRC_VERSION), uppercase removal, lowercase preservation. PR number TBD."
   ],
   "checked_off_by_maintainer": []
 }
