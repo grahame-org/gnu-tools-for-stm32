@@ -495,6 +495,88 @@ rm -rf "${_CML_NOOP_TMPDIR}"
 rm -rf "$_CML_TMPDIR"
 
 # ---------------------------------------------------------------------------
+# Test group 15: clean_env
+#
+# clean_env() scrubs exported uppercase variables from the shell environment,
+# keeping a fixed whitelist (PATH, HOME, SHELL, etc.).  Each test runs in a
+# subshell so the parent test process environment is not disturbed.
+# ---------------------------------------------------------------------------
+
+echo ""
+echo "=== Group 15: clean_env ==="
+
+# Non-whitelisted uppercase variable is removed.
+_ce1=$(bash -c \
+    '. "$1/build-common.sh"
+     export TEST_CLEAN_ENV_XYZZY=sentinel
+     clean_env
+     echo "${TEST_CLEAN_ENV_XYZZY:-cleared}"' \
+    _ "$REPO_ROOT")
+assert_eq "clean_env removes non-whitelisted uppercase variable" "cleared" "$_ce1"
+
+# PATH is preserved (explicitly whitelisted).
+_ce2=$(bash -c \
+    '. "$1/build-common.sh"
+     clean_env
+     echo "${PATH:+present}"' \
+    _ "$REPO_ROOT")
+assert_eq "clean_env preserves PATH (whitelisted)" "present" "$_ce2"
+
+# HOME is preserved (explicitly whitelisted).
+_ce3=$(bash -c \
+    '. "$1/build-common.sh"
+     clean_env
+     echo "${HOME:+present}"' \
+    _ "$REPO_ROOT")
+assert_eq "clean_env preserves HOME (whitelisted)" "present" "$_ce3"
+
+# SHELL is preserved (explicitly whitelisted).
+_ce4=$(bash -c \
+    '. "$1/build-common.sh"
+     clean_env
+     echo "${SHELL:+present}"' \
+    _ "$REPO_ROOT")
+assert_eq "clean_env preserves SHELL (whitelisted)" "present" "$_ce4"
+
+# An exported all-lowercase variable is not touched (only names with uppercase
+# characters reach the unset loop).
+_ce5=$(bash -c \
+    '. "$1/build-common.sh"
+     export testcleanenvlower=sentinel
+     clean_env
+     echo "${testcleanenvlower:-gone}"' \
+    _ "$REPO_ROOT")
+assert_eq "clean_env leaves exported lowercase variable untouched" "sentinel" "$_ce5"
+
+# WORKSPACE is preserved when set (explicitly whitelisted).
+_ce6=$(bash -c \
+    '. "$1/build-common.sh"
+     export WORKSPACE=/some/path
+     clean_env
+     echo "${WORKSPACE:-cleared}"' \
+    _ "$REPO_ROOT")
+assert_eq "clean_env preserves WORKSPACE (whitelisted)" "/some/path" "$_ce6"
+
+# SRC_VERSION is preserved when set (explicitly whitelisted).
+_ce7=$(bash -c \
+    '. "$1/build-common.sh"
+     export SRC_VERSION=1.2.3
+     clean_env
+     echo "${SRC_VERSION:-cleared}"' \
+    _ "$REPO_ROOT")
+assert_eq "clean_env preserves SRC_VERSION (whitelisted)" "1.2.3" "$_ce7"
+
+# Multiple non-whitelisted uppercase variables are all removed in a single call.
+_ce8=$(bash -c \
+    '. "$1/build-common.sh"
+     export CLEAN_ENV_ALPHA=a CLEAN_ENV_BETA=b
+     clean_env
+     echo "${CLEAN_ENV_ALPHA:-cleared}:${CLEAN_ENV_BETA:-cleared}"' \
+    _ "$REPO_ROOT")
+assert_eq "clean_env removes multiple non-whitelisted variables in one call" \
+    "cleared:cleared" "$_ce8"
+
+# ---------------------------------------------------------------------------
 # Summary
 # ---------------------------------------------------------------------------
 
