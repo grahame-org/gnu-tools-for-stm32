@@ -1,23 +1,18 @@
 {
-  "updated": "2026-05-25T14:20:00Z",
+  "updated": "2026-05-26T14:13:00Z",
   "last_run": {
-    "run_id": "26405076308",
-    "date": "2026-05-25",
-    "tasks": [
-      "T4",
-      "T5",
-      "T3",
-      "T7"
-    ]
+    "run_id": "26453425466",
+    "date": "2026-05-26",
+    "tasks": ["T1", "T4", "T7"]
   },
   "task_last_run": {
-    "T1": "2026-05-23",
+    "T1": "2026-05-26",
     "T2": "2026-05-24",
     "T3": "2026-05-25",
-    "T4": "2026-05-25",
+    "T4": "2026-05-26",
     "T5": "2026-05-25",
     "T6": "2026-05-24",
-    "T7": "2026-05-25"
+    "T7": "2026-05-26"
   },
   "bash_test_count_main": 407,
   "python_test_count_main": 22,
@@ -47,10 +42,10 @@
       "note": "created 2026-05-24; T6 infra: adds assert_file_exists, assert_file_not_exists, assert_path_not_exists, assert_dir_exists, assert_dir_not_exists; refactors 28 verbose patterns; removes 8 SC2015 warnings; CI green"
     },
     {
-      "number": "TBD",
+      "number": 830,
       "branch": "test-assist/clean-env-tests",
       "title": "[Test Improver] test: add clean_env unit tests to test-build-common.sh",
-      "note": "created 2026-05-25; T3: adds 8 tests for clean_env() whitelist logic in build-common.sh; +8 tests (407->415); PR number TBD"
+      "note": "created 2026-05-25; T3: adds 8 tests for clean_env() whitelist logic in build-common.sh; +8 tests (407->415); CI green"
     }
   ],
   "closed_prs": [
@@ -145,7 +140,8 @@
     "build-toolchain.sh stage dispatch uses SKIP_ALL which skips native build; testing stage_is_skipped() output requires mocking sub-build scripts",
     "2026-05-22: PR #826 confirmed (cmake flags test for test-entrypoint.sh, +9 tests, 407->416); CI green",
     "2026-05-24: PR #828 confirmed (branch test-assist/path-existence-test-helpers-f5926b6058e2c0d9) — adds 5 path/file/dir existence helpers, refactors 28 verbose patterns in test-build-common.sh and test-pre-cache-clean.sh, removes 8 pre-existing SC2015 shellcheck warnings.",
-    "2026-05-25: New PR created (branch test-assist/clean-env-tests) — adds 8 clean_env() unit tests to test-build-common.sh covering whitelist (PATH, HOME, SHELL, WORKSPACE, SRC_VERSION), uppercase removal, lowercase preservation. PR number TBD."
+    "2026-05-25: PR #830 confirmed (branch test-assist/clean-env-tests-76c31fa1255fedf2) — adds 8 clean_env() unit tests to test-build-common.sh covering whitelist (PATH, HOME, SHELL, WORKSPACE, SRC_VERSION), uppercase removal, lowercase preservation. CI green.",
+    "2026-05-26: 5 open PRs all CI green; 407 test baseline confirmed on main"
   ],
   "checked_off_by_maintainer": []
 }
