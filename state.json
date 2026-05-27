@@ -1,20 +1,20 @@
 {
-  "updated": "2026-05-26T14:13:00Z",
+  "updated": "2026-05-27T14:37:00Z",
   "last_run": {
-    "run_id": "26453425466",
-    "date": "2026-05-26",
-    "tasks": ["T1", "T4", "T7"]
+    "run_id": "26517932493",
+    "date": "2026-05-27",
+    "tasks": ["T2", "T7"]
   },
   "task_last_run": {
     "T1": "2026-05-26",
-    "T2": "2026-05-24",
+    "T2": "2026-05-27",
     "T3": "2026-05-25",
     "T4": "2026-05-26",
     "T5": "2026-05-25",
     "T6": "2026-05-24",
-    "T7": "2026-05-26"
+    "T7": "2026-05-27"
   },
-  "bash_test_count_main": 407,
+  "bash_test_count_main": 420,
   "python_test_count_main": 22,
   "open_prs": [
     {
@@ -128,20 +128,21 @@
   ],
   "notes": [
     "All 6 big PRs (#786, #790, #796, #798, #801, #803) merged by maintainer on 2026-05-16 - queue is now mostly empty",
-    "New bash test baseline on main: 407 (was 334 before merges)",
+    "Corrected bash test baseline on main: 420 (test-strip-binary.sh 13 tests was undercounted; prior memory said 407)",
     "CI gap: test-build-gcc-size-libstdcxx.sh NOT in shell-unit-tests.yml run list or shellcheck.yml; fix requires manual PR (workflow write blocked); instructions in #815/#816",
     "Duplicate CI gap issues: #815 and #816 both describe same fix; suggest maintainer close one",
     "--skip_steps=native,mingw exits build-prerequisites.sh at ~line 225 without build work (safe for tests)",
     "Use _out=$(bash script 2>&1) || _status=$? not piped through grep (loses exit code)",
     "shell-unit-tests.yml paths-filter uses tests/** wildcard so new test files trigger CI, but the Run step still requires explicit listing",
     "safeoutputs create_pull_request is blocked for .github/workflows/ changes (protected files); use create_issue instead",
-    "test-build-toolchain.sh has 18 tests on main; PR #818 adds 14 more (407->421 total)",
+    "test-build-toolchain.sh has 18 tests on main; PR #818 adds 14 more",
     "assert_zero_exit / assert_nonzero_exit / assert_exit_status now capture+show output on failure (PR #823 from 2026-05-20 run; not yet merged)",
     "build-toolchain.sh stage dispatch uses SKIP_ALL which skips native build; testing stage_is_skipped() output requires mocking sub-build scripts",
-    "2026-05-22: PR #826 confirmed (cmake flags test for test-entrypoint.sh, +9 tests, 407->416); CI green",
-    "2026-05-24: PR #828 confirmed (branch test-assist/path-existence-test-helpers-f5926b6058e2c0d9) — adds 5 path/file/dir existence helpers, refactors 28 verbose patterns in test-build-common.sh and test-pre-cache-clean.sh, removes 8 pre-existing SC2015 shellcheck warnings.",
-    "2026-05-25: PR #830 confirmed (branch test-assist/clean-env-tests-76c31fa1255fedf2) — adds 8 clean_env() unit tests to test-build-common.sh covering whitelist (PATH, HOME, SHELL, WORKSPACE, SRC_VERSION), uppercase removal, lowercase preservation. CI green.",
-    "2026-05-26: 5 open PRs all CI green; 407 test baseline confirmed on main"
+    "2026-05-22: PR #826 confirmed (cmake flags test for test-entrypoint.sh, +9 tests); CI green",
+    "2026-05-24: PR #828 confirmed — adds 5 path/file/dir existence helpers, refactors 28 verbose patterns in test-build-common.sh and test-pre-cache-clean.sh, removes 8 pre-existing SC2015 shellcheck warnings.",
+    "2026-05-25: PR #830 confirmed — adds 8 clean_env() unit tests to test-build-common.sh covering whitelist (PATH, HOME, SHELL, WORKSPACE, SRC_VERSION), uppercase removal, lowercase preservation. CI green.",
+    "2026-05-27: Baseline corrected to 420 tests (not 407). test-strip-binary.sh had 13 tests not counted in earlier estimate.",
+    "2026-05-27: 5 open PRs all CI green; no new commits on main since 2026-05-16; backlog unchanged"
   ],
   "checked_off_by_maintainer": []
 }
