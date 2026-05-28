@@ -141,7 +141,7 @@ assert_zero_exit "GITHUB_STEP_SUMMARY file is created when variable is set" \
     test -f "${_SUMMARY_FILE}"
 
 summary_content=$(cat "${_SUMMARY_FILE}")
-assert_ne "GITHUB_STEP_SUMMARY is non-empty" "" "${summary_content}"
+assert_nonempty "GITHUB_STEP_SUMMARY is non-empty" "${summary_content}"
 assert_contains "GITHUB_STEP_SUMMARY contains table heading" \
     "${summary_content}" "Cache Budget Validation"
 assert_contains "GITHUB_STEP_SUMMARY mentions install-native" \

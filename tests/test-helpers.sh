@@ -167,6 +167,29 @@ assert_unset() {
     fi
 }
 
+assert_empty() {
+    local desc="$1" actual="$2"
+    if [ -z "$actual" ]; then
+        _PASS=$((_PASS + 1))
+        echo "  PASS: $desc"
+    else
+        _FAIL=$((_FAIL + 1))
+        echo "  FAIL: $desc"
+        echo "        expected empty, got: [$actual]"
+    fi
+}
+
+assert_nonempty() {
+    local desc="$1" actual="$2"
+    if [ -n "$actual" ]; then
+        _PASS=$((_PASS + 1))
+        echo "  PASS: $desc"
+    else
+        _FAIL=$((_FAIL + 1))
+        echo "  FAIL: $desc (expected non-empty, was empty)"
+    fi
+}
+
 print_test_results() {
     echo ""
     echo "Results: $_PASS passed, $_FAIL failed"

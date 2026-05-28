@@ -65,17 +65,17 @@ echo "=== Group 1: Wrong argument counts ==="
 reset_strip_log
 STRIP_LOG="$_STRIP_LOG" strip_binary 2>/dev/null; _ret=$?
 assert_eq "0 args: returns 0" "0" "$_ret"
-assert_eq "0 args: strip not called" "" "$([ -f "$_STRIP_LOG" ] && echo called || true)"
+assert_empty "0 args: strip not called" "$([ -f "$_STRIP_LOG" ] && echo called || true)"
 
 reset_strip_log
 STRIP_LOG="$_STRIP_LOG" strip_binary "$_MOCK_STRIP" 2>/dev/null; _ret=$?
 assert_eq "1 arg: returns 0" "0" "$_ret"
-assert_eq "1 arg: strip not called" "" "$([ -f "$_STRIP_LOG" ] && echo called || true)"
+assert_empty "1 arg: strip not called" "$([ -f "$_STRIP_LOG" ] && echo called || true)"
 
 reset_strip_log
 STRIP_LOG="$_STRIP_LOG" strip_binary "$_MOCK_STRIP" /some/file extra_arg 2>/dev/null; _ret=$?
 assert_eq "3 args: returns 0" "0" "$_ret"
-assert_eq "3 args: strip not called" "" "$([ -f "$_STRIP_LOG" ] && echo called || true)"
+assert_empty "3 args: strip not called" "$([ -f "$_STRIP_LOG" ] && echo called || true)"
 
 # ---------------------------------------------------------------------------
 # Test group 2: Non-binary files → strip not called
@@ -89,14 +89,14 @@ echo "hello world" > "$_TEXT_FILE"
 
 reset_strip_log
 STRIP_LOG="$_STRIP_LOG" strip_binary "$_MOCK_STRIP" "$_TEXT_FILE"
-assert_eq "plain text file: strip not called" "" "$([ -f "$_STRIP_LOG" ] && echo called || true)"
+assert_empty "plain text file: strip not called" "$([ -f "$_STRIP_LOG" ] && echo called || true)"
 
 _EMPTY_FILE="$_SB_TMPDIR/empty"
 : > "$_EMPTY_FILE"
 
 reset_strip_log
 STRIP_LOG="$_STRIP_LOG" strip_binary "$_MOCK_STRIP" "$_EMPTY_FILE"
-assert_eq "empty file: strip not called" "" "$([ -f "$_STRIP_LOG" ] && echo called || true)"
+assert_empty "empty file: strip not called" "$([ -f "$_STRIP_LOG" ] && echo called || true)"
 
 # ---------------------------------------------------------------------------
 # Test group 3: ELF binary → strip is called with correct path
@@ -126,7 +126,7 @@ _NOEXIST="$_SB_TMPDIR/no_such_file"
 
 reset_strip_log
 STRIP_LOG="$_STRIP_LOG" strip_binary "$_MOCK_STRIP" "$_NOEXIST" 2>/dev/null
-assert_eq "non-existent file: strip not called" "" "$([ -f "$_STRIP_LOG" ] && echo called || true)"
+assert_empty "non-existent file: strip not called" "$([ -f "$_STRIP_LOG" ] && echo called || true)"
 
 # ---------------------------------------------------------------------------
 # Test group 5: Strip command exits non-zero → silently ignored (|| true)

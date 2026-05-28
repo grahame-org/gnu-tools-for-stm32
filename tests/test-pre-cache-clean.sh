@@ -63,7 +63,7 @@ assert_zero_exit "non-existent dir: exits 0" bash "$SCRIPT" "$_NOEXIST"
 
 # Verify warning is printed to stderr
 _warn_out=$( bash "$SCRIPT" "$_NOEXIST" 2>&1 1>/dev/null )
-assert_ne "non-existent dir: warning printed" "" "$_warn_out"
+assert_nonempty "non-existent dir: warning printed" "$_warn_out"
 
 # ---------------------------------------------------------------------------
 # Test group 3: ELF binaries in bin/ are stripped

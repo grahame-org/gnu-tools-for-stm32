@@ -81,7 +81,7 @@ PATH="$_EMPTYBIN" "${BASH}" "$SCRIPT" "$_DIR4" >/dev/null 2>/dev/null || _exit4=
 assert_eq "tools absent: exits 0" "0" "$_exit4"
 
 _stderr4=$(PATH="$_EMPTYBIN" "${BASH}" "$SCRIPT" "$_DIR4" 2>&1 1>/dev/null)
-assert_ne "tools absent: warning printed to stderr" "" "$_stderr4"
+assert_nonempty "tools absent: warning printed to stderr" "$_stderr4"
 
 # ---------------------------------------------------------------------------
 # Summary

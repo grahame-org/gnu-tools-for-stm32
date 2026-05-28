@@ -113,7 +113,7 @@ assert_eq "CACHE_MISS=false → cache-hit=true" "true" \
     "$(run_set_cache_hit_output "false")"
 assert_eq "CACHE_MISS='' → cache-hit=true" "true" \
     "$(run_set_cache_hit_output "")"
-assert_eq "CACHE_MISS=true → cache-hit='' (empty)" "" \
+assert_empty "CACHE_MISS=true → cache-hit='' (empty)" \
     "$(run_set_cache_hit_output "true")"
 
 # ---------------------------------------------------------------------------
@@ -172,7 +172,7 @@ run_build_stage() {
 
 # build-time-seconds is written to GITHUB_OUTPUT.
 _bts=$(run_build_stage "")
-assert_ne "empty args: build-time-seconds written to GITHUB_OUTPUT" "" "$_bts"
+assert_nonempty "empty args: build-time-seconds written to GITHUB_OUTPUT" "$_bts"
 
 # build-time-seconds is an integer.
 case "$_bts" in
@@ -214,7 +214,7 @@ JOBS_LOG="$_JOBS_LOG" \
 GITHUB_OUTPUT="$_gh_out" \
 bash "$_RUN_SCRIPT"
 _jobs_val=$(cat "$_JOBS_LOG")
-assert_ne "JOBS exported to build script and non-empty" "" "$_jobs_val"
+assert_nonempty "JOBS exported to build script and non-empty" "$_jobs_val"
 case "$_jobs_val" in
     ''|*[!0-9]*) assert_eq "JOBS exported to build script is numeric" "numeric" "non-numeric" ;;
     *)           assert_eq "JOBS exported to build script is numeric" "numeric" "numeric" ;;
