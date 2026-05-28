@@ -28,7 +28,7 @@ assert_eq "--skip_steps=manual,strip produces space-separated value" \
     "manual strip" "$skip_steps"
 
 parse_toolchain_args --skip_steps=
-assert_eq "--skip_steps= (empty) produces empty variable" "" "$skip_steps"
+assert_empty "--skip_steps= (empty) produces empty variable" "$skip_steps"
 
 parse_toolchain_args --skip_steps=manual,package_bins,strip
 assert_eq "--skip_steps=manual sets skip_manual=yes" "yes" "$skip_manual"
@@ -74,7 +74,7 @@ assert_eq "--skip_stages=binutils,gcc-first produces space-separated value" \
     "binutils gcc-first" "$skip_stages"
 
 parse_toolchain_args --skip_stages=
-assert_eq "--skip_stages= (empty) produces empty variable" "" "$skip_stages"
+assert_empty "--skip_stages= (empty) produces empty variable" "$skip_stages"
 
 parse_toolchain_args --skip_stages=newlib
 assert_eq "--skip_stages=newlib sets skip_stages=newlib" "newlib" "$skip_stages"
@@ -121,9 +121,9 @@ echo ""
 echo "=== Group 4: defaults when no flags given ==="
 
 parse_toolchain_args
-assert_eq "default skip_steps is empty"       ""    "$skip_steps"
-assert_eq "default skip_stages is empty"      ""    "$skip_stages"
-assert_eq "default build_type is empty"       ""    "$build_type"
+assert_empty "default skip_steps is empty"       "$skip_steps"
+assert_empty "default skip_stages is empty"      "$skip_stages"
+assert_empty "default build_type is empty"       "$build_type"
 assert_eq "default is_native_build=yes"       "yes" "$is_native_build"
 assert_eq "default is_ppa_release=no"         "no"  "$is_ppa_release"
 assert_eq "default is_debug_build=no"         "no"  "$is_debug_build"
@@ -211,9 +211,9 @@ parse_toolchain_args --build_type=ppa,debug \
     --skip_stages=binutils --with-multilib-list=rmprofile
 # Now call again with no args — everything should revert to defaults
 parse_toolchain_args
-assert_eq "reset: skip_steps is empty"              "" "$skip_steps"
-assert_eq "reset: skip_stages is empty"             "" "$skip_stages"
-assert_eq "reset: build_type is empty"              "" "$build_type"
+assert_empty "reset: skip_steps is empty"              "$skip_steps"
+assert_empty "reset: skip_stages is empty"             "$skip_stages"
+assert_empty "reset: build_type is empty"              "$build_type"
 assert_eq "reset: is_native_build=yes"              "yes" "$is_native_build"
 assert_eq "reset: is_ppa_release=no"                "no" "$is_ppa_release"
 assert_eq "reset: is_debug_build=no"                "no" "$is_debug_build"
