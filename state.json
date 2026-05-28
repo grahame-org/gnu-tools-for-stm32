@@ -1,20 +1,20 @@
 {
-  "updated": "2026-05-27T14:37:00Z",
+  "updated": "2026-05-28T14:47:00Z",
   "last_run": {
-    "run_id": "26517932493",
-    "date": "2026-05-27",
-    "tasks": ["T2", "T7"]
+    "run_id": "26582007298",
+    "date": "2026-05-28",
+    "tasks": ["T6", "T4", "T7"]
   },
   "task_last_run": {
     "T1": "2026-05-26",
     "T2": "2026-05-27",
     "T3": "2026-05-25",
-    "T4": "2026-05-26",
+    "T4": "2026-05-28",
     "T5": "2026-05-25",
-    "T6": "2026-05-24",
-    "T7": "2026-05-27"
+    "T6": "2026-05-28",
+    "T7": "2026-05-28"
   },
-  "bash_test_count_main": 420,
+  "bash_test_count_main": 407,
   "python_test_count_main": 22,
   "open_prs": [
     {
@@ -46,6 +46,12 @@
       "branch": "test-assist/clean-env-tests",
       "title": "[Test Improver] test: add clean_env unit tests to test-build-common.sh",
       "note": "created 2026-05-25; T3: adds 8 tests for clean_env() whitelist logic in build-common.sh; +8 tests (407->415); CI green"
+    },
+    {
+      "number": null,
+      "branch": "test-assist/assert-empty-nonempty-helpers",
+      "title": "[Test Improver] test: add assert_empty and assert_nonempty helpers, refactor 20 patterns",
+      "note": "created 2026-05-28; T6 infra: adds assert_empty/assert_nonempty to test-helpers.sh; refactors 20 empty/non-empty assertion patterns in 6 test files; all 407 tests pass; shellcheck clean; PR number TBD"
     }
   ],
   "closed_prs": [
@@ -128,7 +134,7 @@
   ],
   "notes": [
     "All 6 big PRs (#786, #790, #796, #798, #801, #803) merged by maintainer on 2026-05-16 - queue is now mostly empty",
-    "Corrected bash test baseline on main: 420 (test-strip-binary.sh 13 tests was undercounted; prior memory said 407)",
+    "Bash test count on main is 407 (not 420 as previously noted in memory — re-counted on 2026-05-28)",
     "CI gap: test-build-gcc-size-libstdcxx.sh NOT in shell-unit-tests.yml run list or shellcheck.yml; fix requires manual PR (workflow write blocked); instructions in #815/#816",
     "Duplicate CI gap issues: #815 and #816 both describe same fix; suggest maintainer close one",
     "--skip_steps=native,mingw exits build-prerequisites.sh at ~line 225 without build work (safe for tests)",
@@ -141,8 +147,8 @@
     "2026-05-22: PR #826 confirmed (cmake flags test for test-entrypoint.sh, +9 tests); CI green",
     "2026-05-24: PR #828 confirmed — adds 5 path/file/dir existence helpers, refactors 28 verbose patterns in test-build-common.sh and test-pre-cache-clean.sh, removes 8 pre-existing SC2015 shellcheck warnings.",
     "2026-05-25: PR #830 confirmed — adds 8 clean_env() unit tests to test-build-common.sh covering whitelist (PATH, HOME, SHELL, WORKSPACE, SRC_VERSION), uppercase removal, lowercase preservation. CI green.",
-    "2026-05-27: Baseline corrected to 420 tests (not 407). test-strip-binary.sh had 13 tests not counted in earlier estimate.",
-    "2026-05-27: 5 open PRs all CI green; no new commits on main since 2026-05-16; backlog unchanged"
+    "2026-05-28: PR submitted (branch test-assist/assert-empty-nonempty-helpers) — adds assert_empty/assert_nonempty to test-helpers.sh; refactors 20 patterns; PR number TBD (look up by branch in next run)",
+    "CI shellcheck only covers subset of test files: test-build-prerequisites.sh, test-build-stage-action.sh, test-build-stage-scripts.sh, test-compare-test-project-artifacts.sh, test-compute-toolchain-src-hash.sh, test-entrypoint.sh, test-helpers.sh, test-measure-cache-compressed-size.sh, test-merge-gcc-final.sh"
   ],
   "checked_off_by_maintainer": []
 }
