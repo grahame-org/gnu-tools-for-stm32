@@ -1,0 +1,121 @@
+name: Docker Action Test
+
+on:
+  push:
+    branches:
+      - 13.3.rel1
+  pull_request:
+  merge_group:
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  check-changes:
+    runs-on: ubuntu-slim
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      should-test: ${{ steps.filter.outputs.test || 'true' }}
+    steps:
+      - name: Check for test-relevant file changes
+        if: github.event_name == 'pull_request'
+        id: filter
+        uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
+        with:
+          filters: |
+            test:
+              - 'docker-action/**'
+              - 'test_project/**'
+              - '.github/actions/compare-test-project-artifacts/**'
+              - '.github/workflows/docker-action-test.yml'
+
+  docker-action-test:
+    needs: check-changes
+    if: needs.check-changes.outputs.should-test == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Log in to ghcr.io
+        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Resolve action image reference
+        run: |
+          # Extract the image reference from docker-action/action.yml so
+          # subsequent steps stay in sync when release-please bumps the tag.
+          # The pattern handles both single- and double-quoted image references.
+          action_image=$(grep -oP 'docker://\K[^'"'"'"\s]+' docker-action/action.yml | head -1)
+          echo "ACTION_IMAGE=${action_image}" >> "${GITHUB_ENV}"
+
+      - name: Check edge image availability
+        id: check-edge
+        run: |
+          # The edge tag is published by docker-publish.yml on every push to the
+          # main branch.  On feature-branch PRs it may not yet exist; skip the
+          # remaining steps gracefully rather than failing.
+          base_image="${ACTION_IMAGE%:*}"
+          if docker manifest inspect "${base_image}:edge" > /dev/null 2>&1; then
+            echo "available=true" >> "${GITHUB_OUTPUT}"
+            echo "Edge image is available: ${base_image}:edge"
+          else
+            echo "available=false" >> "${GITHUB_OUTPUT}"
+            echo "::warning::Edge image ${base_image}:edge is not available. Skipping end-to-end test."
+          fi
+
+      - name: Pull published image and tag for action
+        if: steps.check-edge.outputs.available == 'true'
+        run: |
+          # Derive the base image (without the pinned tag) and pull the edge tag,
+          # which is published on every push to the main branch and represents the
+          # current end-to-end consumer experience.
+          base_image="${ACTION_IMAGE%:*}"
+          docker pull "${base_image}:edge"
+          # Retag as the action's pinned placeholder so 'uses: ./docker-action'
+          # resolves to the published image without modifying action.yml.
+          docker tag "${base_image}:edge" "${ACTION_IMAGE}"
+
+      - name: Verify toolchain – version check
+        if: steps.check-edge.outputs.available == 'true'
+        run: |
+          docker run --rm --pull=never \
+            --entrypoint arm-none-eabi-gcc \
+            "${ACTION_IMAGE}" \
+            --version
+
+      - name: Build test_project using docker-action
+        if: steps.check-edge.outputs.available == 'true'
+        uses: ./docker-action
+        with:
+          src-path: test_project
+
+      - name: Compare test_project artifacts against reference binaries
+        if: steps.check-edge.outputs.available == 'true'
+        uses: ./.github/actions/compare-test-project-artifacts
+
+  docker-action-test-status:
+    runs-on: ubuntu-slim
+    needs: [check-changes, docker-action-test]
+    if: always()
+    steps:
+      - name: Report test status
+        run: |
+          if [[ "${{ needs.check-changes.result }}" == "failure" || "${{ needs.check-changes.result }}" == "cancelled" ]]; then
+            echo "check-changes job failed or was cancelled" && exit 1
+          fi
+          if [[ "${{ needs.docker-action-test.result }}" == "failure" || "${{ needs.docker-action-test.result }}" == "cancelled" ]]; then
+            echo "Tests failed or were cancelled" && exit 1
+          fi
+          echo "Tests skipped or succeeded"
